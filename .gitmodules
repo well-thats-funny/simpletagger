@@ -1,0 +1,3 @@
+[submodule "deps/boxicons"]
+	path = deps/boxicons
+	url = https://github.com/atisawd/boxicons.git

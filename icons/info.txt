@@ -1,0 +1,1 @@
+Icons prefixed with "bx-" are modified icons from Boxicons set.

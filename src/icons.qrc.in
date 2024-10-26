@@ -1,0 +1,34 @@
+<RCC>
+  <qresource prefix="icons">
+    <file alias="bx-area.svg">${boxicons_SOURCE_DIR}/svg/regular/bx-area.svg</file>
+    <file alias="bx-block.svg">${boxicons_SOURCE_DIR}/svg/regular/bx-block.svg</file>
+    <file alias="bx-book-add.svg">${boxicons_SOURCE_DIR}/svg/regular/bx-book-add.svg</file>
+    <file alias="bx-book-open.svg">${boxicons_SOURCE_DIR}/svg/regular/bx-book-open.svg</file>
+    <file alias="bx-book.svg">${boxicons_SOURCE_DIR}/svg/regular/bx-book.svg</file>
+    <file alias="bx-comment-edit.svg">${boxicons_SOURCE_DIR}/svg/regular/bx-comment-edit.svg</file>
+    <file alias="bx-cube.svg">${boxicons_SOURCE_DIR}/svg/regular/bx-cube.svg</file>
+    <file alias="bx-edit.svg">${boxicons_SOURCE_DIR}/svg/regular/bx-edit.svg</file>
+    <file alias="bx-export.svg">${boxicons_SOURCE_DIR}/svg/regular/bx-export.svg</file>
+    <file alias="bx-hide.svg">${boxicons_SOURCE_DIR}/svg/regular/bx-hide.svg</file>
+    <file alias="bx-image.svg">${boxicons_SOURCE_DIR}/svg/regular/bx-image.svg</file>
+    <file alias="bx-import.svg">${boxicons_SOURCE_DIR}/svg/regular/bx-import.svg</file>
+    <file alias="bx-info-circle.svg">${boxicons_SOURCE_DIR}/svg/regular/bx-info-circle.svg</file>
+    <file alias="bx-link.svg">${boxicons_SOURCE_DIR}/svg/regular/bx-link.svg</file>
+    <file alias="bx-plus-circle.svg">${boxicons_SOURCE_DIR}/svg/regular/bx-plus-circle.svg</file>
+    <file alias="bx-refresh.svg">${boxicons_SOURCE_DIR}/svg/regular/bx-refresh.svg</file>
+    <file alias="bx-minus-circle.svg">${boxicons_SOURCE_DIR}/svg/regular/bx-minus-circle.svg</file>
+    <file alias="bx-rectangle.svg">${boxicons_SOURCE_DIR}/svg/regular/bx-rectangle.svg</file>
+    <file alias="bx-rename.svg">${boxicons_SOURCE_DIR}/svg/regular/bx-rename.svg</file>
+    <file alias="bx-show.svg">${boxicons_SOURCE_DIR}/svg/regular/bx-show.svg</file>
+    <file alias="bx-toggle-left.svg">${boxicons_SOURCE_DIR}/svg/regular/bx-toggle-left.svg</file>
+    <file alias="bx-toggle-right.svg">${boxicons_SOURCE_DIR}/svg/regular/bx-toggle-right.svg</file>
+    <file alias="bx-unlink.svg">${boxicons_SOURCE_DIR}/svg/regular/bx-unlink.svg</file>
+    <file alias="bx-zoom-in.svg">${boxicons_SOURCE_DIR}/svg/regular/bx-zoom-in.svg</file>
+    <file alias="bx-zoom-out.svg">${boxicons_SOURCE_DIR}/svg/regular/bx-zoom-out.svg</file>
+    <file alias="bx-eraser-red.svg">${CMAKE_CURRENT_SOURCE_DIR}/../icons/bx-eraser-red.svg</file>
+    <file alias="bx-minus-circle-red.svg">${CMAKE_CURRENT_SOURCE_DIR}/../icons/bx-minus-circle-red.svg</file>
+    <file alias="bx-zoom.svg">${CMAKE_CURRENT_SOURCE_DIR}/../icons/bx-zoom.svg</file>
+    <file alias="bx-zoom-red-square.svg">${CMAKE_CURRENT_SOURCE_DIR}/../icons/bx-zoom-red-square.svg</file>
+    <file alias="bx-zoom-black-square.svg">${CMAKE_CURRENT_SOURCE_DIR}/../icons/bx-zoom-black-square.svg</file>
+  </qresource>
+</RCC>

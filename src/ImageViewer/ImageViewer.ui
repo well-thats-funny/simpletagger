@@ -1,0 +1,230 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>ImageViewer</class>
+ <widget class="QWidget" name="ImageViewer">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>597</width>
+    <height>419</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <layout class="QVBoxLayout" name="verticalLayout_5">
+     <item>
+      <layout class="QHBoxLayout" name="horizontalLayout_4">
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout" stretch="1,0,0">
+         <item>
+          <widget class="QLabel" name="labelImagePath">
+           <property name="text">
+            <string/>
+           </property>
+           <property name="wordWrap">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="Line" name="line">
+           <property name="orientation">
+            <enum>Qt::Orientation::Vertical</enum>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="labelZoom"/>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <widget class="QToolButton" name="buttonInterrogate">
+         <property name="toolTip">
+          <string>Automatically assign tags</string>
+         </property>
+         <property name="text">
+          <string notr="true">...</string>
+         </property>
+         <property name="icon">
+          <iconset theme="system-run"/>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QToolButton" name="buttonOpenExternal">
+         <property name="toolTip">
+          <string>Open the image in an external program</string>
+         </property>
+         <property name="text">
+          <string notr="true">...</string>
+         </property>
+         <property name="icon">
+          <iconset theme="document-open"/>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QToolButton" name="buttonRegionEdit"/>
+       </item>
+       <item>
+        <widget class="QToolButton" name="buttonZoomReset">
+         <property name="text">
+          <string notr="true"/>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QToolButton" name="buttonZoomToFitRegion">
+         <property name="text">
+          <string notr="true"/>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QToolButton" name="buttonZoomToFitWholeImage">
+         <property name="toolTip">
+          <string>Fit to window</string>
+         </property>
+         <property name="text">
+          <string notr="true"/>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QToolButton" name="buttonZoomIn"/>
+       </item>
+       <item>
+        <widget class="QToolButton" name="buttonZoomOut"/>
+       </item>
+      </layout>
+     </item>
+     <item>
+      <widget class="ImageGraphicsView" name="imageView">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+         <horstretch>0</horstretch>
+         <verstretch>1</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="renderHints">
+        <set>QPainter::RenderHint::Antialiasing|QPainter::RenderHint::TextAntialiasing</set>
+       </property>
+       <property name="dragMode">
+        <enum>QGraphicsView::DragMode::ScrollHandDrag</enum>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+  </layout>
+  <action name="actionRegionEdit">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="../icons.qrc">
+     <normaloff>:/icons/bx-area.svg</normaloff>:/icons/bx-area.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Edit selection region</string>
+   </property>
+   <property name="toolTip">
+    <string>Edit selection region</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::MenuRole::NoRole</enum>
+   </property>
+  </action>
+  <action name="actionZoomIn">
+   <property name="icon">
+    <iconset resource="../icons.qrc">
+     <normaloff>:/icons/bx-zoom-in.svg</normaloff>:/icons/bx-zoom-in.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Zoom in</string>
+   </property>
+   <property name="toolTip">
+    <string>Zoom in</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::MenuRole::NoRole</enum>
+   </property>
+  </action>
+  <action name="actionZoomOut">
+   <property name="icon">
+    <iconset resource="../icons.qrc">
+     <normaloff>:/icons/bx-zoom-out.svg</normaloff>:/icons/bx-zoom-out.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Zoom out</string>
+   </property>
+   <property name="toolTip">
+    <string>Zoom out</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::MenuRole::NoRole</enum>
+   </property>
+  </action>
+  <action name="actionZoomToFitWholeImage">
+   <property name="icon">
+    <iconset resource="../icons.qrc">
+     <normaloff>:/icons/bx-zoom-black-square.svg</normaloff>:/icons/bx-zoom-black-square.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Zoom to fit whole image</string>
+   </property>
+   <property name="toolTip">
+    <string>Zoom to fit whole image</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::MenuRole::NoRole</enum>
+   </property>
+  </action>
+  <action name="actionZoomToFitRegion">
+   <property name="icon">
+    <iconset resource="../icons.qrc">
+     <normaloff>:/icons/bx-zoom-red-square.svg</normaloff>:/icons/bx-zoom-red-square.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Zoom to fit selected image region</string>
+   </property>
+   <property name="toolTip">
+    <string>Zoom to fit selected image region</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::MenuRole::NoRole</enum>
+   </property>
+  </action>
+  <action name="actionZoomReset">
+   <property name="icon">
+    <iconset resource="../icons.qrc">
+     <normaloff>:/icons/bx-zoom.svg</normaloff>:/icons/bx-zoom.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Reset zoom</string>
+   </property>
+   <property name="toolTip">
+    <string>Reset zoom</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::MenuRole::NoRole</enum>
+   </property>
+  </action>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>ImageGraphicsView</class>
+   <extends>QGraphicsView</extends>
+   <header>ImageViewer/ImageGraphicsView.hpp</header>
+  </customwidget>
+ </customwidgets>
+ <resources>
+  <include location="../icons.qrc"/>
+ </resources>
+ <connections/>
+</ui>

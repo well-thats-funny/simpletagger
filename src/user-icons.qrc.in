@@ -1,0 +1,40 @@
+<RCC>
+  <qresource prefix="user-icons">
+    <file alias="Body">${boxicons_SOURCE_DIR}/svg/regular/bx-body.svg</file>
+    <file alias="Camera">${boxicons_SOURCE_DIR}/svg/regular/bx-camera.svg</file>
+    <file alias="Car">${boxicons_SOURCE_DIR}/svg/regular/bx-car.svg</file>
+    <file alias="Closet">${boxicons_SOURCE_DIR}/svg/regular/bx-closet.svg</file>
+    <file alias="Face">${boxicons_SOURCE_DIR}/svg/regular/bx-face.svg</file>
+    <file alias="Grid">${boxicons_SOURCE_DIR}/svg/regular/bx-grid.svg</file>
+    <file alias="View">${boxicons_SOURCE_DIR}/svg/regular/bx-street-view.svg</file>
+    <file alias="Female">${boxicons_SOURCE_DIR}/svg/regular/bx-female-sign.svg</file>
+    <file alias="Male">${boxicons_SOURCE_DIR}/svg/regular/bx-male-sign.svg</file>
+    <file alias="Brush/aqua">${CMAKE_CURRENT_SOURCE_DIR}/../icons/colors/bx-brush-aqua.svg</file>
+    <file alias="Brush/black">${CMAKE_CURRENT_SOURCE_DIR}/../icons/colors/bx-brush-black.svg</file>
+    <file alias="Brush/blue">${CMAKE_CURRENT_SOURCE_DIR}/../icons/colors/bx-brush-blue.svg</file>
+    <file alias="Brush/brown">${CMAKE_CURRENT_SOURCE_DIR}/../icons/colors/bx-brush-brown.svg</file>
+    <file alias="Brush/green">${CMAKE_CURRENT_SOURCE_DIR}/../icons/colors/bx-brush-green.svg</file>
+    <file alias="Brush/grey">${CMAKE_CURRENT_SOURCE_DIR}/../icons/colors/bx-brush-grey.svg</file>
+    <file alias="Brush/orange">${CMAKE_CURRENT_SOURCE_DIR}/../icons/colors/bx-brush-orange.svg</file>
+    <file alias="Brush/pink">${CMAKE_CURRENT_SOURCE_DIR}/../icons/colors/bx-brush-pink.svg</file>
+    <file alias="Brush/purple">${CMAKE_CURRENT_SOURCE_DIR}/../icons/colors/bx-brush-purple.svg</file>
+    <file alias="Brush/red">${CMAKE_CURRENT_SOURCE_DIR}/../icons/colors/bx-brush-red.svg</file>
+    <file alias="Brush/white">${CMAKE_CURRENT_SOURCE_DIR}/../icons/colors/bx-brush-white.svg</file>
+    <file alias="Brush/yellow">${CMAKE_CURRENT_SOURCE_DIR}/../icons/colors/bx-brush-yellow.svg</file>
+    <file alias="Brush/blond (hair color)">${CMAKE_CURRENT_SOURCE_DIR}/../icons/colors/bx-brush-haircolor-blond.svg</file>
+    <file alias="Brush/dark blond (hair color)">${CMAKE_CURRENT_SOURCE_DIR}/../icons/colors/bx-brush-haircolor-darkblond.svg</file>
+    <file alias="Brush/medium brown (hair color)">${CMAKE_CURRENT_SOURCE_DIR}/../icons/colors/bx-brush-haircolor-mediumbrown.svg</file>
+    <file alias="Brush/dark brown (hair color)">${CMAKE_CURRENT_SOURCE_DIR}/../icons/colors/bx-brush-haircolor-darkbrown.svg</file>
+    <file alias="Brush/black (hair color)">${CMAKE_CURRENT_SOURCE_DIR}/../icons/colors/bx-brush-haircolor-black.svg</file>
+    <file alias="Brush/red-brown (hair color)">${CMAKE_CURRENT_SOURCE_DIR}/../icons/colors/bx-brush-haircolor-redbrown.svg</file>
+    <file alias="Brush/red (hair color)">${CMAKE_CURRENT_SOURCE_DIR}/../icons/colors/bx-brush-haircolor-red.svg</file>
+    <file alias="Brush/grey (hair color)">${CMAKE_CURRENT_SOURCE_DIR}/../icons/colors/bx-brush-haircolor-grey.svg</file>
+    <file alias="Brush/white (hair color)">${CMAKE_CURRENT_SOURCE_DIR}/../icons/colors/bx-brush-haircolor-white.svg</file>
+    <file alias="Brush/fitzpatrick-1 (skin color)">${CMAKE_CURRENT_SOURCE_DIR}/../icons/colors/bx-brush-skincolor-fitzpatrick-1.svg</file>
+    <file alias="Brush/fitzpatrick-2 (skin color)">${CMAKE_CURRENT_SOURCE_DIR}/../icons/colors/bx-brush-skincolor-fitzpatrick-2.svg</file>
+    <file alias="Brush/fitzpatrick-3 (skin color)">${CMAKE_CURRENT_SOURCE_DIR}/../icons/colors/bx-brush-skincolor-fitzpatrick-3.svg</file>
+    <file alias="Brush/fitzpatrick-4 (skin color)">${CMAKE_CURRENT_SOURCE_DIR}/../icons/colors/bx-brush-skincolor-fitzpatrick-4.svg</file>
+    <file alias="Brush/fitzpatrick-5 (skin color)">${CMAKE_CURRENT_SOURCE_DIR}/../icons/colors/bx-brush-skincolor-fitzpatrick-5.svg</file>
+    <file alias="Brush/fitzpatrick-6 (skin color)">${CMAKE_CURRENT_SOURCE_DIR}/../icons/colors/bx-brush-skincolor-fitzpatrick-6.svg</file>
+  </qresource>
+</RCC>

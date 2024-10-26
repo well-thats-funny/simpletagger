@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>About</class>
+ <widget class="QDialog" name="About">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>598</width>
+    <height>434</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Dialog</string>
+  </property>
+  <property name="modal">
+   <bool>false</bool>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <widget class="QLabel" name="text">
+     <property name="text">
+      <string>&lt;html&gt;&lt;body&gt;
+&lt;p&gt;SimpleTagger&lt;/p&gt;
+&lt;p&gt;&lt;a href=&quot;https://github.com/well-thats-funny/simpletagger&quot;&gt;https://github.com/well-thats-funny/simpletagger&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;Copyright (C) 2024 &lt;a href=&quot;mailto:fdresufdresu@gmail.com&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#2980b9;&quot;&gt;fdresufdresu@gmail.com&lt;/span&gt;&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;This program comes with ABSOLUTELY NO WARRANTY.
+This is free software, and you are welcome to redistribute it
+under license onditions.&lt;/p&gt;
+&lt;p&gt;Licensed under: GNU General Public License v3.0 or later&lt;/p&gt;
+&lt;p&gt;Used components:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Qt Framework 6: &lt;a href=&quot;https://www.qt.io&quot;&gt;https://www.qt.io&lt;/a&gt; (under the terms of LGPL v3 license)&lt;/li&gt;
+&lt;li&gt;Qt Advanced Docking: &lt;a href=&quot;https://github.com/githubuser0xFFFF/Qt-Advanced-Docking-System&quot;&gt;https://github.com/githubuser0xFFFF/Qt-Advanced-Docking-System&lt;/a&gt; (under the terms of LGPL v2.1 license)&lt;/li&gt;
+&lt;li&gt;Boxicons: &lt;a href=&quot;https://boxicons.com&quot;&gt;https://boxicons.com&lt;/a&gt; and &lt;a&gt;https://github.com/atisawd/boxicons&lt;/a&gt; (under the terms of MIT and CC 4.0 licenses)&lt;/li&gt;
+&lt;li&gt;GSL Lite: &lt;a href=&quot;https://github.com/gsl-lite/gsl-lite&quot;&gt;https://github.com/gsl-lite/gsl-lite&lt;/a&gt; (under the terms of MIT license)&lt;/li&gt;
+&lt;li&gt;Tracy: &lt;a href=&quot;https://github.com/wolfpld/tracy&quot;&gt;https://github.com/wolfpld/tracy&lt;/a&gt; (under the terms of 3-clause BSD license)&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/body&gt;&lt;/html&gt;</string>
+     </property>
+     <property name="wordWrap">
+      <bool>true</bool>
+     </property>
+     <property name="textInteractionFlags">
+      <set>Qt::TextInteractionFlag::LinksAccessibleByMouse|Qt::TextInteractionFlag::TextSelectableByMouse</set>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QDialogButtonBox" name="buttons">
+     <property name="orientation">
+      <enum>Qt::Orientation::Horizontal</enum>
+     </property>
+     <property name="standardButtons">
+      <set>QDialogButtonBox::StandardButton::Close</set>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections>
+  <connection>
+   <sender>buttons</sender>
+   <signal>accepted()</signal>
+   <receiver>About</receiver>
+   <slot>accept()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>248</x>
+     <y>254</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>157</x>
+     <y>274</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>buttons</sender>
+   <signal>rejected()</signal>
+   <receiver>About</receiver>
+   <slot>reject()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>316</x>
+     <y>260</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>286</x>
+     <y>274</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+</ui>
