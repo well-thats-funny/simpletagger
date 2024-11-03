@@ -317,6 +317,9 @@ void FileBrowser::openDirectory(QString const &directory) {
         auto sourceIndex = directoryTreeModel->setRootPath(absoluteDirectory);
 
         directoryTreeProxyModel->setSourceModel(&*directoryTreeModel);
+        directoryTreeProxyModel->setFilterRole(std::to_underlying(DirectoryTreeModel::Roles::FileNameRole));
+        directoryTreeProxyModel->setSortRole(std::to_underlying(DirectoryTreeModel::Roles::FileNameRole));
+
         auto index = directoryTreeProxyModel->mapFromSource(sourceIndex);
 
         ui->treeViewDirectories->setModel(&*directoryTreeProxyModel);
