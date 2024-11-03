@@ -19,21 +19,15 @@
 #include "../IconIdentifier.hpp"
 
 namespace TagLibrary {
-class TreeViewDelegate: public QStyledItemDelegate {
+class TreeViewDelegate: public CustomItemDelegate {
     Q_OBJECT
 
 public:
-    TreeViewDelegate(TreeViewDelegate const &other) = delete;
-    TreeViewDelegate(TreeViewDelegate &&other) = delete;
-    TreeViewDelegate& operator=(TreeViewDelegate const &other) = delete;
-    TreeViewDelegate& operator=(TreeViewDelegate &&other) = delete;
-
-    using QStyledItemDelegate::QStyledItemDelegate;
-    ~TreeViewDelegate();
+    using CustomItemDelegate::CustomItemDelegate;
+    ~TreeViewDelegate() override;
 
     void initStyleOption(QStyleOptionViewItem *option, const QModelIndex &index) const override;
 
-    void paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const override;
     bool helpEvent(QHelpEvent *event, QAbstractItemView *view, QStyleOptionViewItem const &option, QModelIndex const &index) override;
 
     mutable IconIdentifier::IconCache iconCache;

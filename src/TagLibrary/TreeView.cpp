@@ -18,7 +18,6 @@
 
 #include "Logging.hpp"
 #include "../IconIdentifier.hpp"
-#include "../Utility.hpp"
 
 namespace TagLibrary {
 TreeViewDelegate::~TreeViewDelegate() = default;
@@ -26,7 +25,7 @@ TreeViewDelegate::~TreeViewDelegate() = default;
 void TreeViewDelegate::initStyleOption(QStyleOptionViewItem *option, const QModelIndex &index) const {
     ZoneScoped;
 
-    QStyledItemDelegate::initStyleOption(option, index);
+    CustomItemDelegate::initStyleOption(option, index);
 
     if (option->icon.isNull()) {
         // perhaps we want to draw a vector of icons?
@@ -54,31 +53,6 @@ void TreeViewDelegate::initStyleOption(QStyleOptionViewItem *option, const QMode
             option->decorationSize = pixmap.size();
         }
     }
-
-    option->backgroundBrush = QBrush(); // remove the background brush, as we handle it manually in paint()
-}
-
-void TreeViewDelegate::paint(QPainter *painter, QStyleOptionViewItem const &option, QModelIndex const &index) const {
-    ZoneScoped;
-
-    // draw background not only under the item but all the way to the left border of the widget
-    auto rect = option.rect;
-
-    if (index.column() == 0) {
-        // not sure whether it's the best way, but hey!
-        rect.setLeft(0);
-    }
-
-    if (auto brushes = index.data(Qt::ItemDataRole::BackgroundRole); !brushes.isNull()) {
-        assert(brushes.canConvert<std::vector<QBrush>>());
-        auto brushesVector = brushes.value<std::vector<QBrush>>();
-        for (auto const &brush: withoutDuplicates(brushesVector))
-        //for (auto const &brush: brushes.value<std::vector<QBrush>>() | withoutDuplicates)
-            painter->fillRect(rect, brush);
-        painter->drawText(0, 0, "lolz");
-    }
-
-    return QStyledItemDelegate::paint(painter, option, index);
 }
 
 bool TreeViewDelegate::helpEvent(
@@ -109,16 +83,13 @@ bool TreeViewDelegate::helpEvent(
     return event->isAccepted();
 }
 
-TreeView::TreeView(QWidget *parent): CustomTreeView(parent) {
-    ZoneScoped;
-    setItemDelegate(new TreeViewDelegate(this));
-}
+TreeView::TreeView(QWidget *const parent): CustomTreeView(new TreeViewDelegate(), parent) {}
 
 TreeView::~TreeView() = default;
 
 TreeViewDelegate *TreeView::itemDelegate() const {
     auto delegate = dynamic_cast<TreeViewDelegate *>(CustomTreeView::itemDelegate());
-    assert(delegate);
+    gsl_Expects(delegate);
     return delegate;
 }
 

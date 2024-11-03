@@ -16,11 +16,35 @@
 */
 #pragma once
 
+class CustomItemDelegate: public QStyledItemDelegate {
+    Q_OBJECT
+
+    CustomItemDelegate(CustomItemDelegate const &other) = delete;
+    CustomItemDelegate(CustomItemDelegate &&other) = delete;
+    CustomItemDelegate& operator=(CustomItemDelegate const &other) = delete;
+    CustomItemDelegate& operator=(CustomItemDelegate &&other) = delete;
+
+public:
+    using QStyledItemDelegate::QStyledItemDelegate;
+    ~CustomItemDelegate() override;
+
+    void initStyleOption(QStyleOptionViewItem *option, const QModelIndex &index) const override;
+    void paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const override;
+};
+
 class CustomTreeView: public QTreeView {
     Q_OBJECT
 
+    CustomTreeView(CustomTreeView const &other) = delete;
+    CustomTreeView(CustomTreeView &&other) = delete;
+    CustomTreeView& operator=(CustomTreeView const &other) = delete;
+    CustomTreeView& operator=(CustomTreeView &&other) = delete;
+
 public:
-    using QTreeView::QTreeView;
+    explicit CustomTreeView(CustomItemDelegate *delegate, QWidget *parent = nullptr);
+    ~CustomTreeView() override;
+
+    CustomItemDelegate *itemDelegate() const;
 
     QByteArray saveExpandedState() const;
     void restoreExpandedState(QByteArray const &state);
