@@ -17,7 +17,7 @@
 #include "MainWindow.hpp"
 
 #include "About.hpp"
-#include "FileTagger.hpp"
+#include "FileEditor.hpp"
 #include "NewProjectDialog.hpp"
 #include "Constants.hpp"
 #include "StartupDialog.hpp"
@@ -52,7 +52,7 @@ std::expected<void, QString> MainWindow::init() {
         showSavedStatusMessage(tr("image tags"), count);
     });
 
-    fileTagger.emplace(fileTagsManager);
+    fileEditor_.emplace(fileTagsManager);
 
     if (auto result = setupGeneralActions(); !result)
         return std::unexpected(result.error());
@@ -220,7 +220,7 @@ std::unique_ptr<ads::CDockWidget> MainWindow::addDock(std::unique_ptr<QWidget> &
 std::expected<void, QString> MainWindow::setupImageViewerDock() {
     ZoneScoped;
 
-    if (auto result = ImageViewer::ImageViewer::create(*fileTagger); !result) {
+    if (auto result = ImageViewer::ImageViewer::create(*fileEditor_); !result) {
         return std::unexpected(result.error());
     } else {
         imageViewer = &**result;
@@ -335,7 +335,7 @@ std::expected<void, QString> MainWindow::setupFileBrowserDock() {
 std::expected<void, QString> MainWindow::setupTagsDock() {
     ZoneScoped;
 
-    if (auto result = Tags::Tags::create(*fileTagger); !result) {
+    if (auto result = Tags::Tags::create(*fileEditor_); !result) {
         return std::unexpected(result.error());
     } else {
         tags_ = &**result;
@@ -419,10 +419,10 @@ std::expected<void, QString> MainWindow::setupTagLibraryDock() {
 
     connect(&*tagLibrary, &TagLibrary::Library::tagsActiveChanged, this, [this](QStringList const &tags, bool const active){
         ZoneScoped;
-        fileTagger->setTagged(tags, active);
+        fileEditor_->setTagged(tags, active);
     });
 
-    connect(&*fileTagger, &FileTagger::tagsChanged, this, &MainWindow::loadFileTaggerTagsToTagLibrary);
+    connect(&*fileEditor_, &FileEditor::tagsChanged, this, &MainWindow::loadFileTaggerTagsToTagLibrary);
 
     return {};
 }
@@ -638,7 +638,7 @@ void MainWindow::loadFile(const QString &file, bool const forceReopen) {
         qDebug() << "MainWindow::loadFile: " << currentViewFile;
 
         // must be set first, as imageViewer relies on it
-        fileTagger->setFile(file);
+        fileEditor_->setFile(file);
 
         imageViewer->loadFile(file);
         tags_->setEnabled(true);
@@ -658,7 +658,7 @@ void MainWindow::unloadFile() {
 
     tagLibrary->setEnabled(false);
 
-    fileTagger->resetFile();
+    fileEditor_->resetFile();
 
     tags_->setEnabled(false);
     imageViewer->unloadFile();
@@ -669,7 +669,7 @@ void MainWindow::unloadFile() {
 void MainWindow::loadFileTaggerTagsToTagLibrary() {
     ZoneScoped;
 
-    if (auto tags = fileTagger->assignedTags()) {
+    if (auto tags = fileEditor_->assignedTags()) {
         if (auto result = tagLibrary->setTagsActive(*tags); !result)
             QMessageBox::critical(
                     this,

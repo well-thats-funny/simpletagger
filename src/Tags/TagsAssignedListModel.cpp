@@ -16,13 +16,13 @@
 */
 #include "TagsAssignedListModel.hpp"
 
-#include "FileTagger.hpp"
+#include "FileEditor.hpp"
 
 namespace Tags {
-TagsAssignedListModel::TagsAssignedListModel(FileTagger &fileTagger): fileTagger{fileTagger} {
+TagsAssignedListModel::TagsAssignedListModel(FileEditor &fileEditor): fileEditor_{fileEditor} {
     ZoneScoped;
 
-    connect(&fileTagger, &FileTagger::tagsChanged, this, [this]{
+    connect(&fileEditor, &FileEditor::tagsChanged, this, [this]{
         ZoneScoped;
         beginResetModel();
         endResetModel();
@@ -40,7 +40,7 @@ bool TagsAssignedListModel::canDropMimeData(const QMimeData *data, Qt::DropActio
 int TagsAssignedListModel::rowCount(const QModelIndex &parent) const {
     ZoneScoped;
     gsl_Expects(!parent.isValid());
-    return fileTagger.assignedTags().transform([](auto const &v){ return v.size(); }).value_or(0);
+    return fileEditor_.assignedTags().transform([](auto const &v){ return v.size(); }).value_or(0);
 }
 
 Qt::ItemFlags TagsAssignedListModel::flags(QModelIndex const &index) const {
@@ -62,7 +62,7 @@ QVariant TagsAssignedListModel::data(const QModelIndex &index, int role) const {
     if (!index.isValid() || index.parent().isValid())
         return {};
 
-    auto tag = fileTagger.assignedTags()
+    auto tag = fileEditor_.assignedTags()
             .transform([&](auto const &v)->QVariant{ return v.at(index.row()); })
             .value_or(QVariant());
 
@@ -88,7 +88,7 @@ bool TagsAssignedListModel::moveRows(QModelIndex const &sourceParent, int source
     gsl_Expects(!sourceParent.isValid());
     gsl_Expects(!destinationParent.isValid());
     gsl_Expects(count == 1); // NOTE: this will only support moving single items for now
-    return fileTagger.moveAssignedTag(sourceRow, destinationChild);
+    return fileEditor_.moveAssignedTag(sourceRow, destinationChild);
 }
 
 QModelIndexList TagsAssignedListModel::setHighlightedTags(QStringList const &tags) {
@@ -99,7 +99,7 @@ QModelIndexList TagsAssignedListModel::setHighlightedTags(QStringList const &tag
     highlightedTags_ = tags;
 
     auto tagToIndex = [&](QString const &tag)->QModelIndex{
-        if (auto pos = fileTagger.assignedTags()->indexOf(tag); pos != -1)
+        if (auto pos = fileEditor_.assignedTags()->indexOf(tag); pos != -1)
             return this->index(pos, 0);
         else
             return {};

@@ -18,7 +18,7 @@
 
 class Ui_ImageViewer;
 
-class FileTagger;
+class FileEditor;
 
 namespace ImageViewer {
 class GraphicsSelectionRectItem;
@@ -31,11 +31,11 @@ class ImageViewer: public QWidget {
     ImageViewer& operator=(ImageViewer const &other) = delete;
     ImageViewer& operator=(ImageViewer &&other) = delete;
 
-    explicit ImageViewer(FileTagger &fileTagger);
+    explicit ImageViewer(FileEditor &fileEditor);
     [[nodiscard]] std::expected<void, QString> init();
 
 public:
-    [[nodiscard]] static std::expected<std::unique_ptr<ImageViewer>, QString> create(FileTagger &fileTagger);
+    [[nodiscard]] static std::expected<std::unique_ptr<ImageViewer>, QString> create(FileEditor &fileEditor);
     ~ImageViewer() override;
 
     QByteArray saveUiState();
@@ -55,7 +55,7 @@ public:
 private:
     std::unique_ptr<Ui_ImageViewer> ui;
 
-    FileTagger &fileTagger_;
+    FileEditor &fileEditor_;
 
     bool enforcedAspectRatiosEnabled_ = false;
 

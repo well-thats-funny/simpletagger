@@ -15,7 +15,7 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 #pragma once
-#include "FileTagger.hpp"
+#include "FileEditor.hpp"
 #include "FileTagsManager.hpp"
 #include "Project.hpp"
 #include "Settings.hpp"
@@ -96,7 +96,7 @@ private:
     std::optional<Project> project;
 
     FileTagsManager fileTagsManager;
-    std::optional<FileTagger> fileTagger;
+    std::optional<FileEditor> fileEditor_;
 
     std::unique_ptr<ads::CDockManager> dockManager;
 

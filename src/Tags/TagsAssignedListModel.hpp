@@ -16,7 +16,7 @@
 */
 #pragma once
 
-class FileTagger;
+class FileEditor;
 
 namespace Tags {
 class TagsAssignedListModel: public QAbstractListModel {
@@ -25,7 +25,7 @@ class TagsAssignedListModel: public QAbstractListModel {
 public:
     static constexpr auto TagRole = Qt::ItemDataRole::UserRole + 1;
 
-    explicit TagsAssignedListModel(FileTagger &fileTagger);
+    explicit TagsAssignedListModel(FileEditor &fileEditor);
     ~TagsAssignedListModel();
 
     bool canDropMimeData(const QMimeData *data, Qt::DropAction action, int row, int column, const QModelIndex &parent) const override;
@@ -39,7 +39,7 @@ public:
     QModelIndexList setHighlightedTags(QStringList const &tags);
 
 private:
-    FileTagger &fileTagger;
+    FileEditor &fileEditor_;
     QStringList highlightedTags_;
 };
 }

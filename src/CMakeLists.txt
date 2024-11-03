@@ -47,8 +47,8 @@ add_executable(simpletagger-cxx
         FileBrowser/FileBrowser.hpp
         FileBrowser/ProjectDirectoryListModel.cpp
         FileBrowser/ProjectDirectoryListModel.hpp
-        FileTagger.cpp
-        FileTagger.hpp
+        FileEditor.cpp
+        FileEditor.hpp
         FileTagsManager.cpp
         FileTagsManager.hpp
         IconIdentifier.cpp

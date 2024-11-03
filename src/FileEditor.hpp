@@ -18,17 +18,17 @@
 
 #include "FileTagsManager.hpp"
 
-class FileTagger: public QObject {
+class FileEditor: public QObject {
     Q_OBJECT
 
 public:
-    FileTagger(FileTagger const &other) = delete;
-    FileTagger(FileTagger &&other) = delete;
-    FileTagger &operator=(FileTagger const &other) = delete;
-    FileTagger &operator=(FileTagger &&other) = delete;
+    FileEditor(FileEditor const &other) = delete;
+    FileEditor(FileEditor &&other) = delete;
+    FileEditor &operator=(FileEditor const &other) = delete;
+    FileEditor &operator=(FileEditor &&other) = delete;
 
-    explicit FileTagger(FileTagsManager &fileTagsManager);
-    ~FileTagger();
+    explicit FileEditor(FileTagsManager &fileTagsManager);
+    ~FileEditor();
 
     void setFile(QString const &file);
     void resetFile();

@@ -18,14 +18,14 @@
 
 #include "TagsAssignedListModel.hpp"
 
-#include "../FileTagger.hpp"
+#include "../FileEditor.hpp"
 
 #include "ui_Tags.h"
 
 namespace Tags {
 Tags::Tags(): ui(std::make_unique<Ui_Tags>()) {}
 
-std::expected<void, QString> Tags::init(FileTagger &fileTagger) {
+std::expected<void, QString> Tags::init(FileEditor &fileEditor) {
     ZoneScoped;
 
     ui->setupUi(this);
@@ -34,7 +34,7 @@ std::expected<void, QString> Tags::init(FileTagger &fileTagger) {
     ui->buttonAssignedTagsDelete->setDefaultAction(ui->actionAssignedTagsDelete);
     ui->buttonAssignedTagsClear->setDefaultAction(ui->actionAssignedTagsClear);
 
-    assignedTagsListModel = std::make_unique<TagsAssignedListModel>(fileTagger);
+    assignedTagsListModel = std::make_unique<TagsAssignedListModel>(fileEditor);
     ui->listAssignedTags->setModel(&*assignedTagsListModel);
 
     connect(ui->listAssignedTags->selectionModel(), &QItemSelectionModel::currentChanged, this, [this](QModelIndex const &current){
@@ -52,20 +52,20 @@ std::expected<void, QString> Tags::init(FileTagger &fileTagger) {
         }
     });
 
-    connect(&fileTagger, &FileTagger::tagsChanged, this, [&]{
+    connect(&fileEditor, &FileEditor::tagsChanged, this, [&]{
         ZoneScoped;
-        if (auto size = fileTagger.assignedTags()->size(); size == 0)
+        if (auto size = fileEditor.assignedTags()->size(); size == 0)
             ui->labelAssignedTags->setText(tr("Assigned tags:"));
         else
             ui->labelAssignedTags->setText(tr("Assigned tags (%1):").arg(size));
     });
 
-    connect(ui->actionAssignedTagsDelete, &QAction::triggered, this, [this, &fileTagger]{
+    connect(ui->actionAssignedTagsDelete, &QAction::triggered, this, [this, &fileEditor]{
         ZoneScoped;
-        fileTagger.setTagged(indexesToTags(ui->listAssignedTags->selectionModel()->selectedIndexes()), false);
+        fileEditor.setTagged(indexesToTags(ui->listAssignedTags->selectionModel()->selectedIndexes()), false);
     });
 
-    connect(ui->actionAssignedTagsClear, &QAction::triggered, this, [this, &fileTagger]{
+    connect(ui->actionAssignedTagsClear, &QAction::triggered, this, [this, &fileEditor]{
         ZoneScoped;
         if (QMessageBox::warning(
                 this,
@@ -74,17 +74,17 @@ std::expected<void, QString> Tags::init(FileTagger &fileTagger) {
                 QMessageBox::StandardButton::Yes | QMessageBox::StandardButton::No
         ) == QMessageBox::StandardButton::Yes) {
             ZoneScoped;
-            fileTagger.clearTags();
+            fileEditor.clearTags();
         }
     });
 
     return {};
 }
 
-std::expected<std::unique_ptr<Tags>, QString> Tags::create(FileTagger &fileTagger) {
+std::expected<std::unique_ptr<Tags>, QString> Tags::create(FileEditor &fileEditor) {
     ZoneScoped;
     std::unique_ptr<Tags> self(new Tags);
-    if (auto result = self->init(fileTagger); !result)
+    if (auto result = self->init(fileEditor); !result)
         return std::unexpected(result.error());
     return self;
 }

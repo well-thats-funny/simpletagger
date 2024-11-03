@@ -14,15 +14,15 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
-#include "FileTagger.hpp"
+#include "FileEditor.hpp"
 
 #include "Constants.hpp"
 
-FileTagger::FileTagger(FileTagsManager &fileTagsManager): fileTagsManager(fileTagsManager) {}
+FileEditor::FileEditor(FileTagsManager &fileTagsManager): fileTagsManager(fileTagsManager) {}
 
-FileTagger::~FileTagger() = default;
+FileEditor::~FileEditor() = default;
 
-void FileTagger::setFile(QString const &file) {
+void FileEditor::setFile(QString const &file) {
     ZoneScoped;
 
     if (!file.isNull())
@@ -32,7 +32,7 @@ void FileTagger::setFile(QString const &file) {
     emit imageRegionChanged();
 }
 
-void FileTagger::resetFile() {
+void FileEditor::resetFile() {
     ZoneScoped;
 
     fileTags.reset();
@@ -40,51 +40,51 @@ void FileTagger::resetFile() {
     emit imageRegionChanged();
 }
 
-std::optional<bool> FileTagger::isTagged(QString const &tag) const {
+std::optional<bool> FileEditor::isTagged(QString const &tag) const {
     ZoneScoped;
 
     return assignedTags().transform([&](auto const &tags){ return tags.contains(tag); });
 }
 
-void FileTagger::setTagged(QStringList const &tags, bool const value) {
+void FileEditor::setTagged(QStringList const &tags, bool const value) {
     ZoneScoped;
 
     if (fileTags.transform([&](auto &f){ return f.get().setTags(tags, value); }).value_or(false))
         emit tagsChanged();
 }
 
-void FileTagger::setTagsState(std::unordered_map<QString, bool> const &state) {
+void FileEditor::setTagsState(std::unordered_map<QString, bool> const &state) {
     ZoneScoped;
 
     if (fileTags.transform([&](auto &f){ return f.get().setTagsState(state); }).value_or(false))
         emit tagsChanged();
 }
 
-void FileTagger::clearTags() {
+void FileEditor::clearTags() {
     ZoneScoped;
 
     if (fileTags.transform([&](auto &f){ return f.get().clearTags(); }).value_or(false))
         emit tagsChanged();
 }
 
-std::optional<QStringList> FileTagger::assignedTags() const {
+std::optional<QStringList> FileEditor::assignedTags() const {
     ZoneScoped;
 
     return fileTags.transform([](auto const &v){ return v.get().assignedTags(); });
 }
 
-bool FileTagger::moveAssignedTag(int const sourcePositon, int const targetPosition) {
+bool FileEditor::moveAssignedTag(int const sourcePositon, int const targetPosition) {
     return fileTags.transform([&](auto &v){ return v.get().moveAssignedTag(sourcePositon, targetPosition); }).value_or(false);
 }
 
-void FileTagger::setImageRegion(std::optional<QRect> const &rect) {
+void FileEditor::setImageRegion(std::optional<QRect> const &rect) {
     ZoneScoped;
 
     if (fileTags.transform([&](auto &v){ return v.get().setImageRegion(rect); }).value_or(false))
         emit imageRegionChanged();
 }
 
-std::optional<QRect> FileTagger::imageRegion() const {
+std::optional<QRect> FileEditor::imageRegion() const {
     ZoneScoped;
 
     return fileTags.and_then([&](auto const &v){ return v.get().imageRegion(); });

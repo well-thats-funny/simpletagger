@@ -18,7 +18,7 @@
 
 #include "GraphicsSelectionRectItem.hpp"
 
-#include "../FileTagger.hpp"
+#include "../FileEditor.hpp"
 #include "../Utility.hpp"
 
 #include "ui_ImageViewer.h"
@@ -29,7 +29,7 @@ constexpr float ZOOM_STEP_WHEEL = 0.1f/120.0f;
 }
 
 namespace ImageViewer {
-ImageViewer::ImageViewer(FileTagger &fileTagger): ui(std::make_unique<Ui_ImageViewer>()), fileTagger_(fileTagger) {}
+ImageViewer::ImageViewer(FileEditor &fileEditor): ui(std::make_unique<Ui_ImageViewer>()), fileEditor_(fileEditor) {}
 
 std::expected<void, QString> ImageViewer::init() {
     ZoneScoped;
@@ -81,10 +81,10 @@ std::expected<void, QString> ImageViewer::init() {
     return {};
 }
 
-std::expected<std::unique_ptr<ImageViewer>, QString> ImageViewer::create(FileTagger &fileTagger) {
+std::expected<std::unique_ptr<ImageViewer>, QString> ImageViewer::create(FileEditor &fileEditor) {
     ZoneScoped;
 
-    std::unique_ptr<ImageViewer> self(new ImageViewer(fileTagger));
+    std::unique_ptr<ImageViewer> self(new ImageViewer(fileEditor));
     if (auto result = self->init(); !result)
         return std::unexpected(result.error());
 
@@ -191,7 +191,7 @@ void ImageViewer::loadFile(QString const &name) {
         ZoneScoped;
 
         if (final)
-            fileTagger_.setImageRegion(rect);
+            fileEditor_.setImageRegion(rect);
 
         auto left = rect.left();
         auto top = rect.top();
@@ -212,14 +212,14 @@ void ImageViewer::loadFile(QString const &name) {
         viewSelectionRectItem->setLabelText(label);
     };
 
-    if (fileTagger_.imageRegion())
-        viewSelectionRectItem->setRect(*fileTagger_.imageRegion());
+    if (fileEditor_.imageRegion())
+        viewSelectionRectItem->setRect(*fileEditor_.imageRegion());
     else
         viewSelectionRectItem->setRect(image.rect());
 
     viewSelectionRectItem->setEditable(false);
 
-    if (fileTagger_.imageRegion())
+    if (fileEditor_.imageRegion())
         setZoomToFitSelectionRect();
     else
         setZoomToFitWholeImage();
@@ -279,7 +279,7 @@ void ImageViewer::setZoomToFitSelectionRect() {
     ZoneScoped;
 
     if (viewSelectionRectItem) {
-        if (auto region = fileTagger_.imageRegion()) {
+        if (auto region = fileEditor_.imageRegion()) {
             ui->imageView->fitInView(&*viewSelectionRectItem, Qt::AspectRatioMode::KeepAspectRatio);
             extractZoomLevelFromCurrentTransformation();
             afterZoomChange();

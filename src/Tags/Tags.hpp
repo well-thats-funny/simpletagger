@@ -18,7 +18,7 @@
 
 class Ui_Tags;
 
-class FileTagger;
+class FileEditor;
 
 namespace Tags {
 class TagsAssignedListModel;
@@ -32,10 +32,10 @@ class Tags: public QWidget {
     Tags& operator=(Tags &&other) = delete;
 
     Tags();
-    [[nodiscard]] std::expected<void, QString> init(FileTagger &fileTagger);
+    [[nodiscard]] std::expected<void, QString> init(FileEditor &fileEditor);
 
 public:
-    static std::expected<std::unique_ptr<Tags>, QString> create(FileTagger &fileTagger);
+    static std::expected<std::unique_ptr<Tags>, QString> create(FileEditor &fileEditor);
     ~Tags() override;
 
     void setHighlightedTags(QStringList const &tags);
