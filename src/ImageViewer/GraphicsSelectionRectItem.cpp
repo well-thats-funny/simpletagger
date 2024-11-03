@@ -23,13 +23,10 @@ static float ACTIVE_RECT_SIZE = 50.f;
 
 enum Corner {
     TopLeft,
-    Top,
     TopRight,
-    Left,
-    Right,
     BottomLeft,
-    Bottom,
-    BottomRight
+    BottomRight,
+    MAX = BottomRight
 };
 
 QPoint limitToRect(QPoint point, QRect const &rect) {
@@ -196,12 +193,8 @@ public:
         Qt::CursorShape cursor = [&]{
             switch (corner_) {
                 case Corner::TopLeft: return Qt::CursorShape::SizeFDiagCursor;
-                case Corner::Top: return Qt::CursorShape::SizeVerCursor;
                 case Corner::TopRight: return Qt::CursorShape::SizeBDiagCursor;
-                case Corner::Left: return Qt::CursorShape::SizeHorCursor;
-                case Corner::Right: return Qt::CursorShape::SizeHorCursor;
                 case Corner::BottomLeft: return Qt::CursorShape::SizeBDiagCursor;
-                case Corner::Bottom: return Qt::CursorShape::SizeVerCursor;
                 case Corner::BottomRight: return Qt::CursorShape::SizeFDiagCursor;
                 default: std::terminate();
             }
@@ -224,12 +217,8 @@ public:
         setPos([&] {
             switch (corner_) {
                 case Corner::TopLeft: return rect.topLeft();
-                case Corner::Top: return QPointF(rect.left() + rect.width()/2.f, rect.top());
                 case Corner::TopRight: return rect.topRight();
-                case Corner::Left: return QPointF(rect.left(), rect.top() + rect.height()/2.f);
-                case Corner::Right: return QPointF(rect.right(), rect.top() + rect.height()/2.f);
                 case Corner::BottomLeft: return rect.bottomLeft();
-                case Corner::Bottom: return QPointF(rect.left() + rect.width()/2.f, rect.bottom());
                 case Corner::BottomRight: return rect.bottomRight();
                 default: std::terminate();
             }
@@ -247,12 +236,6 @@ public:
         QGraphicsRectItem::mouseMoveEvent(event);
 
         auto newPos = pos();
-
-        if (!enableAxisX())
-            newPos.setX(prevPos.x());
-
-        if (!enableAxisY())
-            newPos.setY(prevPos.y());
 
         newPos = onMovedFixPos(prevPos.toPoint(), newPos.toPoint()).toPointF();
 
@@ -278,14 +261,6 @@ public:
     qreal scaleFactor_ = 1.0;
 
 private:
-    bool enableAxisX() const {
-        return corner_ != Corner::Top && corner_ != Corner::Bottom;
-    }
-
-    bool enableAxisY() const {
-        return corner_ != Corner::Left && corner_ != Corner::Right;
-    }
-
     Corner corner_;
 };
 
@@ -328,6 +303,7 @@ public:
 
 GraphicsSelectionRectItem::GraphicsSelectionRectItem(QRect const rect, QRect const limitRect): limitRect_(limitRect) {
     ZoneScoped;
+    gsl_Expects(activeCorners.size() == std::to_underlying(Corner::MAX) + 1);
 
     mainRect = new QGraphicsRectItem(rect, this);
 
@@ -352,48 +328,16 @@ GraphicsSelectionRectItem::GraphicsSelectionRectItem(QRect const rect, QRect con
                             next = *p;
                         break;
                     }
-                    case Corner::Top: {
-                        rect.setTop(next.y());
-                        auto bestRatio = closestAspectRatio(rect.size());
-                        qreal bestRatioF = static_cast<qreal>(bestRatio.width()) / static_cast<qreal>(bestRatio.height());
-                        qreal newHeight = rect.width() / bestRatioF;
-                        next.setY(rect.bottom() - newHeight);
-                        break;
-                    }
                     case Corner::TopRight: {
                         rect.setTopRight(next);
                         if (auto p = findClosestPointByAspectRatio(rect, next, aspectRatios_, limitRect_, 1))
                             next = *p;
                         break;
                     }
-                    case Corner::Left: {
-                        rect.setLeft(next.x());
-                        auto bestRatio = closestAspectRatio(rect.size());
-                        qreal bestRatioF = static_cast<qreal>(bestRatio.width()) / static_cast<qreal>(bestRatio.height());
-                        qreal newWidth = rect.height() * bestRatioF;
-                        next.setX(rect.right() - newWidth);
-                        break;
-                    }
-                    case Corner::Right: {
-                        rect.setRight(next.x());
-                        auto bestRatio = closestAspectRatio(rect.size());
-                        qreal bestRatioF = static_cast<qreal>(bestRatio.width()) / static_cast<qreal>(bestRatio.height());
-                        qreal newWidth = rect.height() * bestRatioF;
-                        next.setX(rect.left() + newWidth);
-                        break;
-                    }
                     case Corner::BottomLeft: {
                         rect.setBottomLeft(next);
                         if (auto p = findClosestPointByAspectRatio(rect, next, aspectRatios_, limitRect_, 2))
                             next = *p;
-                        break;
-                    }
-                    case Corner::Bottom: {
-                        rect.setBottom(next.y());
-                        auto bestRatio = closestAspectRatio(rect.size());
-                        qreal bestRatioF = static_cast<qreal>(bestRatio.width()) / static_cast<qreal>(bestRatio.height());
-                        qreal newHeight = rect.width() / bestRatioF;
-                        next.setY(rect.top() + newHeight);
                         break;
                     }
                     case Corner::BottomRight: {
@@ -420,23 +364,11 @@ GraphicsSelectionRectItem::GraphicsSelectionRectItem(QRect const rect, QRect con
                 case Corner::TopLeft:
                     newRect.setTopLeft(point);
                     break;
-                case Corner::Top:
-                    newRect.setTop(point.y());
-                    break;
                 case Corner::TopRight:
                     newRect.setTopRight(point);
                     break;
-                case Corner::Left:
-                    newRect.setLeft(point.x());
-                    break;
-                case Corner::Right:
-                    newRect.setRight(point.x());
-                    break;
                 case Corner::BottomLeft:
                     newRect.setBottomLeft(point);
-                    break;
-                case Corner::Bottom:
-                    newRect.setBottom(point.y());
                     break;
                 case Corner::BottomRight:
                     newRect.setBottomRight(point);

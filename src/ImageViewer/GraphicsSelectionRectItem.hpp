@@ -211,7 +211,7 @@ private:
     bool useErrorStyle = false;
 
     QGraphicsRectItem* mainRect = nullptr;
-    std::array<GraphicsSelectionActiveCorner *, 8> activeCorners = {};
+    std::array<GraphicsSelectionActiveCorner *, 4> activeCorners = {};
     GraphicsSelectionActiveLabel* labelBackgroundRect = nullptr;
     QGraphicsSimpleTextItem *label = nullptr;
     QGraphicsPolygonItem *outside = nullptr;
