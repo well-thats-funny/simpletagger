@@ -80,7 +80,6 @@ private:
     QString path_;
 
     mutable QMutex mutex_;
-
     struct Stats {
         bool loaded_ = false;
         int fileCount_ = 0;
@@ -120,7 +119,12 @@ private:
     QMutex fileTagsMutex_;
     std::unordered_map<QString, std::unique_ptr<FileTags>> fileTags_;
 
+    std::unordered_map<QString, std::unique_ptr<DirectoryTagsStats>> directoryStats_;
+
+    // TODO: this is placed AFTER directoryStats_ because at the moment, DirectoryTagsStats doesn't
+    //       interrupt (and wait) pending reloads in destructor. Doing it there would be "more correct",
+    //       but simpler way for now is ensuring the pool is destroyed before "directoryStats_" map.
+    std::atomic_flag directoryStatsThreadPoolInterrupt_;
     // TODO: get threadpool as a dependency? We could have a global I/O threadpool
     QThreadPool directoryStatsThreadPool_;
-    std::unordered_map<QString, std::unique_ptr<DirectoryTagsStats>> directoryStats_;
 };

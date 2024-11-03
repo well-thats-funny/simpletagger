@@ -320,6 +320,9 @@ void DirectoryTagsStats::reload() {
 
         QDirIterator iterator(path_, QDirIterator::IteratorFlag::Subdirectories | QDirIterator::IteratorFlag::FollowSymlinks);
         while (iterator.hasNext()) {
+            if (manager_.directoryStatsThreadPoolInterrupt_.test())
+                return;
+
             auto info = iterator.nextFileInfo();
             if (!info.isDir() && IMAGE_FILE_SUFFIXES.contains("."+info.suffix())) {
                 auto &tags = manager_.forFile(info.absoluteFilePath());
@@ -348,7 +351,9 @@ FileTagsManager::FileTagsManager(bool const backupOnSave): backupOnSave_(backupO
     directoryStatsThreadPool_.setMaxThreadCount(4); // TODO: configurable?
 }
 
-FileTagsManager::~FileTagsManager() = default;
+FileTagsManager::~FileTagsManager() {
+    directoryStatsThreadPoolInterrupt_.test_and_set();
+}
 
 void FileTagsManager::setBackupOnSave(bool value) {
     this->backupOnSave_ = value;
