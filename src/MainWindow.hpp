@@ -78,8 +78,10 @@ private:
     void readSettings();
     void refreshRecentProjects();
     [[nodiscard]] std::expected<void, QString> loadProject(QString const &filePath = QString());
-    void loadFile(const QString &file, bool forceReopen = false);
-    void unloadFile();
+
+    void load(const QString &path, bool forceReopen = false);
+    void loadFile(const QString &path);
+    void unload();
 
     void loadFileTaggerTagsToTagLibrary();
     void saveProject();
@@ -100,7 +102,7 @@ private:
 
     std::unique_ptr<ads::CDockManager> dockManager;
 
-    QString currentViewFile;
+    QString currentPath;
 
     ImageViewer::ImageViewer *imageViewer = nullptr; // owned by the dock widget
     std::unique_ptr<ads::CDockWidget> imageViewerDock;

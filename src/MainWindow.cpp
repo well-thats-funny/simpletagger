@@ -280,10 +280,7 @@ std::expected<void, QString> MainWindow::setupFileBrowserDock() {
     connect(&*fileBrowser, &FileBrowser::FileBrowser::fileSelected, this, [this](auto const &file){
         ZoneScoped;
         gsl_Expects(file.isNull() || QFileInfo(file).isAbsolute());
-        if (!file.isNull() && !QFileInfo(file).isDir())
-            loadFile(file);
-        else
-            unloadFile();
+        load(file);
     });
 
     connect(&*fileBrowser, &FileBrowser::FileBrowser::requestTagsCopy, this, [this](auto const &sourceFile, auto const &targetFile) {
@@ -321,7 +318,7 @@ std::expected<void, QString> MainWindow::setupFileBrowserDock() {
                         tr("Could not copy tags: %1").arg(result.error())
                 );
             else
-                loadFile(targetFile, true);
+                load(targetFile, true);
         }
     });
 
@@ -634,42 +631,53 @@ std::expected<void, QString> MainWindow::loadProject(QString const &filePath) {
     return {};
 }
 
-void MainWindow::loadFile(const QString &file, bool const forceReopen) {
+void MainWindow::load(QString const &path, bool forceReopen) {
     ZoneScoped;
-    gsl_Expects(!file.isNull() && !QFileInfo(file).isDir() && QFileInfo(file).isAbsolute());
+    gsl_Expects(path.isEmpty() || QFileInfo(path).isAbsolute());
 
-    if (forceReopen || file != currentViewFile) {
-        currentViewFile = file;
+    if (path != currentPath || forceReopen) {
+        unload();
+        fileEditor_->resetFile();
+        currentPath.clear();
 
-        qDebug() << "MainWindow::loadFile: " << currentViewFile;
+        if (!path.isEmpty()) {
+            // must be set first, as many components rely on it
+            fileEditor_->setFile(path);
 
-        // must be set first, as imageViewer relies on it
-        fileEditor_->setFile(file);
+            if (!QFileInfo(path).isDir())
+                loadFile(path);
 
-        imageViewer->loadFile(file);
-        tags_->setEnabled(true);
-
-        tagLibrary->setEnabled(true);
-
-        loadFileTaggerTagsToTagLibrary();
-
-        QSettings settings;
-        settings.setValue(SettingsKey::LAST_VIEWED_FILE, currentViewFile);
+            currentPath = path;
+        }
     }
+
+    gsl_Ensures(currentPath == path);
 }
 
-void MainWindow::unloadFile() {
+void MainWindow::loadFile(QString const &path) {
     ZoneScoped;
-    qDebug() << "MainWindow::unloadFile";
+    gsl_Expects(!path.isNull() && !QFileInfo(path).isDir() && QFileInfo(path).isAbsolute());
+
+    qDebug() << "MainWindow::loadFile: " << path;
+
+    imageViewer->loadFile(path);
+    tags_->setEnabled(true);
+
+    tagLibrary->setEnabled(true);
+
+    loadFileTaggerTagsToTagLibrary();
+
+    QSettings settings;
+    settings.setValue(SettingsKey::LAST_VIEWED_FILE, currentPath);
+}
+
+void MainWindow::unload() {
+    ZoneScoped;
 
     tagLibrary->setEnabled(false);
 
-    fileEditor_->resetFile();
-
     tags_->setEnabled(false);
     imageViewer->unloadFile();
-
-    currentViewFile.clear();
 }
 
 void MainWindow::loadFileTaggerTagsToTagLibrary() {

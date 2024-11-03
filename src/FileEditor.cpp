@@ -56,22 +56,29 @@ void FileEditor::setFile(QString const &file) {
 
     if (file != currentFile_) {
         currentFile_ = file;
-        fileTags = std::ref(fileTagsManager.forFile(file));
+
+        if (!QFileInfo(file).isDir())
+            fileTags = std::ref(fileTagsManager.forFile(file));
 
         emit tagsChanged();
         emit imageRegionChanged();
     }
+
+    gsl_Ensures(!currentFile_.isEmpty());
 }
 
 void FileEditor::resetFile() {
     ZoneScoped;
-    gsl_Expects(!currentFile_.isEmpty() == static_cast<bool>(fileTags));
 
     if (!currentFile_.isEmpty()) {
+        currentFile_.clear();
         fileTags.reset();
         emit tagsChanged();
         emit imageRegionChanged();
     }
+
+    gsl_Ensures(currentFile_.isEmpty());
+    gsl_Ensures(!fileTags);
 }
 
 std::optional<bool> FileEditor::isTagged(QString const &tag) const {
@@ -155,6 +162,7 @@ std::expected<void, QString> FileEditor::setFileExcluded(bool const excluded) {
 bool FileEditor::isFileExcluded() const {
     ZoneScoped;
     gsl_Expects(project_);
+    gsl_Expects(!currentFile_.isEmpty());
     gsl_Expects(QFileInfo(currentFile_).isAbsolute());
 
     auto relative = QDir(project_->rootDir()).relativeFilePath(currentFile_);

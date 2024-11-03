@@ -260,6 +260,8 @@ void ImageViewer::unloadFile() {
 
     ui->labelImagePath->clear();
 
+    name_.clear();
+
     setEnabled(false);
 }
 
