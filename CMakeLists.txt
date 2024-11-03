@@ -67,6 +67,7 @@ set(CMAKE_COMPILE_WARNING_AS_ERROR ON)
 
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
-find_package(Qt6 COMPONENTS Core Widgets LinguistTools REQUIRED)
+find_package(Qt6 COMPONENTS Core Widgets LinguistTools Test REQUIRED)
 
 add_subdirectory(src)
+add_subdirectory(test)

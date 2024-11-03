@@ -174,56 +174,6 @@ QStringList Node::resolveChildTag(QString const &tag) const {
     return {tag};
 }
 
-bool Node::tagHasPlaceholder(QString const &tag) {
-    ZoneScoped;
-
-    auto ch = tag.begin();
-    while(ch != tag.end()) {
-        if (ch->unicode() == '%') {
-            ++ch;
-            if (ch->unicode() != '%') // reject '%%'
-                return true;
-        } else {
-            ++ch;
-        }
-    }
-
-    return false;
-}
-
-QString Node::tagReplacePlaceholder(QString const &tag, QString const &replacement) {
-    ZoneScoped;
-
-    QString result;
-    result.reserve(tag.size() + replacement.size());  // biggest possible size
-
-    auto ch = tag.begin();
-    while (ch != tag.end()) {
-        if (ch->unicode() == '%') {
-            ++ch;
-
-            if (ch == tag.end()) {
-                result += replacement;
-                break;
-            }
-
-            if (ch->unicode() == '%') {
-                result.push_back('%');
-            } else {
-                result += replacement;
-                result += *ch;
-            }
-
-            ++ch;
-        } else {
-            result.push_back(*ch);
-            ++ch;
-        }
-    }
-
-    return result;
-}
-
 QString Node::comment() const {
     return {};
 }

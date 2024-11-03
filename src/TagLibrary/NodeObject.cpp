@@ -18,6 +18,7 @@
 
 #include "Logging.hpp"
 
+#include "../TagProcessor.hpp"
 #include "../Utility.hpp"
 
 namespace TagLibrary {
@@ -142,10 +143,7 @@ QStringList NodeObject::resolveChildTag(QString const &tag) const {
         result.push_back(tag);
     else
         for (auto const &ownTag: tags_) {
-            if (tagHasPlaceholder(tag))
-                result.push_back(tagReplacePlaceholder(tag, ownTag));
-            else
-                result.push_back(tag);
+            result.push_back(TagProcessor::resolveChildTag(ownTag, tag));
         }
 
     QStringList result2;

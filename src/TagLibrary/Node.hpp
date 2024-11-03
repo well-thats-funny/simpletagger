@@ -94,10 +94,6 @@ public:
     [[nodiscard]] virtual std::expected<void, QString> setTags(QStringList const &tags);
     [[nodiscard]] virtual QStringList resolveChildTag(QString const &tag) const;
 
-protected:
-    static bool tagHasPlaceholder(QString const &tag);
-    static QString tagReplacePlaceholder(QString const &tag, QString const &replacement);
-
 public:
     [[nodiscard]] virtual QString comment() const;
     [[nodiscard]] virtual bool canSetComment() const;
