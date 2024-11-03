@@ -36,12 +36,6 @@ int main(int argc, char * argv[]) {
         QCoreApplication::installTranslator(&translator);
     }
 
-    QDirIterator it(":", QDirIterator::Subdirectories);
-    while (it.hasNext()) {
-        qDebug() << "Embedded file:" << it.next();
-    }
-
-
     std::unique_ptr<MainWindow> mainWindow;
     if (auto result = MainWindow::create(settings, translator); !result) {
         QMessageBox::critical(

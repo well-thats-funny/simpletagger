@@ -18,8 +18,7 @@
 
 class Ui_FileBrowser;
 
-class FileTags;
-class DirectoryTagsStats;
+class FileTagsManager;
 
 namespace FileBrowser {
 class ProjectDirectoryListModel;
@@ -34,13 +33,10 @@ class FileBrowser: public QDockWidget {
     FileBrowser& operator=(FileBrowser const &other) = delete;
     FileBrowser& operator=(FileBrowser &&other) = delete;
 
-    using FileTagsProvider = std::function<FileTags const &(QString const &)>;
-    using DirectoryStatsProvider = std::function<DirectoryTagsStats(QString const &)>;
     using IsFileExcluded = std::function<bool(QString const &)>;
 
     FileBrowser(
-            FileTagsProvider const &fileTagsProvider,
-            DirectoryStatsProvider const &directoryStatsProvider,
+            FileTagsManager &fileTagsManager,
             IsFileExcluded const &isFileExcluded,
             Qt::WindowFlags flags = Qt::WindowFlags()
     );
@@ -49,8 +45,7 @@ class FileBrowser: public QDockWidget {
 public:
     static std::expected<std::unique_ptr<FileBrowser>, QString>
     create(
-            FileTagsProvider const &fileTagsProvider,
-            DirectoryStatsProvider const &directoryStatsProvider,
+            FileTagsManager &fileTagsManager,
             IsFileExcluded const &isFileExcluded,
             Qt::WindowFlags flags = Qt::WindowFlags()
     );
@@ -75,6 +70,7 @@ signals:
     void fileSelected(QString const &path);
     void requestTagsCopy(QString const &sourceFile, QString const &targetFile);
     void requestExcludeFileToggle(QString const &path);
+    void refresh();
 
 private:
     void openDirectory(QString const &directory);
@@ -85,6 +81,7 @@ private:
     bool isFileExcludedAbsPath(QString const &file);
 
     std::unique_ptr<Ui_FileBrowser> ui;
+    FileTagsManager &fileTagsManager_;
     IsFileExcluded isFileExcluded_;
 
     std::unique_ptr<ProjectDirectoryListModel> projectDirectoryListModel;

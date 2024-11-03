@@ -62,13 +62,11 @@ public:
 
 DirectoryTreeModel::DirectoryTreeModel(
         QStyle *const style,
-        FileTagsProvider const &fileTagsProvider,
-        DirectoryStatsProvider const &directoryStatsProvider,
+        FileTagsManager &fileTagsManager,
         IsFileExcluded const & isFileExcluded
 ):
         style{style},
-        fileTagsProvider_{fileTagsProvider},
-        directoryStatsProvider_{directoryStatsProvider},
+        fileTagsManager_{fileTagsManager},
         isFileExcluded_{isFileExcluded},
         directoryIcon{style->standardPixmap(QStyle::SP_DirIcon)},
         cacheDir{QStandardPaths::standardLocations(QStandardPaths::StandardLocation::CacheLocation).at(0)+"/DirectoryTreeModelCache"} {
@@ -80,6 +78,16 @@ DirectoryTreeModel::DirectoryTreeModel(
     if (!QDir{}.exists(cacheDir))
         if(!QDir{}.mkpath(cacheDir))
             qWarning() << "DirectoryTreeModel: could not create directory: " << cacheDir;
+
+    connect(&fileTagsManager, &FileTagsManager::directoryStatsChanged, this, [this](auto const &path){
+                ZoneScoped;
+                gsl_Expects(QFileInfo(path).isAbsolute());
+                gsl_Expects(QFileInfo(path).isDir());
+                auto idx = index(path);
+                emit dataChanged(idx, idx);
+            },
+            Qt::ConnectionType::QueuedConnection
+    );
 }
 
 DirectoryTreeModel::~DirectoryTreeModel() = default;
@@ -114,22 +122,28 @@ QVariant DirectoryTreeModel::data(const QModelIndex &index, int role) const {
         switch (role) {
             case Qt::ItemDataRole::DisplayRole:
                 if (pathInfo.isDir()) {
-                    auto stats = directoryStatsProvider_(path);
-                    return QString(
-                            "%1\n"
-                            "%2 / %3 files have tags (%4%)\n"
-                            "%5 total tags")
-                        .arg(pathInfo.fileName())
-                        .arg(stats.filesWithTags())
-                        .arg(stats.fileCount())
-                        // I don't know how to format numbers with Qt :<
-                        .arg(QString::fromStdString(std::format(
-                                "{:.2f}",
-                                (static_cast<float>(stats.filesWithTags())/static_cast<float>(stats.fileCount()))*100.f
-                        )))
-                        .arg(stats.totalTags());
+                    if (auto &stats = fileTagsManager_.directoryStats(path); stats.ready()) {
+                        return QString(
+                                "%1\n"
+                                "%2 / %3 files have tags (%4%)\n"
+                                "%5 total tags")
+                                .arg(pathInfo.fileName())
+                                .arg(stats.filesWithTags())
+                                .arg(stats.fileCount())
+                                        // I don't know how to format numbers with Qt :<
+                                .arg(QString::fromStdString(std::format(
+                                        "{:.2f}",
+                                        (static_cast<float>(stats.filesWithTags()) /
+                                         static_cast<float>(stats.fileCount())) * 100.f
+                                )))
+                                .arg(stats.totalTags());
+                    } else {
+                        return QString("%1\n%2")
+                            .arg(pathInfo.fileName())
+                            .arg(tr("(loading statistics...)"));
+                    }
                 } else {
-                    auto &fileTags = fileTagsProvider_(path);
+                    auto &fileTags = fileTagsManager_.forFile(path);
                     QString label = pathInfo.fileName() + "\n";
                     if (auto rect = fileTags.imageRegion()) {
                         int w = rect->right() - rect->left();

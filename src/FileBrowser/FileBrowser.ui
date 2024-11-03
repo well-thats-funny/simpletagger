@@ -182,7 +182,7 @@
     <string>Refresh</string>
    </property>
    <property name="toolTip">
-    <string>Refresh directory tree</string>
+    <string>Refresh complete directory tree</string>
    </property>
    <property name="menuRole">
     <enum>QAction::MenuRole::NoRole</enum>

@@ -222,12 +222,7 @@ std::expected<void, QString> MainWindow::setupFileBrowserDock() {
     ZoneScoped;
 
     if (auto result = FileBrowser::FileBrowser::create(
-                [this](QString const &fileName)->FileTags const &{
-                    return fileTagsManager.forFile(fileName);
-                },
-                [this](QString const &directoryPath){
-                    return fileTagsManager.directoryStats(directoryPath);
-                },
+                fileTagsManager,
                 [this](QString const &fileName)->bool{
                     ZoneScoped;
                     gsl_Expects(project);
@@ -333,6 +328,10 @@ std::expected<void, QString> MainWindow::setupFileBrowserDock() {
             );
 
         fileBrowser->refreshExcludedState(path);
+    });
+
+    connect(&*fileBrowser, &FileBrowser::FileBrowser::refresh, this, [this]{
+        fileTagsManager.invalidateDirectoryStatsCache();
     });
 
     return {};

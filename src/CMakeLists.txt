@@ -176,6 +176,8 @@ target_precompile_headers(simpletagger-cxx PRIVATE
         <QMessageBox>
         <QMetaEnum>
         <QMimeData>
+        <QMutex>
+        <QMutexLocker>
         <QPushButton>
         <QSaveFile>
         <QScrollBar>
@@ -188,6 +190,7 @@ target_precompile_headers(simpletagger-cxx PRIVATE
         <QStyle>
         <QStyledItemDelegate>
         <QString>
+        <QThreadPool>
         <QTimer>
         <QToolButton>
         <QToolTip>

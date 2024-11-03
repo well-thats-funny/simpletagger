@@ -52,7 +52,9 @@ private:
     std::optional<QRect> imageRegion_;
 };
 
-class DirectoryTagsStats {
+class DirectoryTagsStats: public QObject {
+    Q_OBJECT
+
     friend class FileTagsManager;
 
     DirectoryTagsStats(FileTagsManager &manager, QString const &path);
@@ -69,18 +71,31 @@ public:
     int filesWithTags() const;
     int totalTags() const;
 
-private:
-    void ensureLoaded() const;
+    bool ready() const;
 
+    void reload();
+
+private:
     FileTagsManager &manager_;
     QString path_;
-    mutable bool loaded_ = false;
-    mutable int fileCount_ = 0;
-    mutable int filesWithTags_ = 0;
-    mutable int totalTags_ = 0;
+
+    mutable QMutex mutex_;
+
+    struct Stats {
+        bool loaded_ = false;
+        int fileCount_ = 0;
+        int filesWithTags_ = 0;
+        int totalTags_ = 0;
+    };
+
+    Stats stats_;
 };
 
-class FileTagsManager {
+class FileTagsManager: public QObject {
+    Q_OBJECT
+
+    friend class DirectoryTagsStats;
+
 public:
     FileTagsManager(FileTagsManager const &other) = delete;
     FileTagsManager(FileTagsManager &&other) = delete;
@@ -93,9 +108,19 @@ public:
     void setBackupOnSave(bool value);
 
     FileTags &forFile(QString const &path);
-    DirectoryTagsStats directoryStats(QString const &path);
+    DirectoryTagsStats &directoryStats(QString const &path);
+    void invalidateDirectoryStatsCache();
+
+signals:
+    void directoryStatsChanged(QString const &path);
 
 private:
     bool backupOnSave_ = false;
-    std::unordered_map<QString, std::unique_ptr<FileTags>> fileTags;
+
+    QMutex fileTagsMutex_;
+    std::unordered_map<QString, std::unique_ptr<FileTags>> fileTags_;
+
+    // TODO: get threadpool as a dependency? We could have a global I/O threadpool
+    QThreadPool directoryStatsThreadPool_;
+    std::unordered_map<QString, std::unique_ptr<DirectoryTagsStats>> directoryStats_;
 };

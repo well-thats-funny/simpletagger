@@ -20,6 +20,8 @@
 #include "DirectoryTreeModel.hpp"
 #include "DirectoryTreeProxyModel.hpp"
 
+#include "../FileTagsManager.hpp"
+
 #include "ui_FileBrowser.h"
 
 namespace {
@@ -28,19 +30,18 @@ const QStringList NAME_FILTERS = {"*.jpg", "*.png"};
 
 namespace FileBrowser {
 FileBrowser::FileBrowser(
-        FileTagsProvider const &fileTagsProvider,
-        DirectoryStatsProvider const &directoryStatsProvider,
+        FileTagsManager &fileTagsManager,
         IsFileExcluded const &isFileExcluded,
         Qt::WindowFlags const flags
 ):
     QDockWidget(nullptr, flags),
     ui(std::make_unique<Ui_FileBrowser>()),
+    fileTagsManager_(fileTagsManager),
     isFileExcluded_(isFileExcluded),
     projectDirectoryListModel(std::make_unique<ProjectDirectoryListModel>()),
     directoryTreeModel(std::make_unique<DirectoryTreeModel>(
             style(),
-            fileTagsProvider,
-            directoryStatsProvider,
+            fileTagsManager,
             [this](auto const &file) { return isFileExcludedAbsPath(file); }
     )),
     directoryTreeProxyModel(std::make_unique<DirectoryTreeProxyModel>(
@@ -94,7 +95,10 @@ std::expected<void, QString> FileBrowser::init() {
 
     connect(&*ui->comboBoxDirectories, &QComboBox::currentIndexChanged, this, [this](int const index){
         ZoneScoped;
-        openDirectory(projectDirectoryListModel->directory(index));
+        if (index != -1)
+            openDirectory(projectDirectoryListModel->directory(index));
+        else
+            closeDirectory();
     });
 
     connect(ui->buttonAddDirectory, &QToolButton::clicked, this, [this]{
@@ -147,9 +151,14 @@ std::expected<void, QString> FileBrowser::init() {
 
         auto actionCopyTagsFrom = menu.addAction(tr("Copy tags from"));
         actionCopyTagsFrom->setEnabled(indexCurrent != indexOver);
-        connect(actionCopyTagsFrom, &QAction::triggered, this, [&](){
+        connect(actionCopyTagsFrom, &QAction::triggered, this, [&]{
             emit requestTagsCopy(fileOver, fileCurrent);
         });
+
+        connect(menu.addAction(tr("Refresh statistics")), &QAction::triggered, this, [&]{
+            fileTagsManager_.directoryStats(fileCurrent).reload();
+        });
+
         menu.exec(ui->treeViewDirectories->mapToGlobal(pos));
     });
 
@@ -160,6 +169,7 @@ std::expected<void, QString> FileBrowser::init() {
     ui->actionShowExcluded->setChecked(false);
 
     connect(ui->actionRefresh, &QAction::triggered, this, [this]{
+        emit refresh();
         emit directoryTreeModel->dataChanged(QModelIndex(), QModelIndex());
     });
 
@@ -185,16 +195,13 @@ std::expected<void, QString> FileBrowser::init() {
 
 std::expected<std::unique_ptr<FileBrowser>, QString>
 FileBrowser::create(
-        FileTagsProvider const &fileTagsProvider,
-        DirectoryStatsProvider const &directoryStatsProvider,
+        FileTagsManager &fileTagsManager,
         IsFileExcluded const &isFileExcluded,
         Qt::WindowFlags flags
 ) {
     ZoneScoped;
 
-    auto self = std::unique_ptr<FileBrowser>(new FileBrowser{
-        fileTagsProvider, directoryStatsProvider, isFileExcluded, flags
-    });
+    auto self = std::unique_ptr<FileBrowser>(new FileBrowser{fileTagsManager, isFileExcluded, flags});
     if (auto result = self->init(); !result)
         return std::unexpected(result.error());
 

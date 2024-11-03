@@ -292,46 +292,61 @@ DirectoryTagsStats::~DirectoryTagsStats() = default;
 
 int DirectoryTagsStats::fileCount() const {
     ZoneScoped;
-    ensureLoaded();
-    return fileCount_;
+    QMutexLocker locker(&mutex_);
+    return stats_.fileCount_;
 }
 
 int DirectoryTagsStats::filesWithTags() const {
     ZoneScoped;
-    ensureLoaded();
-    return filesWithTags_;
+    QMutexLocker locker(&mutex_);
+    return stats_.filesWithTags_;
 }
 
 int DirectoryTagsStats::totalTags() const {
     ZoneScoped;
-    ensureLoaded();
-    return totalTags_;
+    QMutexLocker locker(&mutex_);
+    return stats_.totalTags_;
 }
 
-void DirectoryTagsStats::ensureLoaded() const  {
+bool DirectoryTagsStats::ready() const {
     ZoneScoped;
+    QMutexLocker locker(&mutex_);
+    return stats_.loaded_;
+}
 
-    if (!loaded_) {
-        gsl_Expects(QFileInfo(path_).isDir());
-        gsl_Expects(QFileInfo(path_).isAbsolute());
+void DirectoryTagsStats::reload() {
+    manager_.directoryStatsThreadPool_.start([this](){
+        Stats stats;
+
         QDirIterator iterator(path_, QDirIterator::IteratorFlag::Subdirectories | QDirIterator::IteratorFlag::FollowSymlinks);
         while (iterator.hasNext()) {
             auto info = iterator.nextFileInfo();
             if (!info.isDir() && IMAGE_FILE_SUFFIXES.contains("."+info.suffix())) {
                 auto &tags = manager_.forFile(info.absoluteFilePath());
-                fileCount_ += 1;
+                stats.fileCount_ += 1;
 
                 auto size = tags.assignedTags().size();
                 if (size != 0)
-                    filesWithTags_ += 1;
+                    stats.filesWithTags_ += 1;
 
-                totalTags_ += size;
+                stats.totalTags_ += size;
             }
         };
-    }
+
+        stats.loaded_ = true;
+
+        {
+            QMutexLocker locker(&mutex_);
+            stats_ = stats;
+        }
+
+        emit manager_.directoryStatsChanged(path_);
+    });
 }
 
-FileTagsManager::FileTagsManager(bool const backupOnSave): backupOnSave_(backupOnSave) {}
+FileTagsManager::FileTagsManager(bool const backupOnSave): backupOnSave_(backupOnSave) {
+    directoryStatsThreadPool_.setMaxThreadCount(4); // TODO: configurable?
+}
 
 FileTagsManager::~FileTagsManager() = default;
 
@@ -343,24 +358,40 @@ FileTags &FileTagsManager::forFile(const QString &path) {
     ZoneScoped;
     gsl_Expects(!QFileInfo(path).isDir());
     gsl_Expects(QFileInfo(path).isAbsolute());
+    gsl_Expects(IMAGE_FILE_SUFFIXES.contains("."+QFileInfo(path).suffix()));
 
-    auto it = fileTags.find(path);
-    if (it == fileTags.end()) {
+    QMutexLocker locker(&fileTagsMutex_);
+
+    auto it = fileTags_.find(path);
+    if (it == fileTags_.end()) {
         QFileInfo fileInfo{path};
-
-        gsl_Expects(IMAGE_FILE_SUFFIXES.contains("."+fileInfo.suffix()));
 
         auto tagsFilePath = fileInfo.dir().filePath(fileInfo.fileName() + Constants::TAGS_FILE_SUFFIX.toString());
 
-        std::tie(it, std::ignore) = fileTags.emplace(path, std::make_unique<FileTags>(tagsFilePath, backupOnSave_));
+        std::tie(it, std::ignore) = fileTags_.emplace(path, std::make_unique<FileTags>(tagsFilePath, backupOnSave_));
     }
 
     return *it->second;
 }
 
-DirectoryTagsStats FileTagsManager::directoryStats(QString const &path) {
+DirectoryTagsStats &FileTagsManager::directoryStats(QString const &path) {
     ZoneScoped;
     gsl_Expects(QFileInfo(path).isDir());
     gsl_Expects(QFileInfo(path).isAbsolute());
-    return DirectoryTagsStats(*this, path);
+
+    auto it = directoryStats_.find(path);
+    if (it == directoryStats_.end()) {
+        std::tie(it, std::ignore) = directoryStats_.emplace(path, std::unique_ptr<DirectoryTagsStats>(
+                new DirectoryTagsStats(*this, path)));
+        it->second->reload();
+    }
+
+    return *it->second;
+}
+
+void FileTagsManager::invalidateDirectoryStatsCache() {
+    ZoneScoped;
+
+    for (auto const &stats: directoryStats_)
+        stats.second->reload();
 }
