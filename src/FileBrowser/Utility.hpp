@@ -19,5 +19,5 @@
 class DirectoryTagsStats;
 
 namespace FileBrowser {
-QString formatDirectoryStats(DirectoryTagsStats const &stats);
+QString formatDirectoryStats(DirectoryTagsStats const &stats, QString const &path);
 }

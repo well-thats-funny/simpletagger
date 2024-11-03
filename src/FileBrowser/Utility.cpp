@@ -19,9 +19,9 @@
 #include "../FileTagsManager.hpp"
 
 namespace FileBrowser {
-QString formatDirectoryStats(DirectoryTagsStats const &stats) {
+QString formatDirectoryStats(DirectoryTagsStats const &stats, QString const &path) {
     QStringList lines;
-    lines.push_back(stats.path());
+    lines.push_back(path);
 
     if (!stats.ready()) {
         lines.push_back(QObject::tr("(loading statistics...)"));

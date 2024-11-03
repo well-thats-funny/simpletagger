@@ -357,7 +357,7 @@ void FileBrowser::refreshDirectoryLabel() {
     gsl_Expects(!currentDirectory_.isNull() == static_cast<bool>(currentDirectoryStats_));
 
     if (!currentDirectory_.isNull())
-        ui->labelDirectory->setText(formatDirectoryStats(*currentDirectoryStats_));
+        ui->labelDirectory->setText(formatDirectoryStats(*currentDirectoryStats_, QDir(projectRootPath_).relativeFilePath(currentDirectory_)));
     else
         ui->labelDirectory->clear();
 }

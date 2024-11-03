@@ -124,7 +124,7 @@ QVariant DirectoryTreeModel::data(const QModelIndex &index, int role) const {
             case Qt::ItemDataRole::DisplayRole:
             case Qt::ItemDataRole::ToolTipRole:
                 if (pathInfo.isDir()) {
-                    return formatDirectoryStats(fileTagsManager_.directoryStats(path));
+                    return formatDirectoryStats(fileTagsManager_.directoryStats(path), pathInfo.fileName());
                 } else {
                     auto &fileTags = fileTagsManager_.forFile(path);
                     QString label = pathInfo.fileName() + "\n";
