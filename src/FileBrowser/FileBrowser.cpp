@@ -321,6 +321,7 @@ void FileBrowser::restoreUiState(QByteArray const &value) {
 
 void FileBrowser::openDirectory(QString const &directory) {
     ZoneScoped;
+    gsl_Expects(!directory.isEmpty());
 
     if (directory != currentDirectory_) {
         currentDirectory_ = directory;
@@ -367,6 +368,7 @@ void FileBrowser::closeDirectory() {
     ui->buttonRemoveDirectory->setEnabled(false);
 
     currentDirectory_ = {};
+    currentDirectoryStats_ = nullptr;
 }
 
 void FileBrowser::refreshDirectoryLabel() {
