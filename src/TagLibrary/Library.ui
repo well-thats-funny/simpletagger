@@ -142,7 +142,8 @@
              <property name="styleSheet">
               <string notr="true">background-color: lightPink;
 border: 2px solid red;
-border-radius: 5px;</string>
+border-radius: 5px;
+color: black;</string>
              </property>
              <property name="text">
               <string notr="true">Very long notification placeholder. Very long notification placeholder. Very long notification placeholder. Very long notification placeholder. </string>
