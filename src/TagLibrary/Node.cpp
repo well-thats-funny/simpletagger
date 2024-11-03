@@ -61,7 +61,7 @@ Node::Node(Model &model): model_(model) {
 }
 
 Node::~Node() {
-    assert(deinitialized && "deinit() should be called before destroying a node");
+    assert(deinitialized_ && "deinit() should be called before destroying a node");
 }
 
 std::expected<void, QString> Node::init() {
@@ -70,9 +70,9 @@ std::expected<void, QString> Node::init() {
 
 void Node::deinit() {
     ZoneScoped;
-    assert(!deinitialized);
+    assert(!deinitialized_);
     emit aboutToRemove();
-    deinitialized = true;
+    deinitialized_ = true;
 }
 
 bool Node::canRemove() const {
@@ -391,5 +391,9 @@ QString Node::path(PathFlags flags) const {
         result += QString("[%1]").arg(uuid().toString(QUuid::WithoutBraces));
 
     return result;
+}
+
+bool Node::deinitialized() const {
+    return deinitialized_;
 }
 }

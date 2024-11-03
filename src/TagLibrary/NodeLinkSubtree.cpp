@@ -44,7 +44,7 @@ std::expected<void, QString> NodeLinkSubtree::init() {
         // NOTE: in contrast to other signals, which forward do subtreeRootOwner (if set), this signal does not.
         //       the reason is, in contrast to other operations, removal of the link's target shouldn't lead to
         //       the removal of the link itself
-        emit aboutToRemove();
+        emit targetAboutToRemove();
     });
 
     connect(&target_, &Node::insertChildrenEnd, this, [this](int const first, int const last){

@@ -21,6 +21,8 @@ namespace TagLibrary {
 class Model;
 
 class NodeLinkSubtree: public Node {
+    Q_OBJECT
+
 public:
     NodeLinkSubtree(Model &model, Node const *parent, Node const &target, Node *subtreeRootOwner);
     ~NodeLinkSubtree();
@@ -61,6 +63,9 @@ public:
     [[nodiscard]] bool isVirtual() const override;
 
     [[nodiscard]] std::vector<QBrush> background(bool editMode) const override;
+
+signals:
+    void targetAboutToRemove();
 
 private:
     [[nodiscard]] std::expected<std::unique_ptr<NodeLinkSubtree>, QString> createChild(int row);

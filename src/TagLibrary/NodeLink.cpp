@@ -35,7 +35,7 @@ void NodeLink::deinit() {
     // this signal leads to premature destruction of linkSubtreeRoot_
     disconnect(subtreeRootAboutToRemoveConnection);
 
-    if (linkSubtreeRoot_)
+    if (linkSubtreeRoot_ && !linkSubtreeRoot_->deinitialized())
         linkSubtreeRoot_->deinit();
 }
 
@@ -139,13 +139,17 @@ std::expected<void, QString> NodeLink::setLinkTo(QUuid const &uuid) {
         if (!target)
             return std::unexpected(target.error());
 
-        root = std::make_unique<NodeLinkSubtree>(const_cast<Model &>(model()), this, *target, this);
+        root = std::make_unique<NodeLinkSubtree>(const_cast<Model &>(model()), this, target->get(), this);
         if (auto result = root->init(); !result)
             return std::unexpected(result.error());
 
+        newSubtreeRootAboutToRemoveConnection = connect(&*root, &NodeLinkSubtree::targetAboutToRemove, this, [this, uuid]mutable{
+            if (!linkSubtreeRoot_->deinitialized())
+                linkSubtreeRoot_->deinit();
+            linkSubtreeRoot_.reset();
+        });
+
         newSubtreeRootAboutToRemoveConnection = connect(&*root, &NodeLinkSubtree::aboutToRemove, this, [this, uuid]mutable{
-            if (auto result = setLinkTo(QUuid()); !result)
-                qCCritical(LoggingCategory) << "Could not reset link (" << this->uuid() << ") on link target removal (" << uuid << "):" << result.error();
         });
     } else {
         qCDebug(LoggingCategory) << "Setting link" << path(PathFlag::IncludeEverything) << "to zero-uuid";

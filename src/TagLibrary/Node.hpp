@@ -129,6 +129,8 @@ public:
     Q_DECLARE_FLAGS(PathFlags, PathFlag);
     [[nodiscard]] QString path(PathFlags flags = PathFlag::IncludeNames) const;
 
+    bool deinitialized() const;
+
 signals:
     void aboutToRemove();
     void persistentDataChanged();
@@ -141,7 +143,7 @@ signals:
 
 private:
     Model &model_;
-    bool deinitialized = false;
+    bool deinitialized_ = false;
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(Node::TagFlags);
