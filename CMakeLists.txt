@@ -33,7 +33,8 @@ FetchContent_Declare(GSL
         GIT_PROGRESS TRUE
 )
 
-set(TRACY_NO_CALLSTACK FALSE CACHE BOOL "" FORCE)
+set(TRACY_ENABLE OFF CACHE BOOL "")
+set(TRACY_NO_CALLSTACK OFF CACHE BOOL "")
 FetchContent_Declare(tracy
         GIT_REPOSITORY "https://github.com/wolfpld/tracy.git"
         GIT_TAG v0.11.1
