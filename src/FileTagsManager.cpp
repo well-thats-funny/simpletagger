@@ -232,6 +232,8 @@ void FileTags::load() {
                 imageRegion_ = QRect(left, top, right - left + 1, bottom - top + 1);
             }
         }
+
+        qDebug() << "Loading tags from" << tagsFilePath_<< ": done";
     }
 }
 
