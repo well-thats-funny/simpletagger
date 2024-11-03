@@ -147,7 +147,7 @@ https://github.com/well-thats-funny/simpletagger
 
 Copyright (C) 2024 [fdresufdresu@gmail.com](mailto:fdresufdresu@gmail.com)
 
-This program comes with ABSOLUTELY NO WARRANTY. This is free software, and you are welcome to redistribute it under license onditions.
+This program comes with ABSOLUTELY NO WARRANTY. This is free software, and you are welcome to redistribute it under license conditions.
 
 Licensed under: GNU General Public License v3.0 or later
 
