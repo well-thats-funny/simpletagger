@@ -58,6 +58,7 @@ private:
         std::vector<std::reference_wrapper<DirectoryStats>> childrenStats_;
 
         bool loaded_ = false;
+        bool isExcluded_ = false;
         int fileCount_ = 0;
         int filesExcluded_ = 0;
         int filesFlaggedComplete_ = 0;

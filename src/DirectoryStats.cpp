@@ -49,10 +49,16 @@ int DirectoryStats::fileCount() const {
 int DirectoryStats::filesExcluded() const {
     ZoneScoped;
     QMutexLocker locker(&mutex_);
-    return stats_.filesExcluded_ + std::ranges::fold_left_first(
-            stats_.childrenStats_ | std::views::transform([](auto const &v){ return v.get().filesExcluded(); }),
-            std::plus<int>()
-    ).value_or(0);
+
+    if (stats_.isExcluded_)
+        return stats_.fileCount_;
+    else
+        return stats_.filesExcluded_ + std::ranges::fold_left_first(
+                stats_.childrenStats_ | std::views::transform([](auto const &v){
+                    return v.get().filesExcluded();
+                }),
+                std::plus<int>()
+        ).value_or(0);
 }
 
 int DirectoryStats::filesFlaggedComplete() const {
@@ -110,6 +116,7 @@ bool DirectoryStats::ready() const {
 
 void DirectoryStats::reload() {
     gsl_Expects(manager_.project_);
+    gsl_Expects(QFileInfo(path_).isAbsolute());
 
     {
         QMutexLocker locker(&mutex_);
@@ -122,6 +129,8 @@ void DirectoryStats::reload() {
         //qDebug() << "Loading directory stats for" << path_;
 
         Stats stats;
+
+        stats.isExcluded_ = manager_.project_->isExcludedFile(QDir(manager_.project_->rootDir()).relativeFilePath(path_));
 
         QDirIterator iterator(path_, QDir::Filter::AllEntries | QDir::Filter::NoDotAndDotDot);
         while (iterator.hasNext()) {
