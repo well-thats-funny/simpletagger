@@ -119,6 +119,8 @@ add_executable(simpletagger-cxx
         TagProcessor.hpp
         FileBrowser/Utility.hpp
         FileBrowser/Utility.cpp
+        VerticalLine.cpp
+        VerticalLine.hpp
 )
 target_compile_options(simpletagger-cxx PRIVATE -Wall -Wextra -Werror)
 

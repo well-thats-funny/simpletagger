@@ -86,7 +86,7 @@ private:
     void showSavedStatusMessage(QString const &dataType, std::optional<int> const &backupsCounter);
 
     std::unique_ptr<Ui_MainWindow> ui;
-    QTimer memoryUsageTimer;
+    QTimer statsTimer;
 
     Settings &settings;
     QTranslator &translator;
@@ -116,5 +116,6 @@ private:
     bool blockTagLibrarySetTagActive_ = false;
 
     QLabel *statusBarMemory = nullptr;
+    QLabel *statusCache = nullptr;
     QMetaObject::Connection connectionSaveTagLibraryOnChange;
 };

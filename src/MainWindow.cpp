@@ -27,6 +27,7 @@
 #include "Tags/Tags.hpp"
 #include "TagLibrary/Library.hpp"
 #include "Utility.hpp"
+#include "VerticalLine.hpp"
 
 #include "ui_MainWindow.h"
 
@@ -159,18 +160,26 @@ std::expected<void, QString> MainWindow::setupGeneralActions() {
 std::expected<void, QString> MainWindow::setupStatusBar() {
     ZoneScoped;
 
+    statusBar()->addPermanentWidget(statusCache = new QLabel);
+    statusBar()->addPermanentWidget(new VerticalLine);
     statusBar()->addPermanentWidget(statusBarMemory = new QLabel);
-    connect(&memoryUsageTimer, &QTimer::timeout, this, [this]{
+
+    connect(&statsTimer, &QTimer::timeout, this, [this]{
         ZoneScoped;
 
         if (auto size = fetchMemoryUsage())
             statusBarMemory->setText(tr("Memory usage (resident): %1").arg(locale().formattedDataSize(size->resident)));
         else
             statusBarMemory->setText(tr("Could not get memory usage"));
+
+        statusCache->setText(tr("Cached %1 directories, %2 files")
+                .arg(fileTagsManager.cachedDirectories())
+                .arg(fileTagsManager.cachedFiles())
+        );
     });
 
-    memoryUsageTimer.setInterval(1000);
-    memoryUsageTimer.start();
+    statsTimer.setInterval(1000);
+    statsTimer.start();
 
     return {};
 }

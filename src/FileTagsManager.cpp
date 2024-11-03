@@ -441,3 +441,11 @@ void FileTagsManager::invalidateDirectoryStatsCache() {
     for (auto const &stats: directoryStats_)
         stats.second->reload();
 }
+
+int FileTagsManager::cachedFiles() const {
+    return fileTags_.size();
+}
+
+int FileTagsManager::cachedDirectories() const {
+    return directoryStats_.size();
+}

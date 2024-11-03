@@ -116,6 +116,9 @@ public:
     DirectoryTagsStats &directoryStats(QString const &path);
     void invalidateDirectoryStatsCache();
 
+    int cachedFiles() const;
+    int cachedDirectories() const;
+
 signals:
     void tagsSaved(std::optional<int> const &backupCount);
     void directoryStatsChanged(QString const &path);
