@@ -52,6 +52,7 @@ std::expected<void, QString> Project::create(const QString &path) {
     map[std::to_underlying(Keys::FORMAT_VERSION)] = valueVersion;
     map[std::to_underlying(Keys::APP)] = valueApp.toString();
     map[std::to_underlying(Keys::DIRECTORIES)] = QCborArray();
+    map[std::to_underlying(Keys::EXCLUDED_FILES)] = QCborArray();
 
     file.write(map.toCborValue().toCbor());
 
