@@ -178,10 +178,8 @@ bool DirectoryTreeModel::event(QEvent *event) {
 
     auto result = QFileSystemModel::event(event);
 
-    if (auto ms = timer.elapsed(); ms > 100) {
-        qWarning() << "DirectoryTreeModel event took" << ms << "ms (event:" << event << ")";
-        //QFileSystemModel::event(event); // TODO: rm
-    }
+    if (auto ms = timer.elapsed(); ms > 100)
+        qWarning() << "DirectoryTreeModel event" << event << "took" << ms << "ms (event:" << event << ")";
 
     return result;
 }
