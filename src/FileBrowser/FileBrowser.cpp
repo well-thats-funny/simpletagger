@@ -152,11 +152,16 @@ std::expected<void, QString> FileBrowser::init() {
         auto actionCopyTagsFrom = menu.addAction(tr("Copy tags from"));
         actionCopyTagsFrom->setEnabled(indexCurrent != indexOver);
         connect(actionCopyTagsFrom, &QAction::triggered, this, [&]{
+            ZoneScoped;
             emit requestTagsCopy(fileOver, fileCurrent);
         });
 
-        connect(menu.addAction(tr("Refresh statistics")), &QAction::triggered, this, [&]{
-            fileTagsManager_.directoryStats(fileCurrent).reload();
+        auto refreshStatisticsAction = menu.addAction(tr("Refresh statistics"));
+        refreshStatisticsAction->setEnabled(QFileInfo(fileOver).isDir());
+        connect(refreshStatisticsAction, &QAction::triggered, this, [&]{
+            ZoneScoped;
+            gsl_Expects(QFileInfo(fileOver).isDir());
+            fileTagsManager_.directoryStats(fileOver).reload();
         });
 
         menu.exec(ui->treeViewDirectories->mapToGlobal(pos));
