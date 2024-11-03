@@ -176,6 +176,9 @@ QVariant DirectoryTreeModel::data(const QModelIndex &index, int role) const {
                             brushes.emplace_back(QColor(0, 255, 0, 64), Qt::BrushStyle::SolidPattern);
                         else if (stats.filesWithTags() != 0)
                             brushes.emplace_back(QColor(255, 255, 0, 64), Qt::BrushStyle::SolidPattern);
+
+                        if (stats.filesFlaggedComplete() != stats.filesWithTags())
+                            brushes.emplace_back(QColor(255, 0, 0, 64), Qt::BrushStyle::FDiagPattern);
                     } else {
                         brushes.emplace_back(Qt::GlobalColor::cyan, Qt::BrushStyle::FDiagPattern);
                     }
