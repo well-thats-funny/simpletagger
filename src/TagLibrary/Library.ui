@@ -179,6 +179,9 @@ border-radius: 5px;</string>
           <property name="defaultDropAction">
            <enum>Qt::DropAction::MoveAction</enum>
           </property>
+          <property name="indentation">
+           <number>10</number>
+          </property>
           <property name="rootIsDecorated">
            <bool>true</bool>
           </property>
