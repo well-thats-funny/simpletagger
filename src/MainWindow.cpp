@@ -54,6 +54,10 @@ std::expected<void, QString> MainWindow::init() {
 
     fileEditor_.emplace(fileTagsManager);
 
+    connect(&*fileEditor_, &FileEditor::projectSaved, this, [this](auto const &backupCount){
+        showSavedStatusMessage(tr("project"), backupCount);
+    });
+
     if (auto result = setupGeneralActions(); !result)
         return std::unexpected(result.error());
 
@@ -321,15 +325,6 @@ std::expected<void, QString> MainWindow::setupFileBrowserDock() {
         }
     });
 
-    connect(&*fileBrowser, &FileBrowser::FileBrowser::requestExcludeFileToggle, this, [this](QString const &path) {
-        ZoneScoped;
-        gsl_Expects(QFileInfo(path).isRelative());
-        auto excluded = !project->isExcludedFile(path);
-        project->setExcludedFile(path, excluded);
-        saveProject();
-        fileBrowser->refreshExcludedState(path);
-    });
-
     connect(&*fileBrowser, &FileBrowser::FileBrowser::refresh, this, [this]{
         fileTagsManager.invalidateDirectoryStatsCache();
     });
@@ -545,6 +540,7 @@ void MainWindow::readSettings() {
 
     setStyleSheet(QString("Font: %1pt").arg(this->settings.interface.fontSize));
 
+    fileEditor_->setBackupOnEveryChange(this->settings.system.backupOnAnyChange);
     fileTagsManager.setBackupOnSave(this->settings.system.backupOnAnyChange);
 
     QFont font;
@@ -595,6 +591,11 @@ std::expected<void, QString> MainWindow::loadProject(QString const &filePath) {
 
     QSettings settings;
     settings.setValue(SettingsKey::LAST_PROJECT_LOCATION, QFileInfo{filePath}.dir().path());
+
+    if (project)
+        fileEditor_->setProject(*project);
+    else
+        fileEditor_->resetProject();
 
     bool enabled = project.has_value();
     ui->widgetCentral->setEnabled(enabled);

@@ -16,7 +16,9 @@
 */
 #pragma once
 
-#include "FileTagsManager.hpp"
+class FileTags;
+class FileTagsManager;
+class Project;
 
 class FileEditor: public QObject {
     Q_OBJECT
@@ -29,6 +31,12 @@ public:
 
     explicit FileEditor(FileTagsManager &fileTagsManager);
     ~FileEditor();
+
+    void setBackupOnEveryChange(bool enable);
+    bool isBackupOnEveryChange() const;
+
+    void setProject(Project &project);
+    void resetProject();
 
     void setFile(QString const &file);
     void resetFile();
@@ -47,11 +55,22 @@ public:
     void setCompleteFlag(bool complete);
     [[nodiscard]] bool isCompleteFlag() const;
 
+    [[nodiscard]] std::expected<void, QString> setFileExcluded(bool excluded);
+    [[nodiscard]] bool isFileExcluded() const;
+
 signals:
+    void projectSaved(std::optional<int> backupCount);
+
     void tagsChanged();
     void imageRegionChanged();
 
 private:
+    Project *project_ = nullptr;
+
+    QString currentFile_;
+
     FileTagsManager &fileTagsManager;
     std::optional<std::reference_wrapper<FileTags>> fileTags;
+
+    bool backupOnEveryChange_ = false;
 };

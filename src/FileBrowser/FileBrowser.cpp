@@ -195,11 +195,16 @@ std::expected<void, QString> FileBrowser::init() {
 
     connect(ui->actionExclude, &QAction::triggered, this, [this]{
         ZoneScoped;
-        auto indexCurrent = ui->treeViewDirectories->currentIndex();
-        auto sourceIndexCurrent = directoryTreeProxyModel->mapToSource(indexCurrent);
-        auto fileCurrent = QDir(projectRootPath_).relativeFilePath(directoryTreeModel->filePath(sourceIndexCurrent));
-        emit requestExcludeFileToggle(fileCurrent);
-        ui->actionExclude->setChecked(isFileExcluded_(fileCurrent));
+        if (auto result = fileEditor_.setFileExcluded(ui->actionExclude->isChecked()); !result) {
+            QMessageBox::critical(this, tr("Could not set exclusion"), result.error());
+        } else {
+            ui->actionExclude->setChecked(fileEditor_.isFileExcluded());
+
+            auto indexCurrent = ui->treeViewDirectories->currentIndex();
+            auto sourceIndexCurrent = directoryTreeProxyModel->mapToSource(indexCurrent);
+            auto currentAbsolutePath = directoryTreeModel->filePath(sourceIndexCurrent);
+            directoryTreeModel->refreshExcludedState(currentAbsolutePath);
+        }
     });
 
     connect(ui->actionShowExcluded, &QAction::triggered, this, [this]{
@@ -307,13 +312,6 @@ void FileBrowser::restoreUiState(QByteArray const &value) {
     byteArray.clear();
 }
 
-void FileBrowser::refreshExcludedState(QString const &file) {
-    ZoneScoped;
-    gsl_Expects(QFileInfo(file).isRelative());
-    directoryTreeModel->refreshExcludedState(QFileInfo(QDir(projectRootPath_), file).filePath());
-    ui->actionExclude->setChecked(isFileExcluded_(file));
-}
-
 void FileBrowser::openDirectory(QString const &directory) {
     ZoneScoped;
 
@@ -390,8 +388,7 @@ void FileBrowser::fileSelectedHandle(QString const &path) {
         if (!isDir)
             ui->actionMarkComplete->setChecked(fileEditor_.isCompleteFlag());
 
-        auto relativeFilePath = QDir(projectRootPath_).relativeFilePath(path);
-        ui->actionExclude->setChecked(isFileExcluded_(relativeFilePath));
+        ui->actionExclude->setChecked(fileEditor_.isFileExcluded());
     }
 }
 

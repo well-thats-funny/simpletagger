@@ -17,27 +17,61 @@
 #include "FileEditor.hpp"
 
 #include "Constants.hpp"
+#include "FileTagsManager.hpp"
+#include "Project.hpp"
 
 FileEditor::FileEditor(FileTagsManager &fileTagsManager): fileTagsManager(fileTagsManager) {}
 
 FileEditor::~FileEditor() = default;
 
-void FileEditor::setFile(QString const &file) {
+void FileEditor::setBackupOnEveryChange(bool const enable) {
+    backupOnEveryChange_ = enable;
+}
+
+bool FileEditor::isBackupOnEveryChange() const {
+    return backupOnEveryChange_;
+}
+
+void FileEditor::setProject(Project &project) {
     ZoneScoped;
 
-    if (!file.isNull())
+    if (&project != project_) {
+        resetProject();
+
+        project_ = &project;
+    }
+}
+
+void FileEditor::resetProject() {
+    ZoneScoped;
+
+    if (project_) {
+        project_ = nullptr;
+    }
+}
+
+void FileEditor::setFile(QString const &file) {
+    ZoneScoped;
+    gsl_Expects(!file.isEmpty());
+
+    if (file != currentFile_) {
+        currentFile_ = file;
         fileTags = std::ref(fileTagsManager.forFile(file));
 
-    emit tagsChanged();
-    emit imageRegionChanged();
+        emit tagsChanged();
+        emit imageRegionChanged();
+    }
 }
 
 void FileEditor::resetFile() {
     ZoneScoped;
+    gsl_Expects(!currentFile_.isEmpty() == static_cast<bool>(fileTags));
 
-    fileTags.reset();
-    emit tagsChanged();
-    emit imageRegionChanged();
+    if (!currentFile_.isEmpty()) {
+        fileTags.reset();
+        emit tagsChanged();
+        emit imageRegionChanged();
+    }
 }
 
 std::optional<bool> FileEditor::isTagged(QString const &tag) const {
@@ -100,4 +134,29 @@ bool FileEditor::isCompleteFlag() const {
     ZoneScoped;
     gsl_Expects(fileTags);
     return fileTags->get().isCompleteFlag();
+}
+
+std::expected<void, QString> FileEditor::setFileExcluded(bool const excluded) {
+    ZoneScoped;
+    gsl_Expects(project_);
+    gsl_Expects(QFileInfo(currentFile_).isAbsolute());
+
+    auto relative = QDir(project_->rootDir()).relativeFilePath(currentFile_);
+    project_->setExcludedFile(relative, excluded);
+    if (auto result = project_->save(backupOnEveryChange_); !result) {
+        return std::unexpected(result.error());
+    } else {
+        emit projectSaved(*result);
+        return {};
+    }
+
+}
+
+bool FileEditor::isFileExcluded() const {
+    ZoneScoped;
+    gsl_Expects(project_);
+    gsl_Expects(QFileInfo(currentFile_).isAbsolute());
+
+    auto relative = QDir(project_->rootDir()).relativeFilePath(currentFile_);
+    return project_->isExcludedFile(relative);
 }

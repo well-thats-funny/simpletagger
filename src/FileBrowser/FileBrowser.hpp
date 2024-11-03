@@ -65,15 +65,12 @@ public:
     [[nodiscard]] QByteArray saveUiState() const;
     void restoreUiState(QByteArray const &value);
 
-    void refreshExcludedState(QString const &file);
-
 signals:
     void directoryAdded(QString const &directory);
     void directoryRemoved(QString const &directory);
     void directoryLoaded(QString const &directory);
     void fileSelected(QString const &path);
     void requestTagsCopy(QString const &sourceFile, QString const &targetFile);
-    void requestExcludeFileToggle(QString const &path);
     void refresh();
 
 private:
