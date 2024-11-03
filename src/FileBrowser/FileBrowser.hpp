@@ -19,6 +19,7 @@
 class Ui_FileBrowser;
 
 class DirectoryTagsStats;
+class FileEditor;
 class FileTagsManager;
 
 namespace FileBrowser {
@@ -38,6 +39,7 @@ class FileBrowser: public QDockWidget {
 
     FileBrowser(
             FileTagsManager &fileTagsManager,
+            FileEditor &fileEditor,
             IsFileExcluded const &isFileExcluded,
             Qt::WindowFlags flags = Qt::WindowFlags()
     );
@@ -47,6 +49,7 @@ public:
     static std::expected<std::unique_ptr<FileBrowser>, QString>
     create(
             FileTagsManager &fileTagsManager,
+            FileEditor &fileEditor,
             IsFileExcluded const &isFileExcluded,
             Qt::WindowFlags flags = Qt::WindowFlags()
     );
@@ -84,6 +87,7 @@ private:
 
     std::unique_ptr<Ui_FileBrowser> ui;
     FileTagsManager &fileTagsManager_;
+    FileEditor &fileEditor_;
     IsFileExcluded isFileExcluded_;
 
     std::unique_ptr<ProjectDirectoryListModel> projectDirectoryListModel;

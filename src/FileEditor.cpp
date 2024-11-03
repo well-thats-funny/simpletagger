@@ -89,3 +89,15 @@ std::optional<QRect> FileEditor::imageRegion() const {
 
     return fileTags.and_then([&](auto const &v){ return v.get().imageRegion(); });
 }
+
+void FileEditor::setCompleteFlag(bool const complete) {
+    ZoneScoped;
+    gsl_Expects(fileTags);
+    fileTags->get().setCompleteFlag(complete);
+}
+
+bool FileEditor::isCompleteFlag() const {
+    ZoneScoped;
+    gsl_Expects(fileTags);
+    return fileTags->get().isCompleteFlag();
+}

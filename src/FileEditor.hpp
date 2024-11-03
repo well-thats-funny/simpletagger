@@ -44,6 +44,9 @@ public:
     void setImageRegion(std::optional<QRect> const &rect);
     [[nodiscard]] std::optional<QRect> imageRegion() const;
 
+    void setCompleteFlag(bool complete);
+    [[nodiscard]] bool isCompleteFlag() const;
+
 signals:
     void tagsChanged();
     void imageRegionChanged();

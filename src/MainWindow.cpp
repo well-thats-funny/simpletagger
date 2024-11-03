@@ -235,6 +235,7 @@ std::expected<void, QString> MainWindow::setupFileBrowserDock() {
 
     if (auto result = FileBrowser::FileBrowser::create(
                 fileTagsManager,
+                *fileEditor_,
                 [this](QString const &fileName)->bool{
                     ZoneScoped;
                     gsl_Expects(project);

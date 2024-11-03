@@ -22,6 +22,7 @@
 #include "Utility.hpp"
 
 #include "../FileTagsManager.hpp"
+#include "../FileEditor.hpp"
 
 #include "ui_FileBrowser.h"
 
@@ -32,12 +33,14 @@ const QStringList NAME_FILTERS = {"*.jpg", "*.png"};
 namespace FileBrowser {
 FileBrowser::FileBrowser(
         FileTagsManager &fileTagsManager,
+        FileEditor &fileEditor,
         IsFileExcluded const &isFileExcluded,
         Qt::WindowFlags const flags
 ):
     QDockWidget(nullptr, flags),
     ui(std::make_unique<Ui_FileBrowser>()),
     fileTagsManager_(fileTagsManager),
+    fileEditor_(fileEditor),
     isFileExcluded_(isFileExcluded),
     projectDirectoryListModel(std::make_unique<ProjectDirectoryListModel>()),
     directoryTreeModel(std::make_unique<DirectoryTreeModel>(
@@ -187,10 +190,7 @@ std::expected<void, QString> FileBrowser::init() {
     });
 
     connect(ui->actionMarkComplete, &QAction::triggered, this, [this]{
-        auto indexCurrent = ui->treeViewDirectories->currentIndex();
-        auto sourceIndexCurrent = directoryTreeProxyModel->mapToSource(indexCurrent);
-        auto fileCurrent = directoryTreeModel->filePath(sourceIndexCurrent);
-        fileTagsManager_.forFile(fileCurrent).setCompleteFlag(ui->actionMarkComplete->isChecked());
+        fileEditor_.setCompleteFlag(ui->actionMarkComplete->isChecked());
     });
 
     connect(ui->actionExclude, &QAction::triggered, this, [this]{
@@ -215,12 +215,13 @@ std::expected<void, QString> FileBrowser::init() {
 std::expected<std::unique_ptr<FileBrowser>, QString>
 FileBrowser::create(
         FileTagsManager &fileTagsManager,
+        FileEditor &fileEditor,
         IsFileExcluded const &isFileExcluded,
         Qt::WindowFlags flags
 ) {
     ZoneScoped;
 
-    auto self = std::unique_ptr<FileBrowser>(new FileBrowser{fileTagsManager, isFileExcluded, flags});
+    auto self = std::unique_ptr<FileBrowser>(new FileBrowser{fileTagsManager, fileEditor, isFileExcluded, flags});
     if (auto result = self->init(); !result)
         return std::unexpected(result.error());
 
@@ -387,7 +388,7 @@ void FileBrowser::fileSelectedHandle(QString const &path) {
 
     if (valid) {
         if (!isDir)
-            ui->actionMarkComplete->setChecked(fileTagsManager_.forFile(path).isCompleteFlag());
+            ui->actionMarkComplete->setChecked(fileEditor_.isCompleteFlag());
 
         auto relativeFilePath = QDir(projectRootPath_).relativeFilePath(path);
         ui->actionExclude->setChecked(isFileExcluded_(relativeFilePath));
@@ -398,6 +399,24 @@ bool FileBrowser::isFileExcludedAbsPath(QString const &file) {
     ZoneScoped;
     gsl_Expects(QFileInfo(file).isAbsolute());
     gsl_Expects(!projectRootPath_.isEmpty());
-    return isFileExcluded_(QDir(projectRootPath_).relativeFilePath(file));
+    gsl_Expects(QFileInfo(projectRootPath_).isAbsolute());
+    gsl_Expects(QFileInfo(currentDirectory_).isRelative());
+
+    if (QFileInfo(file).isRoot())
+        return false;
+
+    auto currentDirectoryAbs = QDir(projectRootPath_).filePath(currentDirectory_);
+    gsl_Expects(QFileInfo(currentDirectoryAbs).isAbsolute());
+
+    auto parent = currentDirectoryAbs;
+    while(!QFileInfo(parent).isRoot()) {
+        if (file == parent)
+            return false;
+
+        parent = QFileInfo(parent).path();
+    }
+
+    auto relativePath = QDir(projectRootPath_).relativeFilePath(file);
+    return isFileExcluded_(relativePath);
 }
 }
