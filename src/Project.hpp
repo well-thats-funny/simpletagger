@@ -22,13 +22,18 @@ public:
     [[nodiscard]] std::expected<std::optional<int>, QString> save(bool backup);
     [[nodiscard]] static std::expected<Project, QString> open(QString const &path);
 
-    bool isExcludedFile(QString const &fileName);
+    [[nodiscard]] bool isExcludedFile(QString const &fileName);
     void setExcludedFile(QString const &fileName, bool excluded);
 
-    // TODO: these should be private as well
-    QString path;
-    QStringList directories;
+    [[nodiscard]] QString const &path() const;
+    [[nodiscard]] QString rootDir() const;
+
+    [[nodiscard]] QStringList const &directories() const;
+    [[nodiscard]] std::expected<void, QString> addDirectory(QString const &directory);
+    [[nodiscard]] std::expected<void, QString> removeDirectory(QString const &directory);
 
 private:
+    QString path_;
+    QStringList directories_;
     QStringList excludedFiles_;
 };

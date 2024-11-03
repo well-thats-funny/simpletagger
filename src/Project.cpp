@@ -59,20 +59,20 @@ std::expected<std::optional<int>, QString> Project::save(bool const backup) {
     std::optional<int> backupCount;
 
     if (backup)
-        backupCount = backupFile(path);
+        backupCount = backupFile(path_);
 
-    qDebug() << "Writing project file: " << path;
+    qDebug() << "Writing project file: " << path_;
 
-    QSaveFile file(path);
+    QSaveFile file(path_);
     if (!file.open(QIODevice::WriteOnly | QIODevice::Truncate))
-        return std::unexpected(QObject::tr("Could not open file for writing: %1 (%2)").arg(path).arg(file.errorString()));
+        return std::unexpected(QObject::tr("Could not open file for writing: %1 (%2)").arg(path_).arg(file.errorString()));
 
     QCborMap map;
     map[std::to_underlying(Keys::FORMAT_VERSION)] = valueVersion;
     map[std::to_underlying(Keys::APP)] = valueApp.toString();
 
     QCborArray cDirectories;
-    for (auto const &d: directories)
+    for (auto const &d: directories_)
         cDirectories.append(d);
 
     map[std::to_underlying(Keys::DIRECTORIES)] = cDirectories;
@@ -85,10 +85,9 @@ std::expected<std::optional<int>, QString> Project::save(bool const backup) {
     file.write(map.toCborValue().toCbor());
 
     if (!file.commit())
-        return std::unexpected(QObject::tr("Could not write file: %1 (%2)").arg(path).arg(file.errorString()));
+        return std::unexpected(QObject::tr("Could not write file: %1 (%2)").arg(path_).arg(file.errorString()));
 
     qDebug() << "Writing project file done";
-
     return backupCount;
 }
 
@@ -105,7 +104,7 @@ std::expected<Project, QString> Project::open(QString const &path) {
     auto map = QCborValue::fromCbor(content).toMap();
 
     auto project = Project();
-    project.path = path;
+    project.path_ = path;
 
     auto formatVersion = map.take(std::to_underlying(Keys::FORMAT_VERSION));
     if (formatVersion.isUndefined())
@@ -132,7 +131,7 @@ std::expected<Project, QString> Project::open(QString const &path) {
     for (auto const &d: directories.toArray()) {
         if (!d.isString())
             return std::unexpected(QObject::tr("Directories element is not a string but %1").arg(cborTypeToString(d.type())));
-        project.directories.append(d.toString());
+        project.directories_.append(d.toString());
     }
 
     auto excludedFiles = map.take(std::to_underlying(Keys::EXCLUDED_FILES));
@@ -166,4 +165,32 @@ void Project::setExcludedFile(QString const &fileName, bool const excluded) {
         excludedFiles_.push_back(fileName);
     else if (!excluded && excludedFiles_.contains(fileName))
         excludedFiles_.removeAll(fileName);
+}
+
+QString const &Project::path() const {
+    return path_;
+}
+
+QString Project::rootDir() const {
+    return QFileInfo(path_).path();
+}
+
+QStringList const &Project::directories() const {
+    return directories_;
+}
+
+std::expected<void, QString> Project::addDirectory(QString const &directory) {
+    if (directories_.contains(directory))
+        return std::unexpected(QObject::tr("This directory already exists in the project"));
+
+    directories_.emplace_back(directory);
+    return {};
+}
+
+std::expected<void, QString> Project::removeDirectory(QString const &directory) {
+    if (!directories_.contains(directory))
+        return std::unexpected(QObject::tr("This directory doesn't exists in the project"));
+
+    directories_.removeAll(directory);
+    return {};
 }

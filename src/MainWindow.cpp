@@ -251,15 +251,19 @@ std::expected<void, QString> MainWindow::setupFileBrowserDock() {
     connect(&*fileBrowser, &FileBrowser::FileBrowser::directoryAdded, this, [this](auto const &directory){
         ZoneScoped;
         assert(project);
-        project->directories.emplaceBack(directory);
-        saveProject();
+        if (auto result = project->addDirectory(directory); !result)
+            QMessageBox::critical(this, tr("Adding directory failed"), result.error());
+        else
+            saveProject();
     });
 
     connect(&*fileBrowser, &FileBrowser::FileBrowser::directoryRemoved, this, [this](auto const &directory){
         ZoneScoped;
         assert(project);
-        project->directories.removeAll(directory);
-        saveProject();
+        if (auto result = project->removeDirectory(directory); !result)
+            QMessageBox::critical(this, tr("Removing directory failed"), result.error());
+        else
+            saveProject();
     });
 
     connect(&*fileBrowser, &FileBrowser::FileBrowser::directoryLoaded, this, [this](auto const &directory){
@@ -282,7 +286,7 @@ std::expected<void, QString> MainWindow::setupFileBrowserDock() {
         gsl_Expects(project);
         gsl_Expects(QFileInfo(sourceFile).isAbsolute());
         gsl_Expects(QFileInfo(targetFile).isAbsolute());
-        auto projectRootPath = QFileInfo(project->path).path();
+        auto projectRootPath = QFileInfo(project->path()).path();
         if (QMessageBox::question(
                 this,
                 tr("Import tags"),
@@ -600,10 +604,10 @@ std::expected<void, QString> MainWindow::loadProject(QString const &filePath) {
     fileBrowser->setEnabled(enabled);
 
     if (enabled) {
-        setWindowTitle(QString("SimpleTagger - %1").arg(project->path));
+        setWindowTitle(QString("SimpleTagger - %1").arg(project->path()));
 
-        fileBrowser->setProjectRootPath(QFileInfo(project->path).path());
-        fileBrowser->setDirectories(project->directories);
+        fileBrowser->setProjectRootPath(project->rootDir());
+        fileBrowser->setDirectories(project->directories());
 
         auto lastDir = settings.value(SettingsKey::LAST_VIEWED_DIRECTORY, QString()).toString();
 
@@ -612,12 +616,12 @@ std::expected<void, QString> MainWindow::loadProject(QString const &filePath) {
         auto lastFile = settings.value(SettingsKey::LAST_VIEWED_FILE, QString()).toString();
         static_cast<void>(fileBrowser->selectFileInTree(lastFile));
 
-        if (auto index = recentProjects.indexOf(project->path); index != -1) {
+        if (auto index = recentProjects.indexOf(project->path()); index != -1) {
             // move this project to the front of the list
             recentProjects.move(index, 0);
         } else {
             // add this project to the list
-            recentProjects.push_front(project->path);
+            recentProjects.push_front(project->path());
             if (recentProjects.size() > MAX_RECENT_PROJECTS)
                 recentProjects.pop_back();
         }

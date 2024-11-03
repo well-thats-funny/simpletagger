@@ -229,6 +229,7 @@ FileBrowser::~FileBrowser() = default;
 
 void FileBrowser::setProjectRootPath(QString const &projectRootPath) {
     ZoneScoped;
+    gsl_Expects(QFileInfo(projectRootPath).isDir());
     projectRootPath_ = projectRootPath;
 }
 
