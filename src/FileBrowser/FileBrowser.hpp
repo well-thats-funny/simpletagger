@@ -21,6 +21,7 @@ class Ui_FileBrowser;
 class DirectoryStatsManager;
 class DirectoryStats;
 class FileEditor;
+class FileTags;
 class FileTagsManager;
 
 namespace FileBrowser {
@@ -37,12 +38,14 @@ class FileBrowser: public QWidget {
     FileBrowser& operator=(FileBrowser &&other) = delete;
 
     using IsFileExcluded = std::function<bool(QString const &)>;
+    using IsOtherLibraryOrVersion = std::function<bool(FileTags const &)>;
 
     FileBrowser(
             FileTagsManager &fileTagsManager,
             DirectoryStatsManager &directoryStatsManager,
             FileEditor &fileEditor,
             IsFileExcluded const &isFileExcluded,
+            IsOtherLibraryOrVersion const &isOtherLibraryOrVersion,
             Qt::WindowFlags flags = Qt::WindowFlags()
     );
     std::expected<void, QString> init();
@@ -54,6 +57,7 @@ public:
             DirectoryStatsManager &directoryStatsManager,
             FileEditor &fileEditor,
             IsFileExcluded const &isFileExcluded,
+            IsOtherLibraryOrVersion const &isOtherLibraryOrVersion,
             Qt::WindowFlags flags = Qt::WindowFlags()
     );
     ~FileBrowser() override;

@@ -247,6 +247,21 @@ std::expected<void, QString> MainWindow::setupFileBrowserDock() {
                     gsl_Expects(project);
                     gsl_Expects(QFileInfo(fileName).isRelative());
                     return project->isExcludedFile(fileName);
+                },
+                [this](FileTags const &fileTags)->bool{
+                    ZoneScoped;
+                    gsl_Expects(tagLibrary);
+                    // TODO: this comparison code is repeated in multiple places. A good candidate
+                    //       for a utility function?
+                    if (auto tagLibraryUuid = fileTags.tagLibraryUuid();
+                            !tagLibraryUuid || (*tagLibraryUuid != tagLibrary->getUuid())) {
+                        return true;
+                    } else if (auto tagLibraryVersionUuid = fileTags.tagLibraryVersionUuid();
+                            !tagLibraryVersionUuid || (*tagLibraryVersionUuid != tagLibrary->getVersionUuid())) {
+                        return true;
+                    } else {
+                        return false;
+                    }
                 }
         ); !result) {
         return std::unexpected(result.error());
@@ -368,6 +383,7 @@ std::expected<void, QString> MainWindow::setupTagLibraryDock() {
         tagLibrary = &**result;
         tagLibraryDock = addDock(std::move(*result), tr("Tag library"), ads::DockWidgetArea::RightDockWidgetArea);
         fileTagsManager.setTagLibrary(tagLibrary);
+        directoryStatsManager.setTagLibrary(tagLibrary);
     }
 
     QDir appData{QStandardPaths::writableLocation(QStandardPaths::StandardLocation::AppDataLocation)};

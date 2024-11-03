@@ -20,6 +20,10 @@ class DirectoryStats;
 class FileTagsManager;
 class Project;
 
+namespace TagLibrary {
+class Library;
+}
+
 class DirectoryStatsManager: public QObject {
     Q_OBJECT
 
@@ -35,6 +39,7 @@ public:
     ~DirectoryStatsManager();
 
     void setProject(Project *project);
+    void setTagLibrary(TagLibrary::Library *tagLibrary);
 
     DirectoryStats &directoryStats(QString const &path);
     void invalidateDirectoryStatsCache();
@@ -45,6 +50,7 @@ signals:
 
 private:
     Project *project_ = nullptr;
+    TagLibrary::Library *tagLibrary_ = nullptr;
     FileTagsManager &fileTagsManager_;
 
     QMutex mutex_;

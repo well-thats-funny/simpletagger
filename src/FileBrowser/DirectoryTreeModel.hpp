@@ -19,6 +19,7 @@
 #include <QStyle>
 
 class DirectoryStatsManager;
+class FileTags;
 class FileTagsManager;
 
 namespace FileBrowser {
@@ -28,13 +29,15 @@ class DirectoryTreeModel: public QFileSystemModel {
     Q_OBJECT
 
     using IsFileExcluded = std::function<bool(QString const &)>;
+    using IsOtherLibraryOrVersion = std::function<bool(FileTags const &)>;
 
 public:
     DirectoryTreeModel(
             QStyle *style,
             FileTagsManager &fileTagsManager,
             DirectoryStatsManager &directoryStatsManager,
-            IsFileExcluded const & isFileExcluded
+            IsFileExcluded const & isFileExcluded,
+            IsOtherLibraryOrVersion const &isOtherLibraryOrVersion
     );
     ~DirectoryTreeModel() override;
 
@@ -54,6 +57,7 @@ private:
     FileTagsManager &fileTagsManager_;
     DirectoryStatsManager &directoryStatsManager_;
     IsFileExcluded isFileExcluded_;
+    IsOtherLibraryOrVersion isOtherLibraryOrVersion_;
     QPixmap directoryIcon;
     QString cacheDir;
     mutable std::unordered_map<QString, QImage> imageCache;

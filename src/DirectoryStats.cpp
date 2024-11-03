@@ -20,6 +20,8 @@
 #include "FileTagsManager.hpp"
 #include "Project.hpp"
 
+#include "TagLibrary/Library.hpp"
+
 namespace {
 // TODO: FileBrowser.cpp and FileTagsManager.cpp has a similar list (just with wildcards added), merge?
 const QStringList IMAGE_FILE_SUFFIXES = {".jpg", ".png"};
@@ -97,6 +99,24 @@ int DirectoryStats::filesWithTagsWithoutExcluded() const {
     ).value_or(0);
 }
 
+int DirectoryStats::filesOtherTagLibrary() const {
+    ZoneScoped;
+    QMutexLocker locker(&mutex_);
+    return stats_.filesOtherTagLibrary_ + std::ranges::fold_left_first(
+            stats_.childrenStats_ | std::views::transform([](auto const &v){ return v.get().filesOtherTagLibrary(); }),
+            std::plus<int>()
+    ).value_or(0);
+}
+
+int DirectoryStats::filesOtherTagLibraryVersion() const {
+    ZoneScoped;
+    QMutexLocker locker(&mutex_);
+    return stats_.filesOtherTagLibraryVersion_ + std::ranges::fold_left_first(
+            stats_.childrenStats_ | std::views::transform([](auto const &v){ return v.get().filesOtherTagLibraryVersion(); }),
+            std::plus<int>()
+    ).value_or(0);
+}
+
 int DirectoryStats::totalTags() const {
     ZoneScoped;
     gsl_Expects(ready());
@@ -116,6 +136,7 @@ bool DirectoryStats::ready() const {
 
 void DirectoryStats::reload() {
     gsl_Expects(manager_.project_);
+    gsl_Expects(manager_.tagLibrary_);
     gsl_Expects(QFileInfo(path_).isAbsolute());
 
     {
@@ -169,6 +190,16 @@ void DirectoryStats::reload() {
 
                     if (!isExcluded)
                         stats.filesFlaggedCompleteWithoutExcluded_ += 1;
+                }
+
+                if (size != 0) {
+                    if (auto tagLibrary = tags->get().tagLibraryUuid();
+                            !tagLibrary || (*tagLibrary != manager_.tagLibrary_->getUuid())) {
+                        stats.filesOtherTagLibrary_ += 1;
+                    } else if (auto tagLibraryVersion = tags->get().tagLibraryVersionUuid();
+                            !tagLibraryVersion || (*tagLibraryVersion != manager_.tagLibrary_->getVersionUuid())) {
+                        stats.filesOtherTagLibraryVersion_ += 1;
+                    }
                 }
 
                 stats.totalTags_ += size;

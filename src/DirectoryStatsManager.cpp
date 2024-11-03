@@ -30,6 +30,10 @@ void DirectoryStatsManager::setProject(Project *const project) {
     project_ = project;
 }
 
+void DirectoryStatsManager::setTagLibrary(TagLibrary::Library *const tagLibrary) {
+    tagLibrary_ = tagLibrary;
+}
+
 DirectoryStats &DirectoryStatsManager::directoryStats(QString const &path) {
     ZoneScoped;
     gsl_Expects(QFileInfo(path).isAbsolute());

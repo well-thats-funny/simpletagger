@@ -41,6 +41,8 @@ public:
     int filesFlaggedCompleteWithoutExcluded() const;
     int filesWithTags() const;
     int filesWithTagsWithoutExcluded() const;
+    int filesOtherTagLibrary() const;
+    int filesOtherTagLibraryVersion() const;
     int totalTags() const;
 
     bool ready() const;
@@ -65,6 +67,8 @@ private:
         int filesFlaggedCompleteWithoutExcluded_ = 0;
         int filesWithTags_ = 0;
         int filesWithTagsWithoutExcluded_ = 0;
+        int filesOtherTagLibrary_ = 0;
+        int filesOtherTagLibraryVersion_ = 0;
         int totalTags_ = 0;
     };
 

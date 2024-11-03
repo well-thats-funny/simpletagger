@@ -67,12 +67,14 @@ DirectoryTreeModel::DirectoryTreeModel(
         QStyle *const style,
         FileTagsManager &fileTagsManager,
         DirectoryStatsManager &directoryStatsManager,
-        IsFileExcluded const & isFileExcluded
+        IsFileExcluded const &isFileExcluded,
+        IsOtherLibraryOrVersion const &isOtherLibraryOrVersion
 ):
         style{style},
         fileTagsManager_{fileTagsManager},
         directoryStatsManager_{directoryStatsManager},
         isFileExcluded_{isFileExcluded},
+        isOtherLibraryOrVersion_{isOtherLibraryOrVersion},
         directoryIcon{style->standardPixmap(QStyle::SP_DirIcon)},
         cacheDir{QStandardPaths::standardLocations(QStandardPaths::StandardLocation::CacheLocation).at(0)+"/DirectoryTreeModelCache"} {
     ZoneScoped;
@@ -148,15 +150,18 @@ QVariant DirectoryTreeModel::data(const QModelIndex &index, int role) const {
 
                         static constexpr int maxTags = 5;
                         if (fileTags->get().assignedTags().isEmpty())
-                            label += "no assigned tags";
+                            label += "no assigned tags\n";
                         else if (fileTags->get().assignedTags().size() <= maxTags)
-                            label += QString("%1 tags: %2")
+                            label += QString("%1 tags: %2\n")
                                     .arg(fileTags->get().assignedTags().size())
                                     .arg(fileTags->get().assignedTags().join(", "));
                         else
-                            label += QString("%1 tags: %2, ...")
+                            label += QString("%1 tags: %2, ...\n")
                                     .arg(fileTags->get().assignedTags().size())
                                     .arg(fileTags->get().assignedTags().sliced(0, maxTags).join(", "));
+
+                        if (isOtherLibraryOrVersion_(fileTags->get()))
+                            label += QString("Tagged with other tag library or version");
                     }
                     return label;
                 }
@@ -186,6 +191,9 @@ QVariant DirectoryTreeModel::data(const QModelIndex &index, int role) const {
 
                         if (stats.filesFlaggedComplete() != stats.filesWithTags())
                             brushes.emplace_back(QColor(255, 0, 0, 64), Qt::BrushStyle::FDiagPattern);
+
+                        if (stats.filesOtherTagLibrary() != 0 || stats.filesOtherTagLibraryVersion() != 0)
+                            brushes.emplace_back(QColor(0, 0, 255, 128), Qt::BrushStyle::HorPattern);
                     } else {
                         brushes.emplace_back(Qt::GlobalColor::cyan, Qt::BrushStyle::FDiagPattern);
                     }
@@ -197,6 +205,9 @@ QVariant DirectoryTreeModel::data(const QModelIndex &index, int role) const {
                             brushes.emplace_back(QColor(0, 255, 0, 64), Qt::BrushStyle::SolidPattern);
                         else if (tags->get().assignedTags().size() != 0)
                             brushes.emplace_back(QColor(255, 255, 0, 64), Qt::BrushStyle::SolidPattern);
+
+                        if (isOtherLibraryOrVersion_(tags->get()))
+                            brushes.emplace_back(QColor(0, 0, 255, 128), Qt::BrushStyle::HorPattern);
                     }
                 }
 

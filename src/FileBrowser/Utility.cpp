@@ -64,18 +64,32 @@ QString formatDirectoryStats(DirectoryStats const &stats, QString const &path) {
                 lines.push_back(secondLine);
             }
 
-            if (stats.filesExcluded() != 0) {
+            QStringList thirdLine;
+            if (auto excluded = stats.filesExcluded(); excluded != 0) {
                 if (fileCount == 0)
-                    lines.push_back(QObject::tr("%1 excluded file(s)", "", stats.filesExcluded()).arg(stats.filesExcluded()));
+                    thirdLine.push_back(QObject::tr("%1 excluded file(s)", "", excluded).arg(excluded));
                 else
-                    lines.push_back(QObject::tr(
+                    thirdLine.push_back(QObject::tr(
                                     "%1 excluded file(s) (not included in the counters above)",
                                     "",
-                                    stats.filesExcluded()
+                                    excluded
                             )
-                            .arg(stats.filesExcluded())
+                            .arg(excluded)
                     );
             }
+
+            auto otherTagLibrary = stats.filesOtherTagLibrary();
+            auto otherTagLibraryVersion = stats.filesOtherTagLibraryVersion();
+            auto otherTagLibraryCount = otherTagLibrary + otherTagLibraryVersion;
+            if (otherTagLibraryCount != 0)
+                thirdLine.push_back(QObject::tr(
+                        "%1 file(s) last edited with different tag library/version",
+                        "",
+                        otherTagLibraryCount
+                ).arg(otherTagLibraryCount));
+
+            if (!thirdLine.isEmpty())
+                lines.push_back(thirdLine.join(", "));
 
             lines.push_back(QObject::tr("%1 total tags").arg(stats.totalTags()));
         }

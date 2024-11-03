@@ -38,6 +38,7 @@ FileBrowser::FileBrowser(
         DirectoryStatsManager &directoryStatsManager,
         FileEditor &fileEditor,
         IsFileExcluded const &isFileExcluded,
+        IsOtherLibraryOrVersion const &isOtherLibraryOrVersion,
         Qt::WindowFlags const flags
 ):
     QWidget(nullptr, flags),
@@ -51,7 +52,8 @@ FileBrowser::FileBrowser(
             style(),
             fileTagsManager,
             directoryStatsManager_,
-            [this](auto const &file) { return isFileExcludedAbsPath(file); }
+            [this](auto const &file) { return isFileExcludedAbsPath(file); },
+            isOtherLibraryOrVersion
     )),
     directoryTreeProxyModel(std::make_unique<DirectoryTreeProxyModel>(
             [this](auto const &file) { return isFileExcludedAbsPath(file); }
@@ -229,11 +231,12 @@ FileBrowser::create(
         DirectoryStatsManager &directoryStatsManager,
         FileEditor &fileEditor,
         IsFileExcluded const &isFileExcluded,
+        IsOtherLibraryOrVersion const &isOtherLibraryOrVersion,
         Qt::WindowFlags flags
 ) {
     ZoneScoped;
 
-    auto self = std::unique_ptr<FileBrowser>(new FileBrowser{fileTagsManager, directoryStatsManager, fileEditor, isFileExcluded, flags});
+    auto self = std::unique_ptr<FileBrowser>(new FileBrowser{fileTagsManager, directoryStatsManager, fileEditor, isFileExcluded, isOtherLibraryOrVersion, flags});
     if (auto result = self->init(); !result)
         return std::unexpected(result.error());
 
