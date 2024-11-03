@@ -11,7 +11,10 @@ class TagLibrary:
     top_level_keys = {
         1: 'format_version',
         2: 'app',
-        3: 'root_node'
+        3: 'root_node',
+        4: 'library_uuid',
+        5: 'library_version',
+        6: 'library_version_uuid'
     }
 
     node_keys = {
@@ -100,7 +103,7 @@ with (args.FILE.open('rb') as f):
 
     def dump(value, name=None, head_prefix='', tail_prefix=''):
         if isinstance(value, (int, str, bytes)):
-            if name in ('uuid', 'link_to'):
+            if name in ('uuid', 'link_to', 'library_uuid', 'library_version_uuid'):
                 value = uuid.UUID(bytes=value)
 
             if name is not None:

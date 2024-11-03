@@ -22,7 +22,10 @@ Q_NAMESPACE
 enum class TopLevelKey {
     FormatVersion = 1,
     App = 2,
-    RootNode = 3
+    RootNode = 3,
+    LibraryUuid = 4,
+    LibraryVersion = 5,
+    LibraryVersionUuid = 6
 };
 
 constexpr unsigned int formatVersion = 1;

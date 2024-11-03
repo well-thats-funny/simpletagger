@@ -510,9 +510,13 @@ Library::~Library() {
 
 std::expected<void, QString> Library::saveContent(QIODevice &io) {
     ZoneScoped;
+    gsl_Expects(!libraryUuid_.isNull());
 
     if (!io.open(QIODevice::WriteOnly))
         return std::unexpected(tr("Cannot open for writing: %1").arg(io.errorString()));
+
+    libraryVersion_ += 1;
+    libraryVersionUuid_ = QUuid::createUuid();
 
     QCborMap map;
     map[std::to_underlying(Format::TopLevelKey::FormatVersion)] = Format::formatVersion;
@@ -522,6 +526,10 @@ std::expected<void, QString> Library::saveContent(QIODevice &io) {
         map[std::to_underlying(Format::TopLevelKey::RootNode)] = *value;
     else
         return std::unexpected(value.error());
+
+    map[std::to_underlying(Format::TopLevelKey::LibraryUuid)] = libraryUuid_.toRfc4122();
+    map[std::to_underlying(Format::TopLevelKey::LibraryVersion)] = libraryVersion_;
+    map[std::to_underlying(Format::TopLevelKey::LibraryVersionUuid)] = libraryVersionUuid_.toRfc4122();
 
     QCborStreamWriter writer(&io);
     map.toCborValue().toCbor(writer);
@@ -561,6 +569,27 @@ std::expected<void, QString> Library::loadContent(QIODevice &io) {
     auto root = map.take(std::to_underlying(Format::TopLevelKey::RootNode));
     if (root.isUndefined())
         return std::unexpected(tr("Root node not found"));
+
+    auto libraryUuid = map.take(std::to_underlying(Format::TopLevelKey::LibraryUuid));
+    if (libraryUuid.isUndefined())
+        return std::unexpected(tr("Library UUID key doesn't exist"));
+    if (!libraryUuid.isByteArray())
+        return std::unexpected(tr("Library UUID is not a byte array but %1").arg(cborTypeToString(libraryUuid.type())));
+    libraryUuid_ = QUuid::fromRfc4122(libraryUuid.toByteArray());
+
+    auto libraryVersion = map.take(std::to_underlying(Format::TopLevelKey::LibraryVersion));
+    if (libraryVersion.isUndefined())
+        return std::unexpected(tr("Library version key doesn't exist"));
+    if (!libraryVersion.isInteger())
+        return std::unexpected(tr("Library version is not an integer but %1").arg(cborTypeToString(libraryVersion.type())));
+    libraryVersion_ = libraryVersion.toInteger();
+
+    auto libraryVersionUuid = map.take(std::to_underlying(Format::TopLevelKey::LibraryVersionUuid));
+    if (libraryVersionUuid.isUndefined())
+        return std::unexpected(tr("Library version UUID key doesn't exist"));
+    if (!libraryVersionUuid.isByteArray())
+        return std::unexpected(tr("Library version UUID is not a byte array but %1").arg(cborTypeToString(libraryVersionUuid.type())));
+    libraryVersionUuid_ = QUuid::fromRfc4122(libraryVersionUuid.toByteArray());
 
     for (auto const &v: map)
         qCWarning(LoggingCategory) << "Unhandled element" << v.first << "=" << v.second;

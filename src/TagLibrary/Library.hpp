@@ -65,7 +65,12 @@ private:
     std::unique_ptr<Ui_Library> ui;
     std::unique_ptr<Model> libraryModel_;
     std::unique_ptr<FilterProxyModel> filterModel_;
+
     std::unique_ptr<SelectionHelperProxyModel> model_;
+    QUuid libraryUuid_ = QUuid::createUuid();
+    int libraryVersion_ = 0;
+    QUuid libraryVersionUuid_;
+
     QString transferLabel_;
     QIcon transferIcon_;
     QMenu userIconMenu;
