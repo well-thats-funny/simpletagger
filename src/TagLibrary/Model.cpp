@@ -544,7 +544,7 @@ bool Model::dropMimeData(
         }
     }
 
-    std::vector<NodeSerializable *> loaded;
+    Node::RepopulationRequest repopulationRequest;
 
     for (auto const &v: parseMimeData(data)) {
         if (!v) {
@@ -564,7 +564,10 @@ bool Model::dropMimeData(
             return false;
         }
 
-        loaded.push_back(&**node);
+        if (!repopulationRequest.modifiedUuids)
+            repopulationRequest.modifiedUuids.emplace();
+
+        repopulationRequest.modifiedUuids->append(node->get()->uuid());
 
         if (auto result = parentNodeStored->insertChild(
                 row, dynamicPtrCast<Node>(std::move(*node))
@@ -574,9 +577,10 @@ bool Model::dropMimeData(
         }
     }
 
-    // calling them all together, as it's possible they're interlinked
-    for (auto const &node: loaded)
-        node->afterDrop();
+    if (auto result = root->repopulateLinkedRecursive(repopulationRequest); !result) {
+        qCCritical(LoggingCategory) << "Cannot repopulate links:" << result.error();
+        return false;
+    }
 
     return true;
 }
@@ -626,6 +630,9 @@ std::expected<void, QString> Model::load(QCborValue const &value) {
         root->deinit();
         root = std::move(newRoot);
     }
+
+    if (auto result = root->repopulateLinkedRecursive(); !result)
+        return std::unexpected(result.error());
 
     emit loadComplete();
     return {};

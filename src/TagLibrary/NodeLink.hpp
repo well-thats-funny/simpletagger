@@ -34,7 +34,6 @@ public:
 
     // children modification
     [[nodiscard]] bool canBeDragged() const override;
-    [[nodiscard]] std::expected<void, QString> afterDrop() override;
 
     [[nodiscard]] QString name(bool raw = false, bool editMode = false) const override;
     [[nodiscard]] bool canSetName() const override;
@@ -71,7 +70,11 @@ protected:
     [[nodiscard]] std::expected<std::optional<QCborArray>, QString> saveChildrenNodes() const override;
     [[nodiscard]] std::expected<void, QString> loadNodeData(QCborMap &map) override;
     [[nodiscard]] std::expected<void, QString> loadChildrenNodes(QCborMap &map) override;
-    void resolveLink();
+    [[nodiscard]] std::expected<void, QString> populateLinked();
+    [[nodiscard]] std::expected<void, QString> unpopulateLinked();
+
+public:
+    [[nodiscard]] std::expected<void, QString> repopulateLinked(RepopulationRequest const &repopulationRequest) override;
 
 private:
     QString name_;

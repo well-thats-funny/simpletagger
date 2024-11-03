@@ -110,22 +110,6 @@ bool Node::canAcceptDrop(NodeType const) const {
     return false;
 }
 
-std::expected<void, QString> Node::afterDrop() {
-    // TODO: this iteration stuff is repeated in many places. Could become a method of Node ?
-    auto count = childrenCount();
-    if (!count)
-        return std::unexpected(count.error());
-
-    for (int i = 0; i != *count; ++i) {
-        if (auto childNode = childOfRow(i); !childNode)
-            return std::unexpected(childNode.error());
-        else if (auto result = childNode->get().afterDrop(); !result)
-            return std::unexpected(result.error());
-    }
-
-    return {};
-}
-
 QString Node::name(bool const, bool const) const {
     return QString();
 }
@@ -395,5 +379,30 @@ QString Node::path(PathFlags flags) const {
 
 bool Node::deinitialized() const {
     return deinitialized_;
+}
+
+std::expected<void, QString> Node::repopulateLinked(RepopulationRequest const &) {
+    return {};
+}
+
+std::expected<void, QString> Node::repopulateLinkedRecursive(RepopulationRequest const &repopulationRequest) {
+    ZoneScoped;
+
+    // TODO: this iteration stuff is repeated in many places. Could become a method of Node ?
+    if (auto result = repopulateLinked(repopulationRequest); !result)
+        return std::unexpected(result.error());
+
+    auto count = childrenCount();
+    if (!count)
+        return std::unexpected(count.error());
+
+    for (int i = 0; i != *count; ++i) {
+        if (auto childNode = childOfRow(i); !childNode)
+            return std::unexpected(childNode.error());
+        else if (auto result = childNode->get().repopulateLinkedRecursive(repopulationRequest); !result)
+            return std::unexpected(result.error());
+    }
+
+    return {};
 }
 }

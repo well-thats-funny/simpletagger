@@ -399,7 +399,7 @@ std::expected<void, QString> MainWindow::setupTagLibraryDock() {
                     tr("Could not save tags library"),
                     tr("Saving to file \"%1\" failed: %2").arg(file.fileName(), result.error()));
         } else {
-            qWarning() << "Tag library saved, backups count:" << (backupsCounter ? *backupsCounter : -1);
+            qInfo() << "Tag library saved, backups count:" << (backupsCounter ? *backupsCounter : -1);
             showSavedStatusMessage(tr("tags library"), backupsCounter);
         }
     });

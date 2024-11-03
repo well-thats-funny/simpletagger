@@ -64,14 +64,6 @@ bool NodeLink::canBeDragged() const {
     return true;
 }
 
-std::expected<void, QString> NodeLink::afterDrop() {
-    if (auto result = NodeHierarchical::afterDrop(); !result)
-        return std::unexpected(result.error());
-
-    resolveLink();
-    return {};
-}
-
 QString NodeLink::name(bool const raw, bool const editMode) const {
     ZoneScoped;
 
@@ -131,76 +123,14 @@ bool NodeLink::canLinkTo() const {
 std::expected<void, QString> NodeLink::setLinkTo(QUuid const &uuid) {
     ZoneScoped;
 
-    std::unique_ptr<NodeLinkSubtree> root;
-    QMetaObject::Connection newSubtreeRootAboutToRemoveConnection;
-
-    if (!uuid.isNull()) {
-        auto target = model().fromUuid(uuid);
-        if (!target)
-            return std::unexpected(target.error());
-
-        root = std::make_unique<NodeLinkSubtree>(const_cast<Model &>(model()), this, target->get(), this);
-        if (auto result = root->init(); !result)
+    if (uuid != linkTo_) {
+        if (auto result = unpopulateLinked(); !result)
             return std::unexpected(result.error());
-
-        newSubtreeRootAboutToRemoveConnection = connect(&*root, &NodeLinkSubtree::targetAboutToRemove, this, [this, uuid]mutable{
-            if (!linkSubtreeRoot_->deinitialized())
-                linkSubtreeRoot_->deinit();
-            linkSubtreeRoot_.reset();
-        });
-
-        newSubtreeRootAboutToRemoveConnection = connect(&*root, &NodeLinkSubtree::aboutToRemove, this, [this, uuid]mutable{
-        });
-    } else {
-        qCDebug(LoggingCategory) << "Setting link" << path(PathFlag::IncludeEverything) << "to zero-uuid";
-    }
-
-    int oldChildrenCount = 0;
-    int newChildrenCount = 0;
-
-    if (linkSubtreeRoot_) {
-        if (auto result = linkSubtreeRoot_->childrenCount(); !result)
-            return std::unexpected(result.error());
-        else
-            oldChildrenCount = *result;
-    }
-
-    if (root) {
-        if (auto result = root->childrenCount(); !result)
-            return std::unexpected(result.error());
-        else
-            newChildrenCount = *result;
-    }
-
-
-    // here we assume we cannot fail anymore. This is, among others, because Qt doesn't support failures between remove/insert begin and end
-
-    QObject::disconnect(subtreeRootAboutToRemoveConnection);
-
-    // notify about all children removal
-    if (oldChildrenCount != 0)
-        emit removeChildrenBegin(0, oldChildrenCount - 1);
-
-    linkTo_ = QUuid();
-
-    if (linkSubtreeRoot_)
-        linkSubtreeRoot_->deinit();
-
-    linkSubtreeRoot_ = nullptr;
-
-    if (oldChildrenCount != 0)
-        emit removeChildrenEnd(0, oldChildrenCount - 1);
-
-    if (!uuid.isNull()) {
-        if (newChildrenCount != 0)
-            emit insertChildrenBegin(0, newChildrenCount - 1);
 
         linkTo_ = uuid;
-        linkSubtreeRoot_ = dynamicPtrCast<NodeLinkSubtree>(std::move(root));
-        subtreeRootAboutToRemoveConnection = newSubtreeRootAboutToRemoveConnection;
 
-        if (newChildrenCount != 0)
-            emit insertChildrenEnd(0, newChildrenCount - 1);
+        if (auto result = populateLinked(); !result)
+            return std::unexpected(result.error());
     }
 
     emit persistentDataChanged();
@@ -335,10 +265,6 @@ std::expected<void, QString> NodeLink::loadNodeData(QCborMap &map) {
         return std::unexpected(QObject::tr("Link target element is not a byte array but %1").arg(cborTypeToString(linkTo.type())));
     linkTo_ = QUuid::fromRfc4122(linkTo.toByteArray());
 
-    connect(&model(), &Model::loadComplete, this, [this]{
-        resolveLink();
-    });
-
     auto comment = map.take(std::to_underlying(Format::NodeKey::Comment));
     if (!comment.isUndefined()) {
         if (!comment.isString())
@@ -357,9 +283,103 @@ std::expected<void, QString> NodeLink::loadChildrenNodes([[maybe_unused]] QCborM
     return {};
 }
 
-void NodeLink::resolveLink() {
-    // force copy of QUuid, as setLinkTo overwrites the field linkTo_ :D
-    if (auto result = setLinkTo(QUuid(linkTo_)); !result)
-        qCCritical(LoggingCategory) << "Could not set link to" << linkTo_ << "at load complete:" << result.error();
+std::expected<void, QString> NodeLink::populateLinked() {
+    gsl_Expects(!linkSubtreeRoot_);
+
+    if (!linkTo_.isNull()) {
+        auto target = model().fromUuid(linkTo_);
+        if (!target)
+            return std::unexpected(target.error());
+
+        auto subtreeRoot = std::make_unique<NodeLinkSubtree>(model(), this, target->get(), this);
+        if (auto result = subtreeRoot->init(); !result)
+            return std::unexpected(result.error());
+
+        connect(&*subtreeRoot, &NodeLinkSubtree::targetAboutToRemove, this, [this]{
+            if (auto result = unpopulateLinked(); !result)
+                qCCritical(LoggingCategory) << "targetAboutToRemove -> unpopulateLinked error:" << result.error();
+        });
+
+        auto childrenCount = subtreeRoot->childrenCount();
+        if (!childrenCount)
+            return std::unexpected(childrenCount.error());
+
+        if (*childrenCount > 0)
+            emit insertChildrenBegin(0, *childrenCount - 1);
+
+        linkSubtreeRoot_ = dynamicPtrCast<NodeLinkSubtree>(std::move(subtreeRoot));
+
+        if (*childrenCount > 0)
+            emit insertChildrenEnd(0, *childrenCount - 1);
+    }
+
+    gsl_Ensures(!linkTo_.isNull() == static_cast<bool>(linkSubtreeRoot_));
+    return {};
+}
+
+std::expected<void, QString> NodeLink::unpopulateLinked() {
+    if (linkSubtreeRoot_) {
+        auto childrenCount = linkSubtreeRoot_->childrenCount();
+        if (!childrenCount)
+            return std::unexpected(childrenCount.error());
+
+        if (*childrenCount > 0)
+            emit removeChildrenBegin(0, *childrenCount - 1);
+
+        if (!linkSubtreeRoot_->deinitialized())
+            linkSubtreeRoot_->deinit();
+
+        linkSubtreeRoot_.reset();
+
+        if (*childrenCount > 0)
+            emit removeChildrenEnd(0, *childrenCount - 1);
+    }
+
+    gsl_Ensures(!linkSubtreeRoot_);
+    return {};
+}
+
+std::expected<void, QString> NodeLink::repopulateLinked(RepopulationRequest const &repopulationRequest) {
+    ZoneScoped;
+
+    if (auto result = Node::repopulateLinked(repopulationRequest); !result)
+        return std::unexpected(result.error());
+
+    // build a list of all UUIDs for which change we need to repopulate
+    QSet<QUuid> allRelatedUuids;
+
+    // our UUID and all our our parents
+    Node const *node = this;
+    while(node) {
+        allRelatedUuids.insert(node->uuid());
+        node = node->parent();
+    }
+
+    // target UUID and all its parents
+    if (!linkTo_.isNull()) {
+        if (auto target = model().fromUuid(linkTo_); !target) {
+            // TODO: this can be because target is invalid - but does not have to! There should be a way to
+            //       distinguish such situations
+            qCWarning(LoggingCategory) << "Could not find node with UUID" << linkTo_ << ":" << target.error();
+        } else {
+            node = &target->get();
+            while(node) {
+                allRelatedUuids.insert(node->uuid());
+                node = node->parent();
+            }
+        }
+    }
+
+    if (!repopulationRequest.modifiedUuids  // no specific UUIDs requested -> all are relevant
+        || std::ranges::any_of(*repopulationRequest.modifiedUuids, [&](auto const &uuid){ return allRelatedUuids.contains(uuid); })
+    ) {
+        if (auto result = unpopulateLinked(); !result)
+            return std::unexpected(result.error());
+
+        if (auto result = populateLinked(); !result)
+            return std::unexpected(result.error());
+    }
+
+    return {};
 }
 }

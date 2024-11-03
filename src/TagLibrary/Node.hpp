@@ -64,7 +64,6 @@ public:
     [[nodiscard]] virtual bool canBeDragged() const;
     [[nodiscard]] virtual bool canAcceptDrop() const; // does it accept drops at all?
     [[nodiscard]] virtual bool canAcceptDrop(NodeType type) const; // does it accept drops of this node type?
-    [[nodiscard]] virtual std::expected<void, QString> afterDrop();
 
     // fields
     [[nodiscard]] virtual QString name(bool raw = false, bool editMode = false) const;
@@ -130,6 +129,15 @@ public:
     [[nodiscard]] QString path(PathFlags flags = PathFlag::IncludeNames) const;
 
     bool deinitialized() const;
+
+    struct RepopulationRequest {
+        // nullopt means there's no specific UUIDs modified - meaning all links should be considered outdated
+        // empty list means no nodes were modified - meaning no links should be considered outdated
+        // non-empty list means only these nodes were modified - meaning only links to these (or links themselves) should be considered outdated
+        std::optional<QList<QUuid>> modifiedUuids;
+    };
+    [[nodiscard]] virtual std::expected<void, QString> repopulateLinked(RepopulationRequest const &repopulationRequest = {});
+    [[nodiscard]] std::expected<void, QString> repopulateLinkedRecursive(RepopulationRequest const &repopulationRequest = {});
 
 signals:
     void aboutToRemove();

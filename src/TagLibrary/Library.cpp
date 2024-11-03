@@ -240,6 +240,18 @@ std::expected<void, QString> Library::init() {
             menu.addAction(ui->actionLinkTo);
             menu.addAction(ui->actionLinkReset);
             menu.addAction(ui->actionComment);
+
+            // TODO: remove after the issues are fixed
+            menu.addSeparator();
+            connect(menu.addAction("[bug workaround] repopulate linked"), &QAction::triggered, [this]{
+                auto index = ui->treeTags->currentIndex();
+                if (index.isValid()) {
+                    auto sourceIndex = model_->mapToSource(index);
+                    auto &node = libraryModel_->fromIndex(sourceIndex);
+                    if (auto result = node.repopulateLinked(); !result)
+                        QMessageBox::critical(this, tr("Repopulate failed"), result.error());
+                }
+            });
         } else {
             menu.addAction(ui->actionToggleActive);
         }
