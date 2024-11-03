@@ -173,6 +173,7 @@ std::expected<void, QString> FileBrowser::init() {
     });
 
     ui->buttonRefresh->setDefaultAction(ui->actionRefresh);
+    ui->buttonMarkComplete->setDefaultAction(ui->actionMarkComplete);
     ui->buttonExclude->setDefaultAction(ui->actionExclude);
     ui->buttonShowExcluded->setDefaultAction(ui->actionShowExcluded);
 
@@ -183,9 +184,15 @@ std::expected<void, QString> FileBrowser::init() {
         emit directoryTreeModel->dataChanged(QModelIndex(), QModelIndex());
     });
 
+    connect(ui->actionMarkComplete, &QAction::triggered, this, [this]{
+        auto indexCurrent = ui->treeViewDirectories->currentIndex();
+        auto sourceIndexCurrent = directoryTreeProxyModel->mapToSource(indexCurrent);
+        auto fileCurrent = directoryTreeModel->filePath(sourceIndexCurrent);
+        fileTagsManager_.forFile(fileCurrent).setCompleteFlag(ui->actionMarkComplete->isChecked());
+    });
+
     connect(ui->actionExclude, &QAction::triggered, this, [this]{
         ZoneScoped;
-
         auto indexCurrent = ui->treeViewDirectories->currentIndex();
         auto sourceIndexCurrent = directoryTreeProxyModel->mapToSource(indexCurrent);
         auto fileCurrent = QDir(projectRootPath_).relativeFilePath(directoryTreeModel->filePath(sourceIndexCurrent));
@@ -366,13 +373,19 @@ void FileBrowser::fileSelectedHandle(QString const &path) {
     ZoneScoped;
 
     bool valid = !path.isNull();
+    bool isDir = valid ? QFileInfo(path).isDir() : false;
 
     if (valid)
         emit fileSelected(path);
 
+    ui->actionMarkComplete->setEnabled(valid && !isDir);
+    ui->actionMarkComplete->setChecked(false);
     ui->actionExclude->setEnabled(valid);
 
     if (valid) {
+        if (!isDir)
+            ui->actionMarkComplete->setChecked(fileTagsManager_.forFile(path).isCompleteFlag());
+
         auto relativeFilePath = QDir(projectRootPath_).relativeFilePath(path);
         ui->actionExclude->setChecked(isFileExcluded_(relativeFilePath));
     }

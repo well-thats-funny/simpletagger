@@ -43,7 +43,7 @@
                 <string notr="true"/>
                </property>
                <property name="icon">
-                <iconset resource="../icons.qrc">
+                <iconset resource="../../cmake-build-relwithdebinfo/src/icons.qrc">
                  <normaloff>:/icons/bx-plus-circle.svg</normaloff>:/icons/bx-plus-circle.svg</iconset>
                </property>
               </widget>
@@ -81,7 +81,7 @@
                 <string notr="true"/>
                </property>
                <property name="icon">
-                <iconset resource="../icons.qrc">
+                <iconset resource="../../cmake-build-relwithdebinfo/src/icons.qrc">
                  <normaloff>:/icons/bx-image.svg</normaloff>:/icons/bx-image.svg</iconset>
                </property>
               </widget>
@@ -258,7 +258,7 @@ border-radius: 5px;</string>
      <bool>true</bool>
     </property>
     <property name="icon">
-     <iconset resource="../icons.qrc">
+     <iconset resource="../../cmake-build-relwithdebinfo/src/icons.qrc">
       <normaloff>:/icons/bx-edit.svg</normaloff>:/icons/bx-edit.svg</iconset>
     </property>
     <property name="text">
@@ -276,7 +276,7 @@ border-radius: 5px;</string>
      <bool>true</bool>
     </property>
     <property name="icon">
-     <iconset resource="../icons.qrc">
+     <iconset resource="../../cmake-build-relwithdebinfo/src/icons.qrc">
       <normaloff>:/icons/bx-toggle-left.svg</normaloff>
       <normalon>:/icons/bx-toggle-right.svg</normalon>:/icons/bx-toggle-left.svg</iconset>
     </property>
@@ -292,7 +292,7 @@ border-radius: 5px;</string>
    </action>
    <action name="actionLinkTo">
     <property name="icon">
-     <iconset resource="../icons.qrc">
+     <iconset resource="../../cmake-build-relwithdebinfo/src/icons.qrc">
       <normaloff>:/icons/bx-link.svg</normaloff>:/icons/bx-link.svg</iconset>
     </property>
     <property name="text">
@@ -307,7 +307,7 @@ border-radius: 5px;</string>
    </action>
    <action name="actionRename">
     <property name="icon">
-     <iconset resource="../icons.qrc">
+     <iconset resource="../../cmake-build-relwithdebinfo/src/icons.qrc">
       <normaloff>:/icons/bx-rename.svg</normaloff>:/icons/bx-rename.svg</iconset>
     </property>
     <property name="text">
@@ -336,7 +336,7 @@ border-radius: 5px;</string>
    </action>
    <action name="actionCreateCollection">
     <property name="icon">
-     <iconset resource="../icons.qrc">
+     <iconset resource="../../cmake-build-relwithdebinfo/src/icons.qrc">
       <normaloff>:/icons/bx-book-add.svg</normaloff>:/icons/bx-book-add.svg</iconset>
     </property>
     <property name="text">
@@ -351,7 +351,7 @@ border-radius: 5px;</string>
    </action>
    <action name="actionCreateObject">
     <property name="icon">
-     <iconset resource="../icons.qrc">
+     <iconset resource="../../cmake-build-relwithdebinfo/src/icons.qrc">
       <normaloff>:/icons/bx-cube.svg</normaloff>:/icons/bx-cube.svg</iconset>
     </property>
     <property name="text">
@@ -366,7 +366,7 @@ border-radius: 5px;</string>
    </action>
    <action name="actionCreateLink">
     <property name="icon">
-     <iconset resource="../icons.qrc">
+     <iconset resource="../../cmake-build-relwithdebinfo/src/icons.qrc">
       <normaloff>:/icons/bx-link.svg</normaloff>:/icons/bx-link.svg</iconset>
     </property>
     <property name="text">
@@ -381,7 +381,7 @@ border-radius: 5px;</string>
    </action>
    <action name="actionLinkReset">
     <property name="icon">
-     <iconset resource="../icons.qrc">
+     <iconset resource="../../cmake-build-relwithdebinfo/src/icons.qrc">
       <normaloff>:/icons/bx-unlink.svg</normaloff>:/icons/bx-unlink.svg</iconset>
     </property>
     <property name="text">
@@ -396,7 +396,7 @@ border-radius: 5px;</string>
    </action>
    <action name="actionComment">
     <property name="icon">
-     <iconset resource="../icons.qrc">
+     <iconset resource="../../cmake-build-relwithdebinfo/src/icons.qrc">
       <normaloff>:/icons/bx-comment-edit.svg</normaloff>:/icons/bx-comment-edit.svg</iconset>
     </property>
     <property name="text">
@@ -419,7 +419,7 @@ border-radius: 5px;</string>
   </customwidget>
  </customwidgets>
  <resources>
-  <include location="../icons.qrc"/>
+  <include location="../../cmake-build-relwithdebinfo/src/icons.qrc"/>
  </resources>
  <connections/>
 </ui>

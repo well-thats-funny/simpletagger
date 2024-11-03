@@ -42,6 +42,9 @@ public:
     [[nodiscard]] std::optional<QRect> imageRegion() const;
     bool setImageRegion(std::optional<QRect> const &rect);
 
+    [[nodiscard]] bool isCompleteFlag() const;
+    void setCompleteFlag(bool value);
+
 private:
     void load();
     void save(bool backup);
@@ -51,6 +54,7 @@ private:
     bool backupOnSave_ = false;
     QStringList assignedTags_;
     std::optional<QRect> imageRegion_;
+    bool completeFlag_ = false;
 };
 
 class DirectoryTagsStats: public QObject {
@@ -70,6 +74,7 @@ public:
 
     QString path() const;
     int fileCount() const;
+    int filesFlaggedComplete() const;
     int filesWithTags() const;
     int totalTags() const;
 
@@ -89,6 +94,7 @@ private:
 
         bool loaded_ = false;
         int fileCount_ = 0;
+        int filesFlaggedComplete_ = 0;
         int filesWithTags_ = 0;
         int totalTags_ = 0;
     };

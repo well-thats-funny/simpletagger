@@ -168,27 +168,29 @@ QVariant DirectoryTreeModel::data(const QModelIndex &index, int role) const {
                 font.setItalic(isFileExcluded_(path));
                 return font;
             }
-            case Qt::ItemDataRole::BackgroundRole:
+            case Qt::ItemDataRole::BackgroundRole: {
+                std::vector<QBrush> brushes;
                 if (pathInfo.isDir()) {
                     if (auto &stats = fileTagsManager_.directoryStats(path); stats.ready()) {
-                        if (stats.filesWithTags() == stats.fileCount())
-                            return QBrush(QColor(0, 255, 0, 64), Qt::BrushStyle::SolidPattern);
+                        if (stats.filesFlaggedComplete() == stats.fileCount())
+                            brushes.emplace_back(QColor(0, 255, 0, 64), Qt::BrushStyle::SolidPattern);
                         else if (stats.filesWithTags() != 0)
-                            return QBrush(Qt::GlobalColor::green, Qt::BrushStyle::FDiagPattern);
-                        else
-                            return {};
+                            brushes.emplace_back(QColor(255, 255, 0, 64), Qt::BrushStyle::SolidPattern);
                     } else {
-                        return QBrush(Qt::GlobalColor::cyan, Qt::BrushStyle::FDiagPattern);
+                        brushes.emplace_back(Qt::GlobalColor::cyan, Qt::BrushStyle::FDiagPattern);
                     }
                 } else {
-                    if (isFileExcluded_(path))
-                        return QBrush(Qt::GlobalColor::gray, Qt::BrushStyle::SolidPattern);
+                    if (fileTagsManager_.forFile(path).isCompleteFlag())
+                        brushes.emplace_back(QColor(0, 255, 0, 64), Qt::BrushStyle::SolidPattern);
                     else if (fileTagsManager_.forFile(path).assignedTags().size() != 0)
-                        return QBrush(QColor(0, 255, 0, 64), Qt::BrushStyle::SolidPattern);
-                    else
-                        return QBrush();
+                        brushes.emplace_back(QColor(255, 255, 0, 64), Qt::BrushStyle::SolidPattern);
                 }
-                break;
+
+                if (isFileExcluded_(path))
+                    brushes.emplace_back(QColor(255, 0, 0, 255), Qt::BrushStyle::FDiagPattern);
+
+                return QVariant::fromValue(brushes);
+            }
             default:
                 return {};
         }

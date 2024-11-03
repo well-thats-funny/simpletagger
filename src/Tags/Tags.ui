@@ -130,7 +130,7 @@
   </layout>
   <action name="actionAssignedTagsAdd">
    <property name="icon">
-    <iconset resource="../icons.qrc">
+    <iconset resource="../../cmake-build-relwithdebinfo/src/icons.qrc">
      <normaloff>:/icons/bx-plus-circle.svg</normaloff>:/icons/bx-plus-circle.svg</iconset>
    </property>
    <property name="text">
@@ -145,7 +145,7 @@
   </action>
   <action name="actionAssignedTagsDelete">
    <property name="icon">
-    <iconset resource="../icons.qrc">
+    <iconset resource="../../cmake-build-relwithdebinfo/src/icons.qrc">
      <normaloff>:/icons/bx-minus-circle-red.svg</normaloff>:/icons/bx-minus-circle-red.svg</iconset>
    </property>
    <property name="text">
@@ -160,7 +160,7 @@
   </action>
   <action name="actionAssignedTagsClear">
    <property name="icon">
-    <iconset resource="../icons.qrc">
+    <iconset resource="../../cmake-build-relwithdebinfo/src/icons.qrc">
      <normaloff>:/icons/bx-eraser-red.svg</normaloff>:/icons/bx-eraser-red.svg</iconset>
    </property>
    <property name="text">
@@ -175,7 +175,7 @@
   </action>
  </widget>
  <resources>
-  <include location="../icons.qrc"/>
+  <include location="../../cmake-build-relwithdebinfo/src/icons.qrc"/>
  </resources>
  <connections/>
 </ui>

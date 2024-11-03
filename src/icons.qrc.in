@@ -5,6 +5,7 @@
     <file alias="bx-book-add.svg">${boxicons_SOURCE_DIR}/svg/regular/bx-book-add.svg</file>
     <file alias="bx-book-open.svg">${boxicons_SOURCE_DIR}/svg/regular/bx-book-open.svg</file>
     <file alias="bx-book.svg">${boxicons_SOURCE_DIR}/svg/regular/bx-book.svg</file>
+    <file alias="bx-check-circle.svg">${boxicons_SOURCE_DIR}/svg/regular/bx-check-circle.svg</file>
     <file alias="bx-comment-edit.svg">${boxicons_SOURCE_DIR}/svg/regular/bx-comment-edit.svg</file>
     <file alias="bx-cube.svg">${boxicons_SOURCE_DIR}/svg/regular/bx-cube.svg</file>
     <file alias="bx-edit.svg">${boxicons_SOURCE_DIR}/svg/regular/bx-edit.svg</file>

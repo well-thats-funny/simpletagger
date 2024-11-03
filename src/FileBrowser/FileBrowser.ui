@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>400</width>
-    <height>326</height>
+    <height>343</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -28,7 +28,7 @@
            <string notr="true"/>
           </property>
           <property name="icon">
-           <iconset resource="../icons.qrc">
+           <iconset resource="../../cmake-build-relwithdebinfo/src/icons.qrc">
             <normaloff>:/icons/bx-plus-circle.svg</normaloff>:/icons/bx-plus-circle.svg</iconset>
           </property>
          </widget>
@@ -42,7 +42,7 @@
            <string notr="true"/>
           </property>
           <property name="icon">
-           <iconset resource="../icons.qrc">
+           <iconset resource="../../cmake-build-relwithdebinfo/src/icons.qrc">
             <normaloff>:/icons/bx-minus-circle.svg</normaloff>:/icons/bx-minus-circle.svg</iconset>
           </property>
          </widget>
@@ -79,7 +79,7 @@
          </widget>
         </item>
         <item>
-         <layout class="QVBoxLayout" name="verticalLayout_2" stretch="2,0,0,0,0,2">
+         <layout class="QVBoxLayout" name="verticalLayout_2" stretch="2,0,0,0,0,0,0,2">
           <item>
            <spacer name="verticalSpacer_3">
             <property name="orientation">
@@ -95,6 +95,26 @@
           </item>
           <item>
            <widget class="QToolButton" name="buttonRefresh">
+            <property name="text">
+             <string notr="true"/>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <spacer name="verticalSpacer_4">
+            <property name="orientation">
+             <enum>Qt::Orientation::Vertical</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>20</width>
+              <height>40</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+          <item>
+           <widget class="QToolButton" name="buttonMarkComplete">
             <property name="text">
              <string notr="true"/>
             </property>
@@ -145,7 +165,7 @@
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset resource="../icons.qrc">
+    <iconset resource="../../cmake-build-relwithdebinfo/src/icons.qrc">
      <normaloff>:/icons/bx-hide.svg</normaloff>
      <normalon>:/icons/bx-show.svg</normalon>:/icons/bx-hide.svg</iconset>
    </property>
@@ -164,7 +184,7 @@
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset resource="../icons.qrc">
+    <iconset resource="../../cmake-build-relwithdebinfo/src/icons.qrc">
      <normaloff>:/icons/bx-block.svg</normaloff>:/icons/bx-block.svg</iconset>
    </property>
    <property name="text">
@@ -179,7 +199,7 @@
   </action>
   <action name="actionRefresh">
    <property name="icon">
-    <iconset resource="../icons.qrc">
+    <iconset resource="../../cmake-build-relwithdebinfo/src/icons.qrc">
      <normaloff>:/icons/bx-refresh.svg</normaloff>:/icons/bx-refresh.svg</iconset>
    </property>
    <property name="text">
@@ -187,6 +207,24 @@
    </property>
    <property name="toolTip">
     <string>Refresh complete directory tree</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::MenuRole::NoRole</enum>
+   </property>
+  </action>
+  <action name="actionMarkComplete">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="../../cmake-build-relwithdebinfo/src/icons.qrc">
+     <normaloff>:/icons/bx-check-circle.svg</normaloff>:/icons/bx-check-circle.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Mark as complete</string>
+   </property>
+   <property name="toolTip">
+    <string>Mark as complete</string>
    </property>
    <property name="menuRole">
     <enum>QAction::MenuRole::NoRole</enum>
@@ -201,7 +239,7 @@
   </customwidget>
  </customwidgets>
  <resources>
-  <include location="../icons.qrc"/>
+  <include location="../../cmake-build-relwithdebinfo/src/icons.qrc"/>
  </resources>
  <connections/>
 </ui>

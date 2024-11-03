@@ -28,6 +28,7 @@ namespace {
         APP = 2,
         TAGS = 3,
         REGION = 4,
+        COMPLETE_FLAG = 5
     };
 
     constexpr int valueFormatVersion = 1;
@@ -189,6 +190,19 @@ bool FileTags::setImageRegion(const std::optional<QRect> &rect) {
     return true;
 }
 
+bool FileTags::isCompleteFlag() const {
+    return completeFlag_;
+}
+
+void FileTags::setCompleteFlag(bool value) {
+    ZoneScoped;
+
+    if (value != completeFlag_) {
+        completeFlag_ = value;
+        save(backupOnSave_);
+    }
+}
+
 void FileTags::load() {
     ZoneScoped;
 
@@ -233,6 +247,13 @@ void FileTags::load() {
             }
         }
 
+        if (auto completeFlag = res->map.take(std::to_underlying(Key::COMPLETE_FLAG)); !completeFlag.isUndefined()) {
+            if (!completeFlag.isBool())
+                qWarning() << "Complete flag in" << tagsFilePath_ << "is not a bool, but" << cborTypeToString(completeFlag.type());
+            else
+                completeFlag_ = completeFlag.toBool();
+        }
+
         qDebug() << "Loading tags from" << tagsFilePath_<< ": done";
     }
 }
@@ -275,6 +296,8 @@ void FileTags::save(bool backup) {
             imageRegion_->left(), imageRegion_->top(), imageRegion_->right(), imageRegion_->bottom()
         });
 
+    map[std::to_underlying(Key::COMPLETE_FLAG)] = completeFlag_;
+
     QCborStreamWriter writer(&saveFile);
     map.toCborValue().toCbor(writer);
 
@@ -304,6 +327,15 @@ int DirectoryTagsStats::fileCount() const {
     QMutexLocker locker(&mutex_);
     return stats_.fileCount_ + std::ranges::fold_left_first(
             stats_.childrenStats_ | std::views::transform([](auto const &v){ return v.get().fileCount(); }),
+            std::plus<int>()
+    ).value_or(0);
+}
+
+int DirectoryTagsStats::filesFlaggedComplete() const {
+    ZoneScoped;
+    QMutexLocker locker(&mutex_);
+    return stats_.filesFlaggedComplete_  + std::ranges::fold_left_first(
+            stats_.childrenStats_ | std::views::transform([](auto const &v){ return v.get().filesFlaggedComplete(); }),
             std::plus<int>()
     ).value_or(0);
 }
@@ -362,6 +394,9 @@ void DirectoryTagsStats::reload() {
                 auto size = tags.assignedTags().size();
                 if (size != 0)
                     stats.filesWithTags_ += 1;
+
+                if (tags.isCompleteFlag())
+                    stats.filesFlaggedComplete_ += 1;
 
                 stats.totalTags_ += size;
             }
