@@ -141,7 +141,12 @@ void DirectoryStats::reload() {
             if (info.isDir()) {
                 stats.childrenStats_.push_back(manager_.directoryStats(info.filePath()));
             } else if (IMAGE_FILE_SUFFIXES.contains("."+info.suffix())) {
-                auto &tags = manager_.fileTagsManager_.forFile(info.absoluteFilePath());
+                auto tags = manager_.fileTagsManager_.forFile(info.absoluteFilePath());
+                if (!tags) {
+                    qWarning() << "Couldn't get tags information for file" << info.absoluteFilePath() << "; this data won't be taken into account for statistics calculation";
+                    continue;
+                }
+
                 bool isExcluded = manager_.project_->isExcludedFile(
                         QDir(manager_.project_->rootDir()).relativeFilePath(info.absoluteFilePath())
                 );
@@ -151,7 +156,7 @@ void DirectoryStats::reload() {
                 if (isExcluded)
                     stats.filesExcluded_ += 1;
 
-                auto size = tags.assignedTags().size();
+                auto size = tags->get().assignedTags().size();
                 if (size != 0) {
                     stats.filesWithTags_ += 1;
 
@@ -159,7 +164,7 @@ void DirectoryStats::reload() {
                         stats.filesWithTagsWithoutExcluded_ += 1;
                 }
 
-                if (tags.isCompleteFlag()) {
+                if (tags->get().isCompleteFlag()) {
                     stats.filesFlaggedComplete_ += 1;
 
                     if (!isExcluded)

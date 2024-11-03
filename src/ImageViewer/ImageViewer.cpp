@@ -140,6 +140,34 @@ void ImageViewer::loadFile(QString const &name) {
 
         ui->labelImagePath->setText(name);
 
+        QString toolTip;
+        toolTip += tr("%1<br>").arg(name);
+        toolTip += "<br>";
+
+        if (auto libraryUuid = fileEditor_.imageTagLibraryUuid())
+            toolTip += tr("Library: %1<br>").arg(libraryUuid->toString(QUuid::StringFormat::WithoutBraces));
+        else
+            toolTip += tr("Library: no data<br>");
+
+        auto libraryVersion = fileEditor_.imageTagLibraryVersion();
+        auto libraryVersionUuid = fileEditor_.imageTagLibraryVersionUuid();
+
+        QString libraryVersionStr;
+        if (libraryVersion && libraryVersionUuid)
+            libraryVersionStr = tr("Library version: %1 (%2)")
+                    .arg(*libraryVersion)
+                    .arg(libraryVersionUuid->toString(QUuid::StringFormat::WithoutBraces));
+        else if (libraryVersion)
+            libraryVersionStr = tr("Library version: %1").arg(*libraryVersion);
+        else if (libraryVersionUuid)
+            libraryVersionStr = tr("Library version: %1").arg(libraryVersionUuid->toString(QUuid::StringFormat::WithoutBraces));
+        else
+            libraryVersionStr = tr("Library version: no data");
+
+
+        toolTip += QString("%1<br>").arg(libraryVersionStr);
+        ui->labelImagePath->setToolTip(toolTip);
+
         QImage image(name);
         viewFilePixmapItem.emplace(QPixmap::fromImage(image));
         viewFilePixmapItem->setTransformationMode(Qt::SmoothTransformation);
@@ -259,6 +287,7 @@ void ImageViewer::unloadFile() {
     }
 
     ui->labelImagePath->clear();
+    ui->labelImagePath->setToolTip(QString());
 
     name_.clear();
 

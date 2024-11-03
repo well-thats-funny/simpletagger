@@ -512,6 +512,18 @@ Library::~Library() {
     disconnect(connectionModelDataChanged);
 }
 
+QUuid Library::getUuid() const {
+    return libraryUuid_;
+}
+
+int Library::getVersion() const {
+    return libraryVersion_;
+}
+
+QUuid Library::getVersionUuid() const {
+    return libraryVersionUuid_;
+}
+
 std::expected<void, QString> Library::saveContent(QIODevice &io) {
     ZoneScoped;
     gsl_Expects(!libraryUuid_.isNull());

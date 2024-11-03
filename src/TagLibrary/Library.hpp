@@ -41,8 +41,12 @@ public:
     static std::expected<std::unique_ptr<Library>, QString> create(Qt::WindowFlags flags = Qt::WindowFlags());
     ~Library() override;
 
-    std::expected<void, QString> saveContent(QIODevice &io);
-    std::expected<void, QString> loadContent(QIODevice &io);
+    [[nodiscard]] QUuid getUuid() const;
+    [[nodiscard]] int getVersion() const;
+    [[nodiscard]] QUuid getVersionUuid() const;
+
+    [[nodiscard]] std::expected<void, QString> saveContent(QIODevice &io);
+    [[nodiscard]] std::expected<void, QString> loadContent(QIODevice &io);
 
     [[nodiscard]] QByteArray saveUiState() const;
     void restoreUiState(QByteArray const &value);

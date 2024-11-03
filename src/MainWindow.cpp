@@ -311,9 +311,19 @@ std::expected<void, QString> MainWindow::setupFileBrowserDock() {
                         .arg(QDir(projectRootPath).relativeFilePath(targetFile))
                         .arg(QFileInfo(targetFile).fileName())
         ) == QMessageBox::StandardButton::Yes) {
-            auto &source = fileTagsManager.forFile(sourceFile);
-            auto &target = fileTagsManager.forFile(targetFile);
-            if (auto result = target.overwriteAssignedTags(source.assignedTags()); !result)
+            auto doCopy = [&]()->std::expected<void, QString> {
+                auto source = fileTagsManager.forFile(sourceFile);
+                if (!source)
+                    return std::unexpected(source.error());
+
+                auto target = fileTagsManager.forFile(targetFile);
+                if (!target)
+                    return std::unexpected(target.error());
+
+                return target->get().overwriteAssignedTags(source->get().assignedTags());
+            };
+
+            if (auto result = doCopy(); !result)
                 QMessageBox::critical(
                         this,
                         tr("Copy tags failed"),
@@ -357,6 +367,7 @@ std::expected<void, QString> MainWindow::setupTagLibraryDock() {
     } else {
         tagLibrary = &**result;
         tagLibraryDock = addDock(std::move(*result), tr("Tag library"), ads::DockWidgetArea::RightDockWidgetArea);
+        fileTagsManager.setTagLibrary(tagLibrary);
     }
 
     QDir appData{QStandardPaths::writableLocation(QStandardPaths::StandardLocation::AppDataLocation)};
@@ -645,7 +656,10 @@ void MainWindow::load(QString const &path, bool forceReopen) {
 
         if (!path.isEmpty()) {
             // must be set first, as many components rely on it
-            fileEditor_->setFile(path);
+            if (auto result = fileEditor_->setFile(path); !result) {
+                QMessageBox::critical(this, tr("Cannot load file"), result.error());
+                return;
+            }
 
             if (!QFileInfo(path).isDir())
                 loadFile(path);

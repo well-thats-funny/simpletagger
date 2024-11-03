@@ -195,7 +195,8 @@ std::expected<void, QString> FileBrowser::init() {
     });
 
     connect(ui->actionMarkComplete, &QAction::triggered, this, [this]{
-        fileEditor_.setCompleteFlag(ui->actionMarkComplete->isChecked());
+        if (auto result = fileEditor_.setCompleteFlag(ui->actionMarkComplete->isChecked()); !result)
+            QMessageBox::critical(this, tr("Could not set complete"), result.error());
     });
 
     connect(ui->actionExclude, &QAction::triggered, this, [this]{

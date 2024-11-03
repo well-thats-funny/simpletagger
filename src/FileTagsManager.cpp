@@ -20,6 +20,8 @@
 #include "Project.hpp"
 #include "Utility.hpp"
 
+#include "TagLibrary/Library.hpp"
+
 namespace {
     // TODO: FileBrowser.cpp and DirectoryStats.cpp has a similar list (just with wildcards added), merge?
     const QStringList IMAGE_FILE_SUFFIXES = {".jpg", ".png"};
@@ -29,7 +31,10 @@ namespace {
         APP = 2,
         TAGS = 3,
         REGION = 4,
-        COMPLETE_FLAG = 5
+        COMPLETE_FLAG = 5,
+        TAG_LIBRARY_UUID = 6,
+        TAG_LIBRARY_VERSION = 7,
+        TAG_LIBRARY_VERSION_UUID = 8
     };
 
     constexpr int valueFormatVersion = 1;
@@ -80,10 +85,20 @@ namespace {
 }
 
 FileTags::FileTags(FileTagsManager &manager, QString const &tagsFilePath, bool const backupOnSave):
-    manager_(manager), tagsFilePath_(tagsFilePath), backupOnSave_(backupOnSave) {
-    ZoneScoped;
+    manager_(manager), tagsFilePath_(tagsFilePath), backupOnSave_(backupOnSave) {}
 
-    load();
+std::expected<void, QString> FileTags::init() {
+    ZoneScoped;
+    return load();
+}
+
+std::expected<std::unique_ptr<FileTags>, QString>
+FileTags::create(FileTagsManager &manager, QString const &tagsFilePath, bool const backupOnSave) {
+    std::unique_ptr<FileTags> self{new FileTags(manager, tagsFilePath, backupOnSave)};
+    if (auto result = self->init(); !result)
+        return std::unexpected(result.error());
+    else
+        return self;
 }
 
 FileTags::~FileTags() = default;
@@ -94,7 +109,7 @@ QStringList FileTags::assignedTags() const {
     return assignedTags_;
 }
 
-bool FileTags::setTags(QStringList const &tags, bool const value) {
+std::expected<bool, QString> FileTags::setTags(QStringList const &tags, bool const value) {
     ZoneScoped;
 
     bool changed = false;
@@ -103,13 +118,16 @@ bool FileTags::setTags(QStringList const &tags, bool const value) {
         if (setTag_(tag, value))
             changed = true;
 
-    if (changed)
-        save(backupOnSave_);
+    if (changed) {
+        if (auto result = save(backupOnSave_); !result)
+            // TODO: it'd be probably appropriate to rollback changes here
+            return std::unexpected(result.error());
+    }
 
     return changed;
 }
 
-bool FileTags::setTagsState(std::unordered_map<QString, bool> const &state) {
+std::expected<bool, QString> FileTags::setTagsState(std::unordered_map<QString, bool> const &state) {
     ZoneScoped;
 
     bool changed = false;
@@ -118,8 +136,11 @@ bool FileTags::setTagsState(std::unordered_map<QString, bool> const &state) {
         if (setTag_(tag, value))
             changed = true;
 
-    if (changed)
-        save(backupOnSave_);
+    if (changed) {
+        if (auto result = save(backupOnSave_); !result)
+            // TODO: it'd be probably appropriate to rollback changes here
+            return std::unexpected(result.error());
+    }
 
     return changed;
 }
@@ -128,11 +149,14 @@ std::expected<void, QString> FileTags::overwriteAssignedTags(QStringList const &
     ZoneScoped;
 
     assignedTags_ = activeTags;
-    save(backupOnSave_);
-    return {};
+    if (auto result = save(backupOnSave_); !result)
+        // TODO: it'd be probably appropriate to rollback changes here
+        return std::unexpected(result.error());
+    else
+        return {};
 }
 
-bool FileTags::moveAssignedTag(int const sourcePositon, int const targetPosition) {
+std::expected<bool, QString> FileTags::moveAssignedTag(int const sourcePositon, int const targetPosition) {
     ZoneScoped;
     gsl_Expects(sourcePositon >= 0);
     gsl_Expects(sourcePositon < assignedTags_.size());
@@ -143,16 +167,24 @@ bool FileTags::moveAssignedTag(int const sourcePositon, int const targetPosition
         return false;
 
     assignedTags_.move(sourcePositon, targetPosition);
-    save(backupOnSave_);
+
+    if (auto result = save(backupOnSave_); !result)
+        // TODO: it'd be probably appropriate to rollback changes here
+        return std::unexpected(result.error());
+
     return true;
 }
 
-bool FileTags::clearTags() {
+std::expected<bool, QString> FileTags::clearTags() {
     ZoneScoped;
 
     if (!assignedTags_.empty()) {
         assignedTags_.clear();
-        save(backupOnSave_);
+
+        if (auto result = save(backupOnSave_); !result)
+            // TODO: it'd be probably appropriate to rollback changes here
+            return std::unexpected(result.error());
+
         return true;
     } else {
         return false;
@@ -180,14 +212,18 @@ std::optional<QRect> FileTags::imageRegion() const {
     return imageRegion_;
 }
 
-bool FileTags::setImageRegion(const std::optional<QRect> &rect) {
+std::expected<bool, QString> FileTags::setImageRegion(const std::optional<QRect> &rect) {
     ZoneScoped;
 
     if (rect == imageRegion_)
         return false;
 
     imageRegion_ = rect;
-    save(backupOnSave_);
+
+    if (auto result = save(backupOnSave_); !result)
+        // TODO: it'd be probably appropriate to rollback changes here
+        return std::unexpected(result.error());
+
     return true;
 }
 
@@ -195,16 +231,33 @@ bool FileTags::isCompleteFlag() const {
     return completeFlag_;
 }
 
-void FileTags::setCompleteFlag(bool value) {
+std::expected<void, QString> FileTags::setCompleteFlag(bool const value) {
     ZoneScoped;
 
     if (value != completeFlag_) {
         completeFlag_ = value;
-        save(backupOnSave_);
+
+        if (auto result = save(backupOnSave_); !result)
+            // TODO: it'd be probably appropriate to rollback changes here
+            return std::unexpected(result.error());
     }
+
+    return {};
 }
 
-void FileTags::load() {
+std::optional<QUuid> FileTags::tagLibraryUuid() const {
+    return tagLibraryUuid_;
+}
+
+std::optional<int> FileTags::tagLibraryVersion() const {
+    return tagLibraryVersion_;
+}
+
+std::optional<QUuid> FileTags::tagLibraryVersionUuid() const {
+    return tagLibraryVersionUuid_;
+}
+
+std::expected<void, QString> FileTags::load() {
     ZoneScoped;
 
     assignedTags_.clear();
@@ -214,19 +267,17 @@ void FileTags::load() {
         qDebug() << "Loading tags from" << tagsFilePath_;
 
         auto res = loadTagsFile(tagsFilePath_);
-        if (!res.has_value()) {
-            qWarning() << "Could not load tags from" << tagsFilePath_ << ":" << res.error();
-            return;
-        }
+        if (!res)
+            return std::unexpected(res.error());
 
         if (auto itTags = res->map.find(std::to_underlying(Key::TAGS)); itTags != res->map.end()) {
-            if (!itTags->isArray())
-                qWarning() << "Tags value in" << tagsFilePath_ << "is not an array";
-            else {
+            if (!itTags->isArray()) {
+                return std::unexpected(QObject::tr("Tags value in %1 is not an array").arg(tagsFilePath_));
+            } else {
                 auto array = itTags->toArray();
                 for(auto const &tag: array) {
                     if (!tag.isString())
-                        qWarning() << "Tag" << tag << "is not a string";
+                        return std::unexpected(QObject::tr("Tag %1 is not a string, but ").arg(cborTypeToString(tag.type())));
                     else
                         assignedTags_.append(tag.toString());
                 }
@@ -237,7 +288,7 @@ void FileTags::load() {
             if (!region.isArray()
                 || region.toArray().size() != 4
                 || !std::ranges::all_of(region.toArray(), [](auto const &v){ return v.isInteger(); })) {
-                qWarning() << "Region value in" << tagsFilePath_ << "is not a 4-element integer array";
+                return std::unexpected(QObject::tr("Region value in %1 is not a 4-element integer array").arg(tagsFilePath_));
             } else {
                 auto array = region.toArray();
                 auto left = array.at(0).toInteger();
@@ -250,17 +301,44 @@ void FileTags::load() {
 
         if (auto completeFlag = res->map.take(std::to_underlying(Key::COMPLETE_FLAG)); !completeFlag.isUndefined()) {
             if (!completeFlag.isBool())
-                qWarning() << "Complete flag in" << tagsFilePath_ << "is not a bool, but" << cborTypeToString(completeFlag.type());
+                return std::unexpected(QObject::tr("Complete flag in %1 is not a bool, but %2").arg(tagsFilePath_).arg(cborTypeToString(completeFlag.type())));
             else
                 completeFlag_ = completeFlag.toBool();
         }
 
+        if (auto libraryUuid = res->map.take(std::to_underlying(Key::TAG_LIBRARY_UUID)); !libraryUuid.isUndefined()) {
+            if (!libraryUuid.isByteArray())
+                return std::unexpected(QObject::tr("Library UUID is not a byte array but %1").arg(
+                        cborTypeToString(libraryUuid.type())));
+            tagLibraryUuid_ = QUuid::fromRfc4122(libraryUuid.toByteArray());
+        }
+
+        if (auto libraryVersion = res->map.take(std::to_underlying(Key::TAG_LIBRARY_VERSION)); !libraryVersion.isUndefined()) {
+            if (!libraryVersion.isInteger())
+                return std::unexpected(QObject::tr("Library version is not an integer but %1").arg(
+                        cborTypeToString(libraryVersion.type())));
+            tagLibraryVersion_ = libraryVersion.toInteger();
+        }
+
+        if (auto libraryVersionUuid = res->map.take(std::to_underlying(Key::TAG_LIBRARY_VERSION_UUID)); !libraryVersionUuid.isUndefined()) {
+            if (!libraryVersionUuid.isByteArray())
+                return std::unexpected(QObject::tr("Library version UUID is not a byte array but %1").arg(
+                        cborTypeToString(libraryVersionUuid.type())));
+            tagLibraryVersionUuid_ = QUuid::fromRfc4122(libraryVersionUuid.toByteArray());
+        }
+
         qDebug() << "Loading tags from" << tagsFilePath_<< ": done";
     }
+
+    return {};
 }
 
-void FileTags::save(bool backup) {
+std::expected<void, QString> FileTags::save(bool backup) {
     ZoneScoped;
+    gsl_Expects(manager_.tagLibrary_);
+    tagLibraryUuid_ = manager_.tagLibrary_->getUuid();
+    tagLibraryVersion_ = manager_.tagLibrary_->getVersion();
+    tagLibraryVersionUuid_ = manager_.tagLibrary_->getVersionUuid();
 
     // First, open the original file, to see whether it can be opened without warnings. In case there were warnings,
     // we first backup the original file
@@ -282,9 +360,8 @@ void FileTags::save(bool backup) {
     qDebug() << "Saving tags to" << tagsFilePath_;
 
     QSaveFile saveFile{tagsFilePath_};
-    if (!saveFile.open(QIODevice::WriteOnly)) {
-        qWarning() << "Could not open for writing:" << tagsFilePath_;
-    }
+    if (!saveFile.open(QIODevice::WriteOnly))
+        return std::unexpected(QObject::tr("Could not open %1 for writing: %2").arg(tagsFilePath_).arg(saveFile.errorString()));
 
     QCborMap map;
     map[std::to_underlying(Key::FORMAT_VERSION)] = valueFormatVersion;
@@ -299,27 +376,37 @@ void FileTags::save(bool backup) {
 
     map[std::to_underlying(Key::COMPLETE_FLAG)] = completeFlag_;
 
+    // optionals always set at the beginning of this function
+    map[std::to_underlying(Key::TAG_LIBRARY_UUID)] = tagLibraryUuid_->toRfc4122();
+    map[std::to_underlying(Key::TAG_LIBRARY_VERSION)] = *tagLibraryVersion_;
+    map[std::to_underlying(Key::TAG_LIBRARY_VERSION_UUID)] = tagLibraryVersionUuid_->toRfc4122();
+
     QCborStreamWriter writer(&saveFile);
     map.toCborValue().toCbor(writer);
 
     qDebug() << "Preparatory saving time:" << saveTimer.elapsed() << "ms";
 
     if (!saveFile.commit())
-        qWarning() << "Failed to write file" << tagsFilePath_;
+        return std::unexpected(QObject::tr("Failed to write file %1: %2").arg(tagsFilePath_).arg(saveFile.errorString()));
 
     qDebug() << "Total saving time:" << saveTimer.elapsed() << "ms";
     emit manager_.tagsSaved(backupCount);
+    return {};
 }
 
 FileTagsManager::FileTagsManager(bool const backupOnSave): backupOnSave_(backupOnSave) {}
 
 FileTagsManager::~FileTagsManager() = default;
 
+void FileTagsManager::setTagLibrary(TagLibrary::Library *const library) {
+    tagLibrary_ = library;
+}
+
 void FileTagsManager::setBackupOnSave(bool value) {
     this->backupOnSave_ = value;
 }
 
-FileTags &FileTagsManager::forFile(const QString &path) {
+std::expected<std::reference_wrapper<FileTags>, QString> FileTagsManager::forFile(const QString &path) {
     ZoneScoped;
     gsl_Expects(!QFileInfo(path).isDir());
     gsl_Expects(QFileInfo(path).isAbsolute());
@@ -333,7 +420,10 @@ FileTags &FileTagsManager::forFile(const QString &path) {
 
         auto tagsFilePath = fileInfo.dir().filePath(fileInfo.fileName() + Constants::TAGS_FILE_SUFFIX.toString());
 
-        std::tie(it, std::ignore) = fileTags_.emplace(path, std::make_unique<FileTags>(*this, tagsFilePath, backupOnSave_));
+        if (auto result = FileTags::create(*this, tagsFilePath, backupOnSave_); !result)
+            return std::unexpected(result.error());
+        else
+            std::tie(it, std::ignore) = fileTags_.emplace(path, std::move(*result));
     }
 
     return *it->second;

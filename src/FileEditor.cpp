@@ -50,21 +50,26 @@ void FileEditor::resetProject() {
     }
 }
 
-void FileEditor::setFile(QString const &file) {
+std::expected<void, QString> FileEditor::setFile(QString const &file) {
     ZoneScoped;
     gsl_Expects(!file.isEmpty());
 
     if (file != currentFile_) {
         currentFile_ = file;
 
-        if (!QFileInfo(file).isDir())
-            fileTags = std::ref(fileTagsManager.forFile(file));
+        if (!QFileInfo(file).isDir()) {
+            if (auto result = fileTagsManager.forFile(file); !result)
+                return std::unexpected(result.error());
+            else
+                fileTags = *result;
+        }
 
         emit tagsChanged();
         emit imageRegionChanged();
     }
 
     gsl_Ensures(!currentFile_.isEmpty());
+    return {};
 }
 
 void FileEditor::resetFile() {
@@ -114,7 +119,7 @@ std::optional<QStringList> FileEditor::assignedTags() const {
     return fileTags.transform([](auto const &v){ return v.get().assignedTags(); });
 }
 
-bool FileEditor::moveAssignedTag(int const sourcePositon, int const targetPosition) {
+std::expected<bool, QString> FileEditor::moveAssignedTag(int const sourcePositon, int const targetPosition) {
     return fileTags.transform([&](auto &v){ return v.get().moveAssignedTag(sourcePositon, targetPosition); }).value_or(false);
 }
 
@@ -131,10 +136,10 @@ std::optional<QRect> FileEditor::imageRegion() const {
     return fileTags.and_then([&](auto const &v){ return v.get().imageRegion(); });
 }
 
-void FileEditor::setCompleteFlag(bool const complete) {
+std::expected<void, QString> FileEditor::setCompleteFlag(bool const complete) {
     ZoneScoped;
     gsl_Expects(fileTags);
-    fileTags->get().setCompleteFlag(complete);
+    return fileTags->get().setCompleteFlag(complete);
 }
 
 bool FileEditor::isCompleteFlag() const {
@@ -167,4 +172,22 @@ bool FileEditor::isFileExcluded() const {
 
     auto relative = QDir(project_->rootDir()).relativeFilePath(currentFile_);
     return project_->isExcludedFile(relative);
+}
+
+std::optional<QUuid> FileEditor::imageTagLibraryUuid() const {
+    ZoneScoped;
+    gsl_Expects(fileTags);
+    return fileTags->get().tagLibraryUuid();
+}
+
+std::optional<int> FileEditor::imageTagLibraryVersion() const {
+    ZoneScoped;
+    gsl_Expects(fileTags);
+    return fileTags->get().tagLibraryVersion();
+}
+
+std::optional<QUuid> FileEditor::imageTagLibraryVersionUuid() const {
+    ZoneScoped;
+    gsl_Expects(fileTags);
+    return fileTags->get().tagLibraryVersionUuid();
 }

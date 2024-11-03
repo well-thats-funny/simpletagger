@@ -38,7 +38,7 @@ public:
     void setProject(Project &project);
     void resetProject();
 
-    void setFile(QString const &file);
+    [[nodiscard]] std::expected<void, QString> setFile(QString const &file);
     void resetFile();
 
     [[nodiscard]] std::optional<bool> isTagged(QString const &tag) const;
@@ -47,16 +47,20 @@ public:
     void clearTags();
 
     [[nodiscard]] std::optional<QStringList> assignedTags() const;
-    [[nodiscard]] bool moveAssignedTag(int sourcePositon, int targetPosition);
+    [[nodiscard]] std::expected<bool, QString> moveAssignedTag(int sourcePositon, int targetPosition);
 
     void setImageRegion(std::optional<QRect> const &rect);
     [[nodiscard]] std::optional<QRect> imageRegion() const;
 
-    void setCompleteFlag(bool complete);
+    [[nodiscard]] std::expected<void, QString> setCompleteFlag(bool complete);
     [[nodiscard]] bool isCompleteFlag() const;
 
     [[nodiscard]] std::expected<void, QString> setFileExcluded(bool excluded);
     [[nodiscard]] bool isFileExcluded() const;
+
+    [[nodiscard]] std::optional<QUuid> imageTagLibraryUuid() const;
+    [[nodiscard]] std::optional<int> imageTagLibraryVersion() const;
+    [[nodiscard]] std::optional<QUuid> imageTagLibraryVersionUuid() const;
 
 signals:
     void projectSaved(std::optional<int> backupCount);

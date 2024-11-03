@@ -73,7 +73,10 @@ class FileTags:
         2: 'app',
         3: 'tags',
         4: 'region',
-        5: 'tags_wizard_data'
+        5: 'complete_flag',
+        6: 'library_uuid',
+        7: 'library_version',
+        8: 'library_version_uuid'
     }
 
     @classmethod

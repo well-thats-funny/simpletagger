@@ -130,31 +130,34 @@ QVariant DirectoryTreeModel::data(const QModelIndex &index, int role) const {
                 if (pathInfo.isDir()) {
                     return formatDirectoryStats(directoryStatsManager_.directoryStats(path), pathInfo.fileName());
                 } else {
-                    auto &fileTags = fileTagsManager_.forFile(path);
                     QString label = pathInfo.fileName() + "\n";
-                    if (auto rect = fileTags.imageRegion()) {
-                        int w = rect->right() - rect->left();
-                        int h = rect->bottom() - rect->top();
-                        auto ar = toMinimalAspectRatio(QSize(w, h));
-                        label += QString("region: %1x%2 (%3:%4)\n").arg(
-                                QString::number(w), QString::number(h),
-                                QString::number(ar.width()), QString::number(ar.height())
-                        );
-                    }
-                    else
-                        label += "no assigned region\n";
 
-                    static constexpr int maxTags = 5;
-                    if (fileTags.assignedTags().isEmpty())
-                        label += "no assigned tags";
-                    else if (fileTags.assignedTags().size() <= maxTags)
-                        label += QString("%1 tags: %2")
-                                .arg(fileTags.assignedTags().size())
-                                .arg(fileTags.assignedTags().join(", "));
-                    else
-                        label += QString("%1 tags: %2, ...")
-                                .arg(fileTags.assignedTags().size())
-                                .arg(fileTags.assignedTags().sliced(0, maxTags).join(", "));
+                    if (auto fileTags = fileTagsManager_.forFile(path); !fileTags) {
+                        label += fileTags.error();
+                    } else {
+                        if (auto rect = fileTags->get().imageRegion()) {
+                            int w = rect->right() - rect->left();
+                            int h = rect->bottom() - rect->top();
+                            auto ar = toMinimalAspectRatio(QSize(w, h));
+                            label += QString("region: %1x%2 (%3:%4)\n").arg(
+                                    QString::number(w), QString::number(h),
+                                    QString::number(ar.width()), QString::number(ar.height())
+                            );
+                        } else
+                            label += "no assigned region\n";
+
+                        static constexpr int maxTags = 5;
+                        if (fileTags->get().assignedTags().isEmpty())
+                            label += "no assigned tags";
+                        else if (fileTags->get().assignedTags().size() <= maxTags)
+                            label += QString("%1 tags: %2")
+                                    .arg(fileTags->get().assignedTags().size())
+                                    .arg(fileTags->get().assignedTags().join(", "));
+                        else
+                            label += QString("%1 tags: %2, ...")
+                                    .arg(fileTags->get().assignedTags().size())
+                                    .arg(fileTags->get().assignedTags().sliced(0, maxTags).join(", "));
+                    }
                     return label;
                 }
             case Qt::ItemDataRole::DecorationRole:
@@ -187,10 +190,14 @@ QVariant DirectoryTreeModel::data(const QModelIndex &index, int role) const {
                         brushes.emplace_back(Qt::GlobalColor::cyan, Qt::BrushStyle::FDiagPattern);
                     }
                 } else {
-                    if (fileTagsManager_.forFile(path).isCompleteFlag())
-                        brushes.emplace_back(QColor(0, 255, 0, 64), Qt::BrushStyle::SolidPattern);
-                    else if (fileTagsManager_.forFile(path).assignedTags().size() != 0)
-                        brushes.emplace_back(QColor(255, 255, 0, 64), Qt::BrushStyle::SolidPattern);
+                    if (auto tags = fileTagsManager_.forFile(path); !tags) {
+                        qWarning() << "Couldn't get tags for" << path << ":" << tags.error();
+                    } else {
+                        if (tags->get().isCompleteFlag())
+                            brushes.emplace_back(QColor(0, 255, 0, 64), Qt::BrushStyle::SolidPattern);
+                        else if (tags->get().assignedTags().size() != 0)
+                            brushes.emplace_back(QColor(255, 255, 0, 64), Qt::BrushStyle::SolidPattern);
+                    }
                 }
 
                 if (isFileExcluded_(path))

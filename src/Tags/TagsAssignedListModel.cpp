@@ -88,7 +88,12 @@ bool TagsAssignedListModel::moveRows(QModelIndex const &sourceParent, int source
     gsl_Expects(!sourceParent.isValid());
     gsl_Expects(!destinationParent.isValid());
     gsl_Expects(count == 1); // NOTE: this will only support moving single items for now
-    return fileEditor_.moveAssignedTag(sourceRow, destinationChild);
+    if (auto result = fileEditor_.moveAssignedTag(sourceRow, destinationChild); !result) {
+        QMessageBox::critical(qApp->activeWindow(), tr("Move tags failed"), result.error());
+        return false;
+    } else {
+        return *result;
+    }
 }
 
 QModelIndexList TagsAssignedListModel::setHighlightedTags(QStringList const &tags) {
