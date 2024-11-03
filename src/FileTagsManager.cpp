@@ -385,7 +385,7 @@ void DirectoryTagsStats::emitStatsUpdate() {
 }
 
 FileTagsManager::FileTagsManager(bool const backupOnSave): backupOnSave_(backupOnSave) {
-    directoryStatsThreadPool_.setMaxThreadCount(4); // TODO: configurable?
+    directoryStatsThreadPool_.setMaxThreadCount(8); // TODO: configurable?
 }
 
 FileTagsManager::~FileTagsManager() {
