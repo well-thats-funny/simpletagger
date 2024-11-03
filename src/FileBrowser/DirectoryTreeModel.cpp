@@ -122,6 +122,7 @@ QVariant DirectoryTreeModel::data(const QModelIndex &index, int role) const {
     if (index.column() == 0) {
         switch (role) {
             case Qt::ItemDataRole::DisplayRole:
+            case Qt::ItemDataRole::ToolTipRole:
                 if (pathInfo.isDir()) {
                     return formatDirectoryStats(fileTagsManager_.directoryStats(path));
                 } else {
