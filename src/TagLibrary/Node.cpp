@@ -224,6 +224,20 @@ bool Node::isVirtual() const {
     return false;
 }
 
+bool Node::isHidden() const {
+    return false;
+}
+
+bool Node::canSetHidden() const {
+    return false;
+}
+
+std::expected<void, QString> Node::setHidden(bool const) {
+    assert(!canSetHidden() && "If canSet* has been overriden to return true, also set* should be overriden");
+    assert(canSetHidden() && "This function shouldn't be called if the respective canSet* returned false");
+    return std::unexpected(tr("Cannot set hidde flag on this object type"));
+}
+
 std::vector<QBrush> Node::background(bool const editMode) const {
     ZoneScoped;
 

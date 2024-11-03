@@ -116,6 +116,10 @@ public:
     [[nodiscard]] virtual NodeType type() const = 0;
     [[nodiscard]] virtual bool isVirtual() const;
 
+    [[nodiscard]] virtual bool isHidden() const;
+    [[nodiscard]] virtual bool canSetHidden() const;
+    [[nodiscard]] virtual std::expected<void, QString> setHidden(bool hidden);
+
     [[nodiscard]] virtual std::vector<QBrush> background(bool editMode) const;
 
     [[nodiscard]] std::expected<QString, QString> tooltip(bool editMode) const;

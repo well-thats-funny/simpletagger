@@ -110,6 +110,20 @@ QUuid NodeSerializable::uuid() const {
     return uuid_;
 }
 
+bool NodeSerializable::isHidden() const {
+    return hidden_;
+}
+
+bool NodeSerializable::canSetHidden() const {
+    return true;
+}
+
+std::expected<void, QString> NodeSerializable::setHidden(bool const hidden) {
+    hidden_ = hidden;
+    emit persistentDataChanged();
+    return {};
+}
+
 std::expected<QCborValue, QString> NodeSerializable::save() const {
     ZoneScoped;
 
@@ -156,15 +170,23 @@ std::expected<void, QString> NodeSerializable::saveNodeData(QCborMap &map) const
     ZoneScoped;
     map[std::to_underlying(Format::NodeKey::Type)] = std::to_underlying(type());
     map[std::to_underlying(Format::NodeKey::Uuid)] = uuid_.toRfc4122();
+    map[std::to_underlying(Format::NodeKey::Hidden)] = hidden_;
     return {};
 }
 
 std::expected<void, QString> NodeSerializable::loadNodeData(QCborMap &map) {
     ZoneScoped;
+
     auto uuid = map.take(std::to_underlying(Format::NodeKey::Uuid));
     if (!uuid.isByteArray())
         return std::unexpected(QObject::tr("UUID element is not a byte array but %1").arg(cborTypeToString(uuid.type())));
     uuid_ = QUuid::fromRfc4122(uuid.toByteArray());
+
+    auto hidden = map.take(std::to_underlying(Format::NodeKey::Hidden));
+    if (!hidden.isBool())
+        return std::unexpected(QObject::tr("Hidden element is not a bool but %1").arg(cborTypeToString(uuid.type())));
+    hidden_ = hidden.toBool();
+
     return {};
 }
 }

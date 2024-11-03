@@ -16,36 +16,18 @@
 */
 #pragma once
 
-namespace TagLibrary::Format {
-Q_NAMESPACE
+namespace TagLibrary {
+class FilterProxyModel: public QSortFilterProxyModel {
+public:
+    using QSortFilterProxyModel::QSortFilterProxyModel;
+    ~FilterProxyModel() override;
 
-enum class TopLevelKey {
-    FormatVersion = 1,
-    App = 2,
-    RootNode = 3
+    void setEditMode(bool editMode);
+
+protected:
+    bool filterAcceptsRow(int sourceRow, QModelIndex const &sourceParent) const override;
+
+private:
+    bool editMode_ = false;
 };
-
-constexpr unsigned int formatVersion = 1;
-static constexpr QAnyStringView app = "SIMPLETAGGER-CXX";
-
-enum class NodeKey {
-    Type = 1,
-    Children = 2,
-    Name = 3,
-    Icon = 4,
-    Uuid = 5,
-    LinkTo = 6,
-    Tags = 7,
-    Comment = 8,
-    Hidden = 9,
-};
-
-enum class NodeType {
-    Root = 1,
-    Collection = 2,
-    Object = 3,
-    Link = 4
-};
-Q_ENUM_NS(NodeType);
-
 }

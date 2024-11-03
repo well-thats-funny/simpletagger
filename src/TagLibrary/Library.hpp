@@ -20,6 +20,7 @@ class Ui_Library;
 
 namespace TagLibrary {
 class Model;
+class FilterProxyModel;
 class SelectionHelperProxyModel;
 class NodeRoot;
 
@@ -58,8 +59,12 @@ signals:
     void tagsActiveChanged(QStringList const &tags, bool active);
 
 private:
+    QModelIndex toLibraryModelIndex(QModelIndex const &viewModelIndex);
+    QModelIndex toViewModelIndex(QModelIndex const &libraryModelIndex);
+
     std::unique_ptr<Ui_Library> ui;
     std::unique_ptr<Model> libraryModel_;
+    std::unique_ptr<FilterProxyModel> filterModel_;
     std::unique_ptr<SelectionHelperProxyModel> model_;
     QString transferLabel_;
     QIcon transferIcon_;

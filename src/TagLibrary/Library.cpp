@@ -17,6 +17,7 @@
 #include "Library.hpp"
 
 #include "CommentEditor.hpp"
+#include "FilterProxyModel.hpp"
 #include "Format.hpp"
 #include "Logging.hpp"
 #include "Model.hpp"
@@ -32,6 +33,7 @@ Library::Library(Qt::WindowFlags const flags):
         QWidget(nullptr, flags),
         ui(std::make_unique<Ui_Library>()),
         libraryModel_(std::make_unique<Model>()),
+        filterModel_(std::make_unique<FilterProxyModel>()),
         model_(std::make_unique<SelectionHelperProxyModel>()) {}
 
 std::expected<void, QString> Library::init() {
@@ -44,7 +46,8 @@ std::expected<void, QString> Library::init() {
         finishSelection(true);
     });
 
-    model_->setSourceModel(&*libraryModel_);
+    filterModel_->setSourceModel(&*libraryModel_);
+    model_->setSourceModel(&*filterModel_);
 
     connect(&*libraryModel_, &Model::persistentDataChanged, this, &Library::contentChanged);
 
@@ -56,16 +59,16 @@ std::expected<void, QString> Library::init() {
                                , active);
     });
 
-    ui->treeTags->setModel(&*model_);
-    ui->treeTags->setRootIndex(QModelIndex());
-
     if (auto result = libraryModel_->resetRoot(); !result)
         return std::unexpected(result.error());
+
+    ui->treeTags->setModel(&*model_);
+    ui->treeTags->setRootIndex(QModelIndex());
 
     auto createNode = [this](NodeType const nodeType){
         ZoneScoped;
         auto index = ui->treeTags->currentIndex();
-        auto sourceIndex = model_->mapToSource(index);
+        auto sourceIndex = toLibraryModelIndex(index);
         if (auto result = libraryModel_->insertNode(nodeType, sourceIndex); !result) {
             qCWarning(LoggingCategory);
             QMessageBox::critical(
@@ -87,7 +90,7 @@ std::expected<void, QString> Library::init() {
         ZoneScoped;
         auto index = ui->treeTags->currentIndex();
         if (index.isValid()) {
-            auto sourceIndex = model_->mapToSource(index);
+            auto sourceIndex = toLibraryModelIndex(index);
             auto count = libraryModel_->recursiveRowCount(sourceIndex);
 
             QMessageBox messageBox;
@@ -118,7 +121,7 @@ std::expected<void, QString> Library::init() {
         auto link = ui->treeTags->currentIndex();
         selectionJumpBackTo = link;
         auto isSelectable = [this](auto const &candidate) {
-            auto sourceCandidate = model_->mapToSource(candidate);
+            auto sourceCandidate = toLibraryModelIndex(candidate);
             return libraryModel_->fromIndex(sourceCandidate).canBeLinkedTo();
         };
         model_->requestSelection(isSelectable);
@@ -126,8 +129,8 @@ std::expected<void, QString> Library::init() {
                 isSelectable,
                 [this, link](auto const &target){
                     ZoneScoped;
-                    auto &linkNode = libraryModel_->fromIndex(model_->mapToSource(link));
-                    auto &targetNode = libraryModel_->fromIndex(model_->mapToSource(target));
+                    auto &linkNode = libraryModel_->fromIndex(toLibraryModelIndex(link));
+                    auto &targetNode = libraryModel_->fromIndex(toLibraryModelIndex(target));
                     if (QMessageBox::question(
                             this, tr("Link"), tr("Link <b>%1</b> to <b>%2</b>?").arg(linkNode.name(true), targetNode.name(true))
                     ) == QMessageBox::StandardButton::Yes) {
@@ -153,7 +156,7 @@ std::expected<void, QString> Library::init() {
     connect(ui->actionLinkReset, &QAction::triggered, this, [this]{
         ZoneScoped;
         auto link = ui->treeTags->currentIndex();
-        auto &linkNode = libraryModel_->fromIndex(model_->mapToSource(link));
+        auto &linkNode = libraryModel_->fromIndex(toLibraryModelIndex(link));
         assert(linkNode.linkTo());
         auto targetNode = libraryModel_->fromUuid(*linkNode.linkTo());
         if (!targetNode) {
@@ -181,7 +184,7 @@ std::expected<void, QString> Library::init() {
         ZoneScoped;
 
         auto index = ui->treeTags->selectionModel()->currentIndex();
-        auto sourceIndex = model_->mapToSource(index);
+        auto sourceIndex = toLibraryModelIndex(index);
         auto &node = libraryModel_->fromIndex(sourceIndex);
 
         auto dialog = CommentEditor::create(this);
@@ -208,10 +211,22 @@ std::expected<void, QString> Library::init() {
         }
     });
 
+    connect(ui->actionSetHidden, &QAction::triggered, this, [this]{
+        ZoneScoped;
+
+        auto index = ui->treeTags->selectionModel()->currentIndex();
+        auto sourceIndex = toLibraryModelIndex(index);
+        auto &node = libraryModel_->fromIndex(sourceIndex);
+
+        gsl_Expects(node.canSetHidden());
+        if (auto result = node.setHidden(ui->actionSetHidden->isChecked()); !result)
+            QMessageBox::critical(this, tr("Set hidden failed"), result.error());
+    });
+
     connect(ui->actionToggleActive, &QAction::triggered, this, [this]{
         ZoneScoped;
         auto index = ui->treeTags->selectionModel()->currentIndex();
-        auto sourceIndex = model_->mapToSource(index);
+        auto sourceIndex = toLibraryModelIndex(index);
         auto &node = libraryModel_->fromIndex(sourceIndex);
         auto active = node.active();
         gsl_Expects(active);
@@ -240,13 +255,14 @@ std::expected<void, QString> Library::init() {
             menu.addAction(ui->actionLinkTo);
             menu.addAction(ui->actionLinkReset);
             menu.addAction(ui->actionComment);
+            menu.addAction(ui->actionSetHidden);
 
             // TODO: remove after the issues are fixed
             menu.addSeparator();
             connect(menu.addAction("[bug workaround] repopulate linked"), &QAction::triggered, [this]{
                 auto index = ui->treeTags->currentIndex();
                 if (index.isValid()) {
-                    auto sourceIndex = model_->mapToSource(index);
+                    auto sourceIndex = toLibraryModelIndex(index);
                     auto &node = libraryModel_->fromIndex(sourceIndex);
                     if (auto result = node.repopulateLinked(); !result)
                         QMessageBox::critical(this, tr("Repopulate failed"), result.error());
@@ -272,6 +288,7 @@ std::expected<void, QString> Library::init() {
     ui->buttonLinkTo->setDefaultAction(ui->actionLinkTo);
     ui->buttonLinkReset->setDefaultAction(ui->actionLinkReset);
     ui->buttonComment->setDefaultAction(ui->actionComment);
+    ui->buttonSetHidden->setDefaultAction(ui->actionSetHidden);
 
     ui->buttonToggleActive->setDefaultAction(ui->actionToggleActive);
 
@@ -321,9 +338,10 @@ std::expected<void, QString> Library::init() {
         ui->buttonsEditMode->setStyleSheet(editMode ? QString("QWidget#%1 {%2}").arg(ui->buttonsEditMode->objectName(), editableBorderStyle) : "");
 
         libraryModel_->setEditMode(editMode);
+        filterModel_->setEditMode(editMode);
 
         auto index = ui->treeTags->selectionModel()->currentIndex();
-        auto indexSource = model_->mapToSource(index);
+        auto indexSource = toLibraryModelIndex(index);
         auto &node = libraryModel_->fromIndex(indexSource);
 
         ui->buttonsNormalMode->setVisible(!editMode);
@@ -339,6 +357,9 @@ std::expected<void, QString> Library::init() {
         ui->actionLinkTo->setEnabled(editMode && node.canLinkTo());
         ui->actionLinkReset->setEnabled(editMode && node.canLinkTo() && node.linkTo() && !node.linkTo()->isNull());
         ui->actionComment->setEnabled(editMode && node.canSetComment());
+
+        ui->actionSetHidden->setEnabled(editMode && node.canSetHidden());
+        ui->actionSetHidden->setChecked(node.isHidden());
 
         ui->actionToggleActive->setEnabled(!editMode && node.canSetActive());
         if (ui->actionToggleActive->isEnabled()) {
@@ -421,6 +442,7 @@ std::expected<void, QString> Library::init() {
             description += tr("<b>Active:</b> %1<br>").arg(activeStr);
 
             description += tr("<b>Comment: </b> %1<br>").arg(node.comment());
+            description += tr("<b>Hidden:</b> %1<br>").arg(node.isHidden() ? tr("yes"): tr("no"));
 
             ui->labelDescriptionText->setText(description);
             emit tagsSelected(node.tags()
@@ -611,16 +633,26 @@ std::expected<void, QString> Library::setHighlightedTags(QStringList const &tags
                 while (nodeSourceIndex.isValid()) {
                     nodeSourceIndex = nodeSourceIndex.parent(); // don't expand the provided node itself, only it's ascendants
 
-                    auto nodeIndex = model_->mapFromSource(nodeSourceIndex);
+                    auto nodeIndex = toViewModelIndex(nodeSourceIndex);
                     ui->treeTags->setExpanded(nodeIndex, true);
                 }
             }
 
             // scroll to the first of the provided indices
-            ui->treeTags->scrollTo(model_->mapFromSource(result->front()));
+            ui->treeTags->scrollTo(toViewModelIndex(result->front()));
         }
     }
 
     return {};
+}
+
+QModelIndex Library::toLibraryModelIndex(QModelIndex const &viewModelIndex) {
+    auto filterModelIndex = model_->mapToSource(viewModelIndex);
+    return filterModel_->mapToSource(filterModelIndex);
+}
+
+QModelIndex Library::toViewModelIndex(QModelIndex const &libraryModelIndex) {
+    auto filterModelIndex = filterModel_->mapFromSource(libraryModelIndex);
+    return model_->mapFromSource(filterModelIndex);
 }
 }

@@ -78,6 +78,8 @@ public:
     [[nodiscard]] std::expected<void, QString> load(QCborValue const &value);
 
     void setEditMode(bool editMode);
+    [[nodiscard]] bool editMode() const;
+
     [[nodiscard]] std::expected<void, QString> setTagsActive(QStringList const &tags);
     void setRowHeight(int rowHeight);
     [[nodiscard]] std::expected<QModelIndexList, QString> setHighlightedTags(QStringList const &tags);

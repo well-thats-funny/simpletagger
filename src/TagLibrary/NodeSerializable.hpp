@@ -34,6 +34,10 @@ public:
 
     [[nodiscard]] QUuid uuid() const;
 
+    [[nodiscard]] bool isHidden() const override;
+    [[nodiscard]] bool canSetHidden() const override;
+    [[nodiscard]] std::expected<void, QString> setHidden(bool hidden) override;
+
     // persistence
     [[nodiscard]] std::expected<QCborValue, QString> save() const;
     [[nodiscard]] static std::expected<std::unique_ptr<NodeSerializable>, QString> load(QCborValue const &value, Model &model, NodeSerializable const *parent);
@@ -44,5 +48,6 @@ protected:
 
 private:
     QUuid uuid_;
+    bool hidden_ = false;
 };
 }

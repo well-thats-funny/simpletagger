@@ -121,6 +121,8 @@ add_executable(simpletagger-cxx
         FileBrowser/Utility.cpp
         VerticalLine.cpp
         VerticalLine.hpp
+        TagLibrary/FilterProxyModel.cpp
+        TagLibrary/FilterProxyModel.hpp
 )
 target_compile_options(simpletagger-cxx PRIVATE -Wall -Wextra -Werror)
 

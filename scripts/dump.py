@@ -22,7 +22,8 @@ class TagLibrary:
         5: 'uuid',
         6: 'link_to',
         7: 'tags',
-        8: 'comment'
+        8: 'comment',
+        9: 'hidden'
     }
 
     node_types = {

@@ -55,12 +55,14 @@ std::pair<QModelIndex, QModelIndex> Model::toIndexRange(Node const &node) const 
 
 Node &Model::fromIndex(QModelIndex const &index) const {
     ZoneScoped;
+    gsl_Expects(!index.isValid() || index.model() == this);
+    gsl_Expects(root);
 
     if (!index.isValid())
         return *root;
 
     auto ptr = reinterpret_cast<Node *>(index.internalPointer());
-    assert(ptr);
+    gsl_Ensures(ptr);
     return *ptr;
 }
 
@@ -96,6 +98,9 @@ std::expected<std::reference_wrapper<Node>, QString> Model::fromUuid(const QUuid
 
 QModelIndex Model::index(int const row, int const column, QModelIndex const &parent) const {
     ZoneScoped;
+    gsl_Expects(!parent.isValid() || parent.model() == this);
+
+    QModelIndex result;
 
     auto &parentNode = fromIndex(parent);
     if (auto child = parentNode.childOfRow(row); !child) {
@@ -105,12 +110,15 @@ QModelIndex Model::index(int const row, int const column, QModelIndex const &par
         qCDebug(LoggingCategory) << "index(" << row << column << parentNode.name() << ") -> "
                                  << "createIndex(" << row << column << child->get().name() << ")";
 
-        return createIndex(row, column, &child->get());
+        result = createIndex(row, column, &child->get());
+        gsl_Ensures(result.model() == this);
+        return result;
     }
 }
 
 QModelIndex Model::parent(QModelIndex const &child) const {
     ZoneScoped;
+    gsl_Expects(!child.isValid() || child.model() == this);
 
     auto &childNode = fromIndex(child);
     if (&childNode == &*root)
@@ -121,6 +129,7 @@ QModelIndex Model::parent(QModelIndex const &child) const {
 
 int Model::rowCount(QModelIndex const &parent) const {
     ZoneScoped;
+    gsl_Expects(!parent.isValid() || parent.model() == this);
 
     auto &node = fromIndex(parent);
     if (auto size = node.childrenCount(); !size) {
@@ -134,6 +143,7 @@ int Model::rowCount(QModelIndex const &parent) const {
 
 int Model::recursiveRowCount(const QModelIndex &parent) const {
     ZoneScoped;
+    gsl_Expects(!parent.isValid() || parent.model() == this);
 
     int directCount = rowCount(parent);
     int count = directCount;
@@ -144,8 +154,9 @@ int Model::recursiveRowCount(const QModelIndex &parent) const {
     return count;
 }
 
-int Model::columnCount(const QModelIndex &) const {
+int Model::columnCount(const QModelIndex &parent) const {
     ZoneScoped;
+    gsl_Expects(!parent.isValid() || parent.model() == this);
     return QMetaEnum::fromType<Column>().keyCount();
 }
 
@@ -171,6 +182,7 @@ QVariant Model::headerData(int section, Qt::Orientation orientation, int role) c
 
 Qt::ItemFlags Model::flags(QModelIndex const &index) const {
     ZoneScoped;
+    gsl_Expects(!index.isValid() || index.model() == this);
 
     Qt::ItemFlags flags = Qt::ItemFlag::ItemIsEnabled | Qt::ItemFlag::ItemIsSelectable;
 
@@ -201,6 +213,7 @@ Qt::ItemFlags Model::flags(QModelIndex const &index) const {
 
 QVariant Model::data(const QModelIndex &index, int role) const {
     ZoneScoped;
+    gsl_Expects(!index.isValid() || index.model() == this);
 
     auto &node = fromIndex(index);
 
@@ -271,12 +284,15 @@ QVariant Model::data(const QModelIndex &index, int role) const {
             break;
         }
         case Qt::ItemDataRole::FontRole: {
+            QFont font;
+
             if (!editMode_) {
-                QFont font;
                 if (auto active = node.active())
                     font.setBold(*active);
-                result = font;
             }
+
+            font.setItalic(node.isHidden());
+            result = font;
             break;
         }
         case Qt::ItemDataRole::BackgroundRole: {
@@ -293,6 +309,7 @@ QVariant Model::data(const QModelIndex &index, int role) const {
 
 bool Model::setData(const QModelIndex &index, const QVariant &value, int role) {
     ZoneScoped;
+    gsl_Expects(!index.isValid() || index.model() == this);
 
     switch (role) {
         case Qt::ItemDataRole::EditRole: {
@@ -333,11 +350,13 @@ bool Model::setData(const QModelIndex &index, const QVariant &value, int role) {
 
 bool Model::canInsertNode(NodeType const type, QModelIndex const &parent) const {
     ZoneScoped;
+    gsl_Expects(!parent.isValid() || parent.model() == this);
     return fromIndex(parent).canInsertChild(type);
 }
 
 std::expected<QModelIndex, QString> Model::insertNode(NodeType type, QModelIndex const &parent) {
     ZoneScoped;
+    gsl_Expects(!parent.isValid() || parent.model() == this);
 
     auto parentNode = &fromIndex(parent);
     auto parentNodeStored = dynamic_cast<NodeSerializable *>(parentNode);
@@ -363,6 +382,7 @@ std::expected<QModelIndex, QString> Model::insertNode(NodeType type, QModelIndex
 
 [[nodiscard]] bool Model::canRemoveRow(QModelIndex const &index) {
     ZoneScoped;
+    gsl_Expects(!index.isValid() || index.model() == this);
     auto &node = fromIndex(index);
     gsl_Expects(node.parent());
     return node.parent()->canRemoveChildren(index.row(), 1);
@@ -370,6 +390,7 @@ std::expected<QModelIndex, QString> Model::insertNode(NodeType type, QModelIndex
 
 bool Model::removeRows(int const row, int const count, const QModelIndex &parent) {
     ZoneScoped;
+    gsl_Expects(!parent.isValid() || parent.model() == this);
     auto &node = fromIndex(parent);
     node.removeChildren(row, count);
     return true;
@@ -381,6 +402,7 @@ QStringList Model::mimeTypes() const {
 
 QMimeData *Model::mimeData(QModelIndexList const &indexes) const {
     ZoneScoped;
+    gsl_Expects(std::ranges::all_of(indexes, [&](auto const &i){ return i.model() == this; }));
 
     if (indexes.empty())
         return nullptr;
@@ -490,6 +512,7 @@ bool Model::canDropMimeData(
 ) const {
     ZoneScoped;
     gsl_Expects(data);
+    gsl_Expects(!parent.isValid() || parent.model() == this);
 
     if (action != Qt::DropAction::MoveAction)
         return false;
@@ -523,6 +546,7 @@ bool Model::dropMimeData(
 ) {
     ZoneScoped;
     gsl_Expects(data);
+    gsl_Expects(!parent.isValid() || parent.model() == this);
     (void)column; // gsl_Expects(column == -1); // TODO: which one?
 
     if (action != Qt::DropAction::MoveAction)
@@ -653,6 +677,10 @@ void Model::setEditMode(bool const editMode) {
         editMode_ = editMode;
         emit dataChanged(QModelIndex(), QModelIndex()); // force redraw
     }
+}
+
+bool Model::editMode() const {
+    return editMode_;
 }
 
 std::expected<void, QString> Model::setTagsActive(QStringList const &tags) {

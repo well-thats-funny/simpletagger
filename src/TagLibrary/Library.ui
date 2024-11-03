@@ -104,6 +104,13 @@
                 </property>
                </widget>
               </item>
+              <item>
+               <widget class="QToolButton" name="buttonSetHidden">
+                <property name="text">
+                 <string notr="true"/>
+                </property>
+               </widget>
+              </item>
              </layout>
             </widget>
            </item>
@@ -415,6 +422,24 @@ border-radius: 5px;</string>
   <action name="actionaaa">
    <property name="text">
     <string>aaa</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::MenuRole::NoRole</enum>
+   </property>
+  </action>
+  <action name="actionSetHidden">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="../../cmake-build-relwithdebinfo/src/icons.qrc">
+     <normaloff>:/icons/bx-hide.svg</normaloff>:/icons/bx-hide.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Make this element hidden</string>
+   </property>
+   <property name="toolTip">
+    <string>Make this element hidden (in normal view)</string>
    </property>
    <property name="menuRole">
     <enum>QAction::MenuRole::NoRole</enum>

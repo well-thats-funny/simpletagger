@@ -14,38 +14,30 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
-#pragma once
+#include "FilterProxyModel.hpp"
 
-namespace TagLibrary::Format {
-Q_NAMESPACE
+#include "Logging.hpp"
+#include "Model.hpp"
 
-enum class TopLevelKey {
-    FormatVersion = 1,
-    App = 2,
-    RootNode = 3
-};
+namespace TagLibrary {
+FilterProxyModel::~FilterProxyModel() = default;
 
-constexpr unsigned int formatVersion = 1;
-static constexpr QAnyStringView app = "SIMPLETAGGER-CXX";
+void FilterProxyModel::setEditMode(bool const editMode) {
+    if (editMode != editMode_) {
+        editMode_ = editMode;
+        invalidateRowsFilter();
+    }
+}
 
-enum class NodeKey {
-    Type = 1,
-    Children = 2,
-    Name = 3,
-    Icon = 4,
-    Uuid = 5,
-    LinkTo = 6,
-    Tags = 7,
-    Comment = 8,
-    Hidden = 9,
-};
+bool FilterProxyModel::filterAcceptsRow(int const sourceRow, QModelIndex const &sourceParent) const {
+    auto source = qobject_cast<Model*>(sourceModel());
+    gsl_Expects(source);
 
-enum class NodeType {
-    Root = 1,
-    Collection = 2,
-    Object = 3,
-    Link = 4
-};
-Q_ENUM_NS(NodeType);
-
+    if (editMode_) {
+        return true;
+    } else {
+        auto &node = source->fromIndex(source->index(sourceRow, 0, sourceParent));
+        return !node.isHidden();
+    }
+}
 }
