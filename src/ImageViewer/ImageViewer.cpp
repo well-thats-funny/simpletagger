@@ -35,8 +35,16 @@ std::expected<void, QString> ImageViewer::init() {
     ZoneScoped;
     ui->setupUi(this);
 
+    ui->buttonOpenExternal->setDefaultAction(ui->actionOpenExternal);
+    connect(ui->actionOpenExternal, &QAction::triggered, this, [this]{
+        ZoneScoped;
+        gsl_Expects(!name_.isEmpty());
+        if (!QDesktopServices::openUrl(QUrl::fromLocalFile(name_)))
+            QMessageBox::critical(this, tr("Open failed"), tr("Could not open file in external program: %1").arg(name_));
+    });
+
     ui->buttonRegionEdit->setDefaultAction(ui->actionRegionEdit);
-    connect(ui->actionRegionEdit, &QAction::triggered, this, [this](){
+    connect(ui->actionRegionEdit, &QAction::triggered, this, [this]{
         ZoneScoped;
         if (viewSelectionRectItem)
             viewSelectionRectItem->setEditable(ui->actionRegionEdit->isChecked());
@@ -124,105 +132,110 @@ void ImageViewer::restoreUiState(QByteArray const &value) {
 void ImageViewer::loadFile(QString const &name) {
     ZoneScoped;
 
-    unloadFile();
+    if (name != name_) {
+        unloadFile();
 
-    setEnabled(true);
+        name_ = name;
+        setEnabled(true);
 
-    ui->labelImagePath->setText(name);
+        ui->labelImagePath->setText(name);
 
-    QImage image(name);
-    viewFilePixmapItem.emplace(QPixmap::fromImage(image));
-    viewFilePixmapItem->setTransformationMode(Qt::SmoothTransformation);
+        QImage image(name);
+        viewFilePixmapItem.emplace(QPixmap::fromImage(image));
+        viewFilePixmapItem->setTransformationMode(Qt::SmoothTransformation);
 
-    viewFileScene.addItem(&*viewFilePixmapItem);
+        viewFileScene.addItem(&*viewFilePixmapItem);
 
-    auto viewSelectionRectItemUnique = std::make_unique<GraphicsSelectionRectItem>(image.rect(), image.rect());
+        auto viewSelectionRectItemUnique = std::make_unique<GraphicsSelectionRectItem>(image.rect(), image.rect());
 
-    auto a = [](QColor const &color, float const alpha){
-        QColor color2(color);
-        color2.setAlphaF(alpha);
-        return color2;
-    };
+        auto a = [](QColor const &color, float const alpha) {
+            QColor color2(color);
+            color2.setAlphaF(alpha);
+            return color2;
+        };
 
-    QColor colorArea(QColorConstants::DarkGray);
-    viewSelectionRectItemUnique->setAreaPen(QPen(colorArea, 10, Qt::PenStyle::SolidLine));
-    viewSelectionRectItemUnique->setAreaBrush(QBrush(a(colorArea, 0.75f), Qt::BrushStyle::FDiagPattern));
+        QColor colorArea(QColorConstants::DarkGray);
+        viewSelectionRectItemUnique->setAreaPen(QPen(colorArea, 10, Qt::PenStyle::SolidLine));
+        viewSelectionRectItemUnique->setAreaBrush(QBrush(a(colorArea, 0.75f), Qt::BrushStyle::FDiagPattern));
 
-    QColor editColorArea(QColorConstants::Red);
-    viewSelectionRectItemUnique->setEditAreaPen(QPen(editColorArea, 10, Qt::PenStyle::SolidLine));
-    viewSelectionRectItemUnique->setEditAreaBrush(QBrush(a(editColorArea, 0.5f), Qt::BrushStyle::FDiagPattern));
+        QColor editColorArea(QColorConstants::Red);
+        viewSelectionRectItemUnique->setEditAreaPen(QPen(editColorArea, 10, Qt::PenStyle::SolidLine));
+        viewSelectionRectItemUnique->setEditAreaBrush(QBrush(a(editColorArea, 0.5f), Qt::BrushStyle::FDiagPattern));
 
-    QColor editColorAreaError(QColorConstants::Yellow);
-    viewSelectionRectItemUnique->setEditErrorAreaPen(QPen(editColorAreaError, 10, Qt::PenStyle::SolidLine));
-    viewSelectionRectItemUnique->setEditErrorAreaBrush(QBrush(a(editColorAreaError, 0.5f), Qt::BrushStyle::SolidPattern));
+        QColor editColorAreaError(QColorConstants::Yellow);
+        viewSelectionRectItemUnique->setEditErrorAreaPen(QPen(editColorAreaError, 10, Qt::PenStyle::SolidLine));
+        viewSelectionRectItemUnique->setEditErrorAreaBrush(
+                QBrush(a(editColorAreaError, 0.5f), Qt::BrushStyle::SolidPattern));
 
-    QColor selectionCornerColor(QColorConstants::DarkRed);
-    viewSelectionRectItemUnique->setActiveCornerPen(QPen(selectionCornerColor, 10, Qt::PenStyle::SolidLine));
-    viewSelectionRectItemUnique->setActiveCornerBrush(QBrush(a(selectionCornerColor, 0.75f), Qt::BrushStyle::SolidPattern));
+        QColor selectionCornerColor(QColorConstants::DarkRed);
+        viewSelectionRectItemUnique->setActiveCornerPen(QPen(selectionCornerColor, 10, Qt::PenStyle::SolidLine));
+        viewSelectionRectItemUnique->setActiveCornerBrush(
+                QBrush(a(selectionCornerColor, 0.75f), Qt::BrushStyle::SolidPattern));
 
-    QFont selectionFont;
-    selectionFont.setPointSize(50);
-    selectionFont.setBold(true);
-    viewSelectionRectItemUnique->setLabelTextFont(selectionFont);
-    viewSelectionRectItemUnique->setLabelTextBrush(QBrush(QColorConstants::White, Qt::BrushStyle::SolidPattern));
-    viewSelectionRectItemUnique->setLabelAreaPen(viewSelectionRectItemUnique->editAreaPen());
-    viewSelectionRectItemUnique->setLabelAreaBrush(QBrush(a(editColorArea, 0.5f), Qt::BrushStyle::SolidPattern));
+        QFont selectionFont;
+        selectionFont.setPointSize(50);
+        selectionFont.setBold(true);
+        viewSelectionRectItemUnique->setLabelTextFont(selectionFont);
+        viewSelectionRectItemUnique->setLabelTextBrush(QBrush(QColorConstants::White, Qt::BrushStyle::SolidPattern));
+        viewSelectionRectItemUnique->setLabelAreaPen(viewSelectionRectItemUnique->editAreaPen());
+        viewSelectionRectItemUnique->setLabelAreaBrush(QBrush(a(editColorArea, 0.5f), Qt::BrushStyle::SolidPattern));
 
-    // TODO: configurable via settings/project settings?
-    QList<QSize> aspectRatios;
-    aspectRatios.append(QSize(1, 1));
-    aspectRatios.append(QSize(1, 2));
-    aspectRatios.append(QSize(2, 1));
-    aspectRatios.append(QSize(2, 3));
-    aspectRatios.append(QSize(3, 2));
-    aspectRatios.append(QSize(3, 4));
-    aspectRatios.append(QSize(4, 3));
-    aspectRatios.append(QSize(8, 5));
-    aspectRatios.append(QSize(5, 8));
-    aspectRatios.append(QSize(9, 16));
-    aspectRatios.append(QSize(16, 9));
-    aspectRatios.append(QSize(9, 21));
-    aspectRatios.append(QSize(21, 9));
-    viewSelectionRectItemUnique->setEnforcedAspectRatios(aspectRatios);
-    viewSelectionRectItemUnique->setEnforcedAspectRatiosEnabled(enforcedAspectRatiosEnabled_);
+        // TODO: configurable via settings/project settings?
+        QList<QSize> aspectRatios;
+        aspectRatios.append(QSize(1, 1));
+        aspectRatios.append(QSize(1, 2));
+        aspectRatios.append(QSize(2, 1));
+        aspectRatios.append(QSize(2, 3));
+        aspectRatios.append(QSize(3, 2));
+        aspectRatios.append(QSize(3, 4));
+        aspectRatios.append(QSize(4, 3));
+        aspectRatios.append(QSize(8, 5));
+        aspectRatios.append(QSize(5, 8));
+        aspectRatios.append(QSize(9, 16));
+        aspectRatios.append(QSize(16, 9));
+        aspectRatios.append(QSize(9, 21));
+        aspectRatios.append(QSize(21, 9));
+        viewSelectionRectItemUnique->setEnforcedAspectRatios(aspectRatios);
+        viewSelectionRectItemUnique->setEnforcedAspectRatiosEnabled(enforcedAspectRatiosEnabled_);
 
-    viewFileScene.addItem(viewSelectionRectItem = viewSelectionRectItemUnique.release());
-    viewSelectionRectItem->onRectChanged = [this](QRect const &rect, bool const final) {
-        ZoneScoped;
+        viewFileScene.addItem(viewSelectionRectItem = viewSelectionRectItemUnique.release());
+        viewSelectionRectItem->onRectChanged = [this](QRect const &rect, bool const final) {
+            ZoneScoped;
 
-        if (final)
-            fileEditor_.setImageRegion(rect);
+            if (final)
+                fileEditor_.setImageRegion(rect);
 
-        auto left = rect.left();
-        auto top = rect.top();
-        auto right = rect.right();
-        auto bottom = rect.bottom();
-        auto w = rect.right() - rect.left();
-        auto h = rect.bottom() - rect.top();
+            auto left = rect.left();
+            auto top = rect.top();
+            auto right = rect.right();
+            auto bottom = rect.bottom();
+            auto w = rect.right() - rect.left();
+            auto h = rect.bottom() - rect.top();
 
-        auto aspectRatio = toMinimalAspectRatio(QSize(w, h));
-        auto rw = aspectRatio.width();
-        auto rh = aspectRatio.height();
+            auto aspectRatio = toMinimalAspectRatio(QSize(w, h));
+            auto rw = aspectRatio.width();
+            auto rh = aspectRatio.height();
 
-        QString label;
-        label += QString("rect (%1, %2)(%3, %4)\n").arg(QString::number(left), QString::number(top),
-                                                        QString::number(right), QString::number(bottom));
-        label += QString("size %1x%2\n").arg(QString::number(w), QString::number(h));
-        label += QString("ratio %1:%2").arg(QString::number(rw), QString::number(rh));
-        viewSelectionRectItem->setLabelText(label);
-    };
+            QString label;
+            label += QString("rect (%1, %2)(%3, %4)\n").arg(QString::number(left), QString::number(top),
+                                                            QString::number(right), QString::number(bottom));
+            label += QString("size %1x%2\n").arg(QString::number(w), QString::number(h));
+            label += QString("ratio %1:%2").arg(QString::number(rw), QString::number(rh));
+            viewSelectionRectItem->setLabelText(label);
+        };
 
-    if (fileEditor_.imageRegion())
-        viewSelectionRectItem->setRect(*fileEditor_.imageRegion());
-    else
-        viewSelectionRectItem->setRect(image.rect());
+        if (fileEditor_.imageRegion())
+            viewSelectionRectItem->setRect(*fileEditor_.imageRegion());
+        else
+            viewSelectionRectItem->setRect(image.rect());
 
-    viewSelectionRectItem->setEditable(false);
+        viewSelectionRectItem->setEditable(false);
 
-    if (fileEditor_.imageRegion())
-        setZoomToFitSelectionRect();
-    else
-        setZoomToFitWholeImage();
+        if (fileEditor_.imageRegion())
+            setZoomToFitSelectionRect();
+        else
+            setZoomToFitWholeImage();
+    }
 }
 
 void ImageViewer::unloadFile() {

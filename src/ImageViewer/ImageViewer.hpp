@@ -55,6 +55,8 @@ public:
 private:
     std::unique_ptr<Ui_ImageViewer> ui;
 
+    QString name_;
+
     FileEditor &fileEditor_;
 
     bool enforcedAspectRatiosEnabled_ = false;

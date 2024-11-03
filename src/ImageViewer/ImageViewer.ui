@@ -61,10 +61,7 @@
           <string>Open the image in an external program</string>
          </property>
          <property name="text">
-          <string notr="true">...</string>
-         </property>
-         <property name="icon">
-          <iconset theme="document-open"/>
+          <string notr="true"/>
          </property>
         </widget>
        </item>
@@ -127,7 +124,7 @@
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset resource="../icons.qrc">
+    <iconset resource="../../cmake-build-relwithdebinfo/src/icons.qrc">
      <normaloff>:/icons/bx-area.svg</normaloff>:/icons/bx-area.svg</iconset>
    </property>
    <property name="text">
@@ -142,7 +139,7 @@
   </action>
   <action name="actionZoomIn">
    <property name="icon">
-    <iconset resource="../icons.qrc">
+    <iconset resource="../../cmake-build-relwithdebinfo/src/icons.qrc">
      <normaloff>:/icons/bx-zoom-in.svg</normaloff>:/icons/bx-zoom-in.svg</iconset>
    </property>
    <property name="text">
@@ -157,7 +154,7 @@
   </action>
   <action name="actionZoomOut">
    <property name="icon">
-    <iconset resource="../icons.qrc">
+    <iconset resource="../../cmake-build-relwithdebinfo/src/icons.qrc">
      <normaloff>:/icons/bx-zoom-out.svg</normaloff>:/icons/bx-zoom-out.svg</iconset>
    </property>
    <property name="text">
@@ -172,7 +169,7 @@
   </action>
   <action name="actionZoomToFitWholeImage">
    <property name="icon">
-    <iconset resource="../icons.qrc">
+    <iconset resource="../../cmake-build-relwithdebinfo/src/icons.qrc">
      <normaloff>:/icons/bx-zoom-black-square.svg</normaloff>:/icons/bx-zoom-black-square.svg</iconset>
    </property>
    <property name="text">
@@ -187,7 +184,7 @@
   </action>
   <action name="actionZoomToFitRegion">
    <property name="icon">
-    <iconset resource="../icons.qrc">
+    <iconset resource="../../cmake-build-relwithdebinfo/src/icons.qrc">
      <normaloff>:/icons/bx-zoom-red-square.svg</normaloff>:/icons/bx-zoom-red-square.svg</iconset>
    </property>
    <property name="text">
@@ -202,7 +199,7 @@
   </action>
   <action name="actionZoomReset">
    <property name="icon">
-    <iconset resource="../icons.qrc">
+    <iconset resource="../../cmake-build-relwithdebinfo/src/icons.qrc">
      <normaloff>:/icons/bx-zoom.svg</normaloff>:/icons/bx-zoom.svg</iconset>
    </property>
    <property name="text">
@@ -210,6 +207,20 @@
    </property>
    <property name="toolTip">
     <string>Reset zoom</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::MenuRole::NoRole</enum>
+   </property>
+  </action>
+  <action name="actionOpenExternal">
+   <property name="icon">
+    <iconset theme="QIcon::ThemeIcon::DocumentOpen"/>
+   </property>
+   <property name="text">
+    <string>Open in external application</string>
+   </property>
+   <property name="toolTip">
+    <string>Open in external application</string>
    </property>
    <property name="menuRole">
     <enum>QAction::MenuRole::NoRole</enum>
@@ -224,7 +235,7 @@
   </customwidget>
  </customwidgets>
  <resources>
-  <include location="../icons.qrc"/>
+  <include location="../../cmake-build-relwithdebinfo/src/icons.qrc"/>
  </resources>
  <connections/>
 </ui>
