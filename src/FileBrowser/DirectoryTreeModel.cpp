@@ -63,10 +63,12 @@ public:
 DirectoryTreeModel::DirectoryTreeModel(
         QStyle *const style,
         FileTagsProvider const &fileTagsProvider,
+        DirectoryStatsProvider const &directoryStatsProvider,
         IsFileExcluded const & isFileExcluded
 ):
         style{style},
         fileTagsProvider_{fileTagsProvider},
+        directoryStatsProvider_{directoryStatsProvider},
         isFileExcluded_{isFileExcluded},
         directoryIcon{style->standardPixmap(QStyle::SP_DirIcon)},
         cacheDir{QStandardPaths::standardLocations(QStandardPaths::StandardLocation::CacheLocation).at(0)+"/DirectoryTreeModelCache"} {
@@ -111,9 +113,22 @@ QVariant DirectoryTreeModel::data(const QModelIndex &index, int role) const {
     if (index.column() == 0) {
         switch (role) {
             case Qt::ItemDataRole::DisplayRole:
-                if (pathInfo.isDir())
-                    return pathInfo.fileName();
-                else {
+                if (pathInfo.isDir()) {
+                    auto stats = directoryStatsProvider_(path);
+                    return QString(
+                            "%1\n"
+                            "%2 / %3 files have tags (%4%)\n"
+                            "%5 total tags")
+                        .arg(pathInfo.fileName())
+                        .arg(stats.filesWithTags())
+                        .arg(stats.fileCount())
+                        // I don't know how to format numbers with Qt :<
+                        .arg(QString::fromStdString(std::format(
+                                "{:.2f}",
+                                (static_cast<float>(stats.filesWithTags())/static_cast<float>(stats.fileCount()))*100.f
+                        )))
+                        .arg(stats.totalTags());
+                } else {
                     auto &fileTags = fileTagsProvider_(path);
                     QString label = pathInfo.fileName() + "\n";
                     if (auto rect = fileTags.imageRegion()) {

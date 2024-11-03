@@ -16,6 +16,8 @@
 */
 #pragma once
 
+class FileTagsManager;
+
 class FileTags {
 public:
     FileTags(FileTags const &other) = delete;
@@ -50,6 +52,33 @@ private:
     std::optional<QRect> imageRegion_;
 };
 
+class DirectoryTagsStats {
+    friend class FileTagsManager;
+
+    DirectoryTagsStats(FileTagsManager &manager, QString const &path);
+
+public:
+    DirectoryTagsStats(DirectoryTagsStats const &other) = delete;
+    DirectoryTagsStats(DirectoryTagsStats &&other) = delete;
+    DirectoryTagsStats& operator=(DirectoryTagsStats const &other) = delete;
+    DirectoryTagsStats& operator=(DirectoryTagsStats &&other) = delete;
+
+    ~DirectoryTagsStats();
+
+    int fileCount() const;
+    int filesWithTags() const;
+    int totalTags() const;
+
+private:
+    void ensureLoaded() const;
+
+    FileTagsManager &manager_;
+    QString path_;
+    mutable bool loaded_ = false;
+    mutable int fileCount_ = 0;
+    mutable int filesWithTags_ = 0;
+    mutable int totalTags_ = 0;
+};
 
 class FileTagsManager {
 public:
@@ -64,6 +93,7 @@ public:
     void setBackupOnSave(bool value);
 
     FileTags &forFile(QString const &path);
+    DirectoryTagsStats directoryStats(QString const &path);
 
 private:
     bool backupOnSave_ = false;

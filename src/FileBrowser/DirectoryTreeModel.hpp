@@ -19,6 +19,7 @@
 #include <QStyle>
 
 class FileTags;
+class DirectoryTagsStats;
 
 namespace FileBrowser {
 class CustomFileIconProvider;
@@ -27,10 +28,16 @@ class DirectoryTreeModel: public QFileSystemModel {
     Q_OBJECT
 
     using FileTagsProvider = std::function<FileTags const &(QString const &)>;
+    using DirectoryStatsProvider = std::function<DirectoryTagsStats(QString const &)>;
     using IsFileExcluded = std::function<bool(QString const &)>;
 
 public:
-    DirectoryTreeModel(QStyle *style, FileTagsProvider const &fileTagsProvider, IsFileExcluded const & isFileExcluded);
+    DirectoryTreeModel(
+            QStyle *style,
+            FileTagsProvider const &fileTagsProvider,
+            DirectoryStatsProvider const &directoryStatsProvider,
+            IsFileExcluded const & isFileExcluded
+    );
     ~DirectoryTreeModel() override;
 
     int columnCount(const QModelIndex &parent) const override;
@@ -47,6 +54,7 @@ private:
 
     QStyle *style = nullptr;
     FileTagsProvider const fileTagsProvider_;
+    DirectoryStatsProvider const directoryStatsProvider_;
     IsFileExcluded isFileExcluded_;
     QPixmap directoryIcon;
     QString cacheDir;

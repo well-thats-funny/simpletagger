@@ -27,7 +27,12 @@ const QStringList NAME_FILTERS = {"*.jpg", "*.png"};
 }
 
 namespace FileBrowser {
-FileBrowser::FileBrowser(FileTagsProvider const &fileTagsProvider, IsFileExcluded const &isFileExcluded, Qt::WindowFlags const flags):
+FileBrowser::FileBrowser(
+        FileTagsProvider const &fileTagsProvider,
+        DirectoryStatsProvider const &directoryStatsProvider,
+        IsFileExcluded const &isFileExcluded,
+        Qt::WindowFlags const flags
+):
     QDockWidget(nullptr, flags),
     ui(std::make_unique<Ui_FileBrowser>()),
     isFileExcluded_(isFileExcluded),
@@ -35,6 +40,7 @@ FileBrowser::FileBrowser(FileTagsProvider const &fileTagsProvider, IsFileExclude
     directoryTreeModel(std::make_unique<DirectoryTreeModel>(
             style(),
             fileTagsProvider,
+            directoryStatsProvider,
             [this](auto const &file) { return isFileExcludedAbsPath(file); }
     )),
     directoryTreeProxyModel(std::make_unique<DirectoryTreeProxyModel>(
@@ -180,12 +186,15 @@ std::expected<void, QString> FileBrowser::init() {
 std::expected<std::unique_ptr<FileBrowser>, QString>
 FileBrowser::create(
         FileTagsProvider const &fileTagsProvider,
+        DirectoryStatsProvider const &directoryStatsProvider,
         IsFileExcluded const &isFileExcluded,
         Qt::WindowFlags flags
 ) {
     ZoneScoped;
 
-    auto self = std::unique_ptr<FileBrowser>(new FileBrowser{fileTagsProvider, isFileExcluded, flags});
+    auto self = std::unique_ptr<FileBrowser>(new FileBrowser{
+        fileTagsProvider, directoryStatsProvider, isFileExcluded, flags
+    });
     if (auto result = self->init(); !result)
         return std::unexpected(result.error());
 

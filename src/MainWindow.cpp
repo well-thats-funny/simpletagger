@@ -225,6 +225,9 @@ std::expected<void, QString> MainWindow::setupFileBrowserDock() {
                 [this](QString const &fileName)->FileTags const &{
                     return fileTagsManager.forFile(fileName);
                 },
+                [this](QString const &directoryPath){
+                    return fileTagsManager.directoryStats(directoryPath);
+                },
                 [this](QString const &fileName)->bool{
                     ZoneScoped;
                     gsl_Expects(project);

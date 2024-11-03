@@ -20,6 +20,9 @@
 #include "Utility.hpp"
 
 namespace {
+    // TODO: FileBrowser.cpp has a similar list (just with wildcards added), merge?
+    const QStringList IMAGE_FILE_SUFFIXES = {".jpg", ".png"};
+
     enum class Key {
         FORMAT_VERSION = 1,
         APP = 2,
@@ -279,6 +282,55 @@ void FileTags::save(bool backup) {
     qDebug() << "Total saving time:" << saveTimer.elapsed() << "ms";
 }
 
+DirectoryTagsStats::DirectoryTagsStats(FileTagsManager &manager, QString const &path):
+    manager_(manager), path_(path) {
+    gsl_Expects(QFileInfo(path_).isAbsolute());
+    gsl_Expects(QFileInfo(path_).isDir());
+}
+
+DirectoryTagsStats::~DirectoryTagsStats() = default;
+
+int DirectoryTagsStats::fileCount() const {
+    ZoneScoped;
+    ensureLoaded();
+    return fileCount_;
+}
+
+int DirectoryTagsStats::filesWithTags() const {
+    ZoneScoped;
+    ensureLoaded();
+    return filesWithTags_;
+}
+
+int DirectoryTagsStats::totalTags() const {
+    ZoneScoped;
+    ensureLoaded();
+    return totalTags_;
+}
+
+void DirectoryTagsStats::ensureLoaded() const  {
+    ZoneScoped;
+
+    if (!loaded_) {
+        gsl_Expects(QFileInfo(path_).isDir());
+        gsl_Expects(QFileInfo(path_).isAbsolute());
+        QDirIterator iterator(path_, QDirIterator::IteratorFlag::Subdirectories | QDirIterator::IteratorFlag::FollowSymlinks);
+        while (iterator.hasNext()) {
+            auto info = iterator.nextFileInfo();
+            if (!info.isDir() && IMAGE_FILE_SUFFIXES.contains("."+info.suffix())) {
+                auto &tags = manager_.forFile(info.absoluteFilePath());
+                fileCount_ += 1;
+
+                auto size = tags.assignedTags().size();
+                if (size != 0)
+                    filesWithTags_ += 1;
+
+                totalTags_ += size;
+            }
+        };
+    }
+}
+
 FileTagsManager::FileTagsManager(bool const backupOnSave): backupOnSave_(backupOnSave) {}
 
 FileTagsManager::~FileTagsManager() = default;
@@ -289,14 +341,26 @@ void FileTagsManager::setBackupOnSave(bool value) {
 
 FileTags &FileTagsManager::forFile(const QString &path) {
     ZoneScoped;
+    gsl_Expects(!QFileInfo(path).isDir());
+    gsl_Expects(QFileInfo(path).isAbsolute());
 
     auto it = fileTags.find(path);
     if (it == fileTags.end()) {
         QFileInfo fileInfo{path};
+
+        gsl_Expects(IMAGE_FILE_SUFFIXES.contains("."+fileInfo.suffix()));
+
         auto tagsFilePath = fileInfo.dir().filePath(fileInfo.fileName() + Constants::TAGS_FILE_SUFFIX.toString());
 
         std::tie(it, std::ignore) = fileTags.emplace(path, std::make_unique<FileTags>(tagsFilePath, backupOnSave_));
     }
 
     return *it->second;
+}
+
+DirectoryTagsStats FileTagsManager::directoryStats(QString const &path) {
+    ZoneScoped;
+    gsl_Expects(QFileInfo(path).isDir());
+    gsl_Expects(QFileInfo(path).isAbsolute());
+    return DirectoryTagsStats(*this, path);
 }
