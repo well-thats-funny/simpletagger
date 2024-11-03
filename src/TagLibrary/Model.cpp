@@ -544,6 +544,8 @@ bool Model::dropMimeData(
         }
     }
 
+    std::vector<NodeSerializable *> loaded;
+
     for (auto const &v: parseMimeData(data)) {
         if (!v) {
             qCCritical(LoggingCategory) << "Cannot parse mime data:" << v.error();
@@ -562,6 +564,8 @@ bool Model::dropMimeData(
             return false;
         }
 
+        loaded.push_back(&**node);
+
         if (auto result = parentNodeStored->insertChild(
                 row, dynamicPtrCast<Node>(std::move(*node))
         ); !result) {
@@ -569,6 +573,10 @@ bool Model::dropMimeData(
             return false;
         }
     }
+
+    // calling them all together, as it's possible they're interlinked
+    for (auto const &node: loaded)
+        node->afterDrop();
 
     return true;
 }

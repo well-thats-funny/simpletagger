@@ -64,6 +64,14 @@ bool NodeLink::canBeDragged() const {
     return true;
 }
 
+std::expected<void, QString> NodeLink::afterDrop() {
+    if (auto result = NodeHierarchical::afterDrop(); !result)
+        return std::unexpected(result.error());
+
+    resolveLink();
+    return {};
+}
+
 QString NodeLink::name(bool const raw, bool const editMode) const {
     ZoneScoped;
 
@@ -324,9 +332,7 @@ std::expected<void, QString> NodeLink::loadNodeData(QCborMap &map) {
     linkTo_ = QUuid::fromRfc4122(linkTo.toByteArray());
 
     connect(&model(), &Model::loadComplete, this, [this]{
-        // force copy of QUuid, as setLinkTo overwrites the field linkTo_ :D
-        if (auto result = setLinkTo(QUuid(linkTo_)); !result)
-            qCCritical(LoggingCategory) << "Could not set link to" << linkTo_ << "at load complete:" << result.error();
+        resolveLink();
     });
 
     auto comment = map.take(std::to_underlying(Format::NodeKey::Comment));
@@ -345,5 +351,11 @@ std::expected<void, QString> NodeLink::loadChildrenNodes([[maybe_unused]] QCborM
     ZoneScoped;
     assert(!map.contains(std::to_underlying(Format::NodeKey::Children)));
     return {};
+}
+
+void NodeLink::resolveLink() {
+    // force copy of QUuid, as setLinkTo overwrites the field linkTo_ :D
+    if (auto result = setLinkTo(QUuid(linkTo_)); !result)
+        qCCritical(LoggingCategory) << "Could not set link to" << linkTo_ << "at load complete:" << result.error();
 }
 }

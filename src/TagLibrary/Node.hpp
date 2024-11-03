@@ -64,6 +64,7 @@ public:
     [[nodiscard]] virtual bool canBeDragged() const;
     [[nodiscard]] virtual bool canAcceptDrop() const; // does it accept drops at all?
     [[nodiscard]] virtual bool canAcceptDrop(NodeType type) const; // does it accept drops of this node type?
+    [[nodiscard]] virtual std::expected<void, QString> afterDrop();
 
     // fields
     [[nodiscard]] virtual QString name(bool raw = false, bool editMode = false) const;
