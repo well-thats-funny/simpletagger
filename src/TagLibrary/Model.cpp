@@ -635,6 +635,15 @@ std::expected<void, QString> Model::load(QCborValue const &value) {
         return std::unexpected(result.error());
 
     emit loadComplete();
+
+    if (auto result = root->verify(); !result) {
+        // TODO: should failed verification be considered a hard error?
+        //return std::unexpected(QString("Library verification failed: %1").arg(result.error().join("\n")));
+        qCWarning(LoggingCategory) << "Library verification failed:";
+        for (auto const &line: result.error())
+            qCWarning(LoggingCategory) << line;
+    }
+
     return {};
 }
 

@@ -139,6 +139,17 @@ public:
     [[nodiscard]] virtual std::expected<void, QString> repopulateLinked(RepopulationRequest const &repopulationRequest = {});
     [[nodiscard]] std::expected<void, QString> repopulateLinkedRecursive(RepopulationRequest const &repopulationRequest = {});
 
+protected:
+    struct VerifyContext {
+        QSet<QUuid> uuids;
+        QSet<QString> resolvedTags;
+    };
+    [[nodiscard]] virtual std::expected<void, QStringList> verify(VerifyContext &context) const;
+    [[nodiscard]] std::expected<void, QStringList> verifyRecursive(VerifyContext &context) const;
+
+public:
+    [[nodiscard]] virtual std::expected<void, QStringList> verify() const;
+
 signals:
     void aboutToRemove();
     void persistentDataChanged();

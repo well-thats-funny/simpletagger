@@ -405,4 +405,59 @@ std::expected<void, QString> Node::repopulateLinkedRecursive(RepopulationRequest
 
     return {};
 }
+
+std::expected<void, QStringList> Node::verify(VerifyContext &context) const {
+    gsl_Expects(&model_);  // this is not an acceptable circumstance ever
+    gsl_Expects(!deinitialized_);  // this one too
+
+    QStringList unexpected;
+
+    if (!isVirtual()) {
+        if (context.uuids.contains(uuid()))
+            unexpected.append(tr("UUID occurs more than once: %1").arg(uuid().toString(QUuid::WithoutBraces)));
+        else
+            context.uuids.insert(uuid());
+
+        for (auto const &tag: tags() | std::views::transform([&](auto const &v){ return v.resolved; })) {
+            if (context.resolvedTags.contains(tag))
+                unexpected.append(tr("Tag (resolved) occurs more than once: %1").arg(tag));
+            else
+                context.resolvedTags.insert(tag);
+        }
+    }
+
+    if (!unexpected.isEmpty())
+        return std::unexpected(unexpected);
+    else
+        return {};
+}
+
+std::expected<void, QStringList> Node::verifyRecursive(VerifyContext &context) const {
+    QStringList unexpected;
+
+    if (auto result = verify(context); !result)
+        unexpected.append(result.error());
+
+    // TODO: this iteration stuff is repeated in many places. Could become a method of Node ?
+    auto count = childrenCount();
+    if (!count)
+        return std::unexpected(QStringList{count.error()}); // cannot continue
+
+    for (int i = 0; i != *count; ++i) {
+        if (auto childNode = childOfRow(i); !childNode)
+            unexpected.append(childNode.error());
+        else if (auto result = childNode->get().verify(context); !result)
+            unexpected.append(result.error());
+    }
+
+    if (!unexpected.isEmpty())
+        return std::unexpected(unexpected);
+    else
+        return {};
+}
+
+std::expected<void, QStringList> Node::verify() const {
+    VerifyContext context;
+    return verifyRecursive(context);
+}
 }
