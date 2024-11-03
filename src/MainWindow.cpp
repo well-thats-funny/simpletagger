@@ -47,6 +47,10 @@ std::expected<void, QString> MainWindow::init() {
 
     ui->setupUi(this);
 
+    connect(&fileTagsManager, &FileTagsManager::tagsSaved, [this](auto const &count){
+        showSavedStatusMessage(tr("image tags"), count);
+    });
+
     fileTagger.emplace(fileTagsManager);
 
 
@@ -240,24 +244,14 @@ std::expected<void, QString> MainWindow::setupFileBrowserDock() {
         ZoneScoped;
         assert(project);
         project->directories.emplaceBack(directory);
-        if (auto result = project->save(this->settings.system.backupOnAnyChange); !result)
-            QMessageBox::critical(
-                    this,
-                    tr("Project saving failed"),
-                    tr("Could not save project: %1").arg(result.error())
-            );
+        saveProject();
     });
 
     connect(&*fileBrowser, &FileBrowser::FileBrowser::directoryRemoved, this, [this](auto const &directory){
         ZoneScoped;
         assert(project);
         project->directories.removeAll(directory);
-        if (auto result = project->save(this->settings.system.backupOnAnyChange); !result)
-            QMessageBox::critical(
-                    this,
-                    tr("Project saving failed"),
-                    tr("Could not save project: %1").arg(result.error())
-            );
+        saveProject();
     });
 
     connect(&*fileBrowser, &FileBrowser::FileBrowser::directoryLoaded, this, [this](auto const &directory){
@@ -319,14 +313,7 @@ std::expected<void, QString> MainWindow::setupFileBrowserDock() {
         gsl_Expects(QFileInfo(path).isRelative());
         auto excluded = !project->isExcludedFile(path);
         project->setExcludedFile(path, excluded);
-
-        if (auto result = project->save(this->settings.system.backupOnAnyChange); !result)
-            QMessageBox::critical(
-                    this,
-                    tr("Project saving failed"),
-                    tr("Could not save project: %1").arg(result.error())
-            );
-
+        saveProject();
         fileBrowser->refreshExcludedState(path);
     });
 
@@ -413,10 +400,7 @@ std::expected<void, QString> MainWindow::setupTagLibraryDock() {
                     tr("Saving to file \"%1\" failed: %2").arg(file.fileName(), result.error()));
         } else {
             qWarning() << "Tag library saved, backups count:" << (backupsCounter ? *backupsCounter : -1);
-            if (!backupsCounter)
-                statusBar()->showMessage(tr("Saved tags library"));
-            else
-                statusBar()->showMessage(tr("Saved tags library (%1 backups found)").arg(*backupsCounter));
+            showSavedStatusMessage(tr("tags library"), backupsCounter);
         }
     });
 
@@ -685,4 +669,23 @@ void MainWindow::loadFileTaggerTagsToTagLibrary() {
                     tr("Could not load active tags to the library: %1").arg(result.error())
             );
     }
+}
+
+void MainWindow::saveProject() {
+    if (auto result = project->save(this->settings.system.backupOnAnyChange); !result)
+        QMessageBox::critical(
+                this,
+                tr("Project saving failed"),
+                tr("Could not save project: %1").arg(result.error())
+        );
+    else
+        showSavedStatusMessage("project", *result);
+
+}
+
+void MainWindow::showSavedStatusMessage(QString const &dataType, std::optional<int> const &backupsCounter) {
+    if (!backupsCounter)
+        statusBar()->showMessage(tr("Saved %1").arg(dataType));
+    else
+        statusBar()->showMessage(tr("Saved %1 (%2 backups found)").arg(dataType).arg(*backupsCounter));
 }

@@ -19,7 +19,7 @@
 class Project {
 public:
     [[nodiscard]] static std::expected<void, QString> create(QString const &path);
-    [[nodiscard]] std::expected<void, QString> save(bool backup);
+    [[nodiscard]] std::expected<std::optional<int>, QString> save(bool backup);
     [[nodiscard]] static std::expected<Project, QString> open(QString const &path);
 
     bool isExcludedFile(QString const &fileName);

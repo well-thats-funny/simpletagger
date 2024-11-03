@@ -25,7 +25,7 @@ public:
     FileTags &operator=(FileTags const &other) = delete;
     FileTags &operator=(FileTags &&other) = delete;
 
-    FileTags(QString const &tagsFilePath, bool backupOnSave);
+    FileTags(FileTagsManager &manager, QString const &tagsFilePath, bool backupOnSave);
     ~FileTags();
 
     [[nodiscard]] QStringList assignedTags() const;
@@ -46,6 +46,7 @@ private:
     void load();
     void save(bool backup);
 
+    FileTagsManager &manager_;
     QString tagsFilePath_;
     bool backupOnSave_ = false;
     QStringList assignedTags_;
@@ -111,6 +112,7 @@ public:
     void invalidateDirectoryStatsCache();
 
 signals:
+    void tagsSaved(std::optional<int> const &backupCount);
     void directoryStatsChanged(QString const &path);
 
 private:

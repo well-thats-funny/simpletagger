@@ -53,11 +53,13 @@ std::expected<void, QString> Project::create(const QString &path) {
     return {};
 }
 
-std::expected<void, QString> Project::save(bool const backup) {
+std::expected<std::optional<int>, QString> Project::save(bool const backup) {
     ZoneScoped;
 
+    std::optional<int> backupCount;
+
     if (backup)
-        backupFile(path);
+        backupCount = backupFile(path);
 
     qDebug() << "Writing project file: " << path;
 
@@ -87,7 +89,7 @@ std::expected<void, QString> Project::save(bool const backup) {
 
     qDebug() << "Writing project file done";
 
-    return {};
+    return backupCount;
 }
 
 std::expected<Project, QString> Project::open(QString const &path) {

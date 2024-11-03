@@ -77,8 +77,8 @@ namespace {
     }
 }
 
-FileTags::FileTags(QString const &tagsFilePath, bool const backupOnSave):
-    tagsFilePath_(tagsFilePath), backupOnSave_(backupOnSave) {
+FileTags::FileTags(FileTagsManager &manager, QString const &tagsFilePath, bool const backupOnSave):
+    manager_(manager), tagsFilePath_(tagsFilePath), backupOnSave_(backupOnSave) {
     ZoneScoped;
 
     load();
@@ -247,8 +247,10 @@ void FileTags::save(bool backup) {
         backup = backup || !res.has_value() || res->warningsOccurred;
     }
 
+    std::optional<int> backupCount;
+
     if (backup)
-        backupFile(tagsFilePath_);
+        backupCount = backupFile(tagsFilePath_);
 
     QElapsedTimer saveTimer;
     saveTimer.start();
@@ -280,6 +282,7 @@ void FileTags::save(bool backup) {
         qWarning() << "Failed to write file" << tagsFilePath_;
 
     qDebug() << "Total saving time:" << saveTimer.elapsed() << "ms";
+    emit manager_.tagsSaved(backupCount);
 }
 
 DirectoryTagsStats::DirectoryTagsStats(FileTagsManager &manager, QString const &path):
@@ -373,7 +376,7 @@ FileTags &FileTagsManager::forFile(const QString &path) {
 
         auto tagsFilePath = fileInfo.dir().filePath(fileInfo.fileName() + Constants::TAGS_FILE_SUFFIX.toString());
 
-        std::tie(it, std::ignore) = fileTags_.emplace(path, std::make_unique<FileTags>(tagsFilePath, backupOnSave_));
+        std::tie(it, std::ignore) = fileTags_.emplace(path, std::make_unique<FileTags>(*this, tagsFilePath, backupOnSave_));
     }
 
     return *it->second;

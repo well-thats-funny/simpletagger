@@ -83,6 +83,8 @@ private:
     void unloadFile();
 
     void loadFileTaggerTagsToTagLibrary();
+    void saveProject();
+    void showSavedStatusMessage(QString const &dataType, std::optional<int> const &backupsCounter);
 
     std::unique_ptr<Ui_MainWindow> ui;
     QTimer memoryUsageTimer;
