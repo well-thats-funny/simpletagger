@@ -156,6 +156,7 @@ target_precompile_headers(simpletagger-cxx PRIVATE
         <QDesktopServices>
         <QDebug>
         <QDialog>
+        <QDirIterator>
         <QDockWidget>
         <QFile>
         <QFileDialog>
