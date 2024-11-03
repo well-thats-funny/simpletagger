@@ -298,38 +298,60 @@ DirectoryTagsStats::~DirectoryTagsStats() = default;
 int DirectoryTagsStats::fileCount() const {
     ZoneScoped;
     QMutexLocker locker(&mutex_);
-    return stats_.fileCount_;
+    return stats_.fileCount_ + std::ranges::fold_left_first(
+            stats_.childrenStats_ | std::views::transform([](auto const &v){ return v.get().fileCount(); }),
+            std::plus<int>()
+    ).value_or(0);
 }
 
 int DirectoryTagsStats::filesWithTags() const {
     ZoneScoped;
     QMutexLocker locker(&mutex_);
-    return stats_.filesWithTags_;
+    return stats_.filesWithTags_ + std::ranges::fold_left_first(
+            stats_.childrenStats_ | std::views::transform([](auto const &v){ return v.get().filesWithTags(); }),
+            std::plus<int>()
+    ).value_or(0);
 }
 
 int DirectoryTagsStats::totalTags() const {
     ZoneScoped;
+    gsl_Expects(ready());
+
     QMutexLocker locker(&mutex_);
-    return stats_.totalTags_;
+    return stats_.totalTags_ + std::ranges::fold_left_first(
+            stats_.childrenStats_ | std::views::transform([](auto const &v){ return v.get().totalTags(); }),
+            std::plus<int>()
+    ).value_or(0);
 }
 
 bool DirectoryTagsStats::ready() const {
     ZoneScoped;
     QMutexLocker locker(&mutex_);
-    return stats_.loaded_;
+    return stats_.loaded_ && std::ranges::all_of(stats_.childrenStats_, [](auto const &v){ return v.get().ready(); });
 }
 
 void DirectoryTagsStats::reload() {
+    {
+        QMutexLocker locker(&mutex_);
+        stats_.loaded_ = false;
+    }
+
+    emitStatsUpdate();
+
     manager_.directoryStatsThreadPool_.start([this](){
+        //qDebug() << "Loading directory stats for" << path_;
+
         Stats stats;
 
-        QDirIterator iterator(path_, QDirIterator::IteratorFlag::Subdirectories | QDirIterator::IteratorFlag::FollowSymlinks);
+        QDirIterator iterator(path_, QDir::Filter::AllEntries | QDir::Filter::NoDotAndDotDot);
         while (iterator.hasNext()) {
             if (manager_.directoryStatsThreadPoolInterrupt_.test())
                 return;
 
             auto info = iterator.nextFileInfo();
-            if (!info.isDir() && IMAGE_FILE_SUFFIXES.contains("."+info.suffix())) {
+            if (info.isDir()) {
+                stats.childrenStats_.push_back(manager_.directoryStats(info.filePath()));
+            } else if (IMAGE_FILE_SUFFIXES.contains("."+info.suffix())) {
                 auto &tags = manager_.forFile(info.absoluteFilePath());
                 stats.fileCount_ += 1;
 
@@ -343,13 +365,19 @@ void DirectoryTagsStats::reload() {
 
         stats.loaded_ = true;
 
+        //qDebug() << "Loaded directory stats for" << path_ << ": fileCount:" << stats.fileCount_ << "; filesWithTags:" << stats.filesWithTags_ << "; totalTags:" << stats.totalTags_ << "; childrenStats (count):" << stats.childrenStats_.size();
+
         {
             QMutexLocker locker(&mutex_);
             stats_ = stats;
         }
 
-        emit manager_.directoryStatsChanged(path_);
+        emitStatsUpdate();
     });
+}
+
+void DirectoryTagsStats::emitStatsUpdate() {
+    emit manager_.directoryStatsChanged(path_);
 }
 
 FileTagsManager::FileTagsManager(bool const backupOnSave): backupOnSave_(backupOnSave) {
@@ -389,6 +417,8 @@ DirectoryTagsStats &FileTagsManager::directoryStats(QString const &path) {
     gsl_Expects(QFileInfo(path).isDir());
     gsl_Expects(QFileInfo(path).isAbsolute());
 
+    QMutexLocker locker(&directoryStatsMutex_);
+
     auto it = directoryStats_.find(path);
     if (it == directoryStats_.end()) {
         std::tie(it, std::ignore) = directoryStats_.emplace(path, std::unique_ptr<DirectoryTagsStats>(
@@ -401,6 +431,8 @@ DirectoryTagsStats &FileTagsManager::directoryStats(QString const &path) {
 
 void FileTagsManager::invalidateDirectoryStatsCache() {
     ZoneScoped;
+
+    QMutexLocker locker(&directoryStatsMutex_);
 
     for (auto const &stats: directoryStats_)
         stats.second->reload();

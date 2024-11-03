@@ -123,20 +123,26 @@ QVariant DirectoryTreeModel::data(const QModelIndex &index, int role) const {
             case Qt::ItemDataRole::DisplayRole:
                 if (pathInfo.isDir()) {
                     if (auto &stats = fileTagsManager_.directoryStats(path); stats.ready()) {
-                        return QString(
-                                "%1\n"
-                                "%2 / %3 files have tags (%4%)\n"
-                                "%5 total tags")
-                                .arg(pathInfo.fileName())
-                                .arg(stats.filesWithTags())
-                                .arg(stats.fileCount())
-                                        // I don't know how to format numbers with Qt :<
-                                .arg(QString::fromStdString(std::format(
-                                        "{:.2f}",
-                                        (static_cast<float>(stats.filesWithTags()) /
-                                         static_cast<float>(stats.fileCount())) * 100.f
-                                )))
-                                .arg(stats.totalTags());
+                        QStringList lines;
+                        lines.push_back(pathInfo.fileName());
+
+                        if (stats.fileCount() == 0)
+                            lines.push_back(tr("no image files"));
+                        else {
+                            lines.push_back(tr("%1 / %2 files have tags (%3%)")
+                                    .arg(stats.filesWithTags())
+                                    .arg(stats.fileCount())
+                                    // I don't know how to format numbers with Qt :<
+                                    .arg(QString::fromStdString(std::format(
+                                            "{:.2f}",
+                                            (static_cast<float>(stats.filesWithTags()) /
+                                            static_cast<float>(stats.fileCount())) * 100.f
+                                    )))
+                            );
+                            lines.push_back(tr("%1 total tags").arg(stats.totalTags()));
+                        }
+
+                        return lines.join("\n");
                     } else {
                         return QString("%1\n%2")
                             .arg(pathInfo.fileName())

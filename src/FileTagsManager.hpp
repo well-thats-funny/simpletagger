@@ -77,11 +77,15 @@ public:
     void reload();
 
 private:
+    void emitStatsUpdate();
+
     FileTagsManager &manager_;
     QString path_;
 
     mutable QMutex mutex_;
     struct Stats {
+        std::vector<std::reference_wrapper<DirectoryTagsStats>> childrenStats_;
+
         bool loaded_ = false;
         int fileCount_ = 0;
         int filesWithTags_ = 0;
@@ -121,6 +125,7 @@ private:
     QMutex fileTagsMutex_;
     std::unordered_map<QString, std::unique_ptr<FileTags>> fileTags_;
 
+    QMutex directoryStatsMutex_;
     std::unordered_map<QString, std::unique_ptr<DirectoryTagsStats>> directoryStats_;
 
     // TODO: this is placed AFTER directoryStats_ because at the moment, DirectoryTagsStats doesn't
