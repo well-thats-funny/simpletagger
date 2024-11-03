@@ -195,9 +195,11 @@ std::vector<Node::Tag> NodeLinkSubtree::tags(TagFlags const flags) const {
         std::ranges::move(tags, std::back_inserter(result));
     } else {
         // TODO: this is the same like in NodeLink::tags -> helper?
-        for (auto const &tag: tags)
-            for (auto const &resolved: parent()->resolveChildTag(tag.resolved))
+        for (auto const &tag: tags) {
+            auto resolvedList = parent()->resolveChildTag(tag.resolved);
+            for (auto const &resolved: withoutDuplicates(resolvedList))
                 result.emplace_back(tag.raw, resolved);
+        }
     }
 
     return result;

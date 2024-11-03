@@ -116,7 +116,7 @@ std::vector<Node::Tag> NodeObject::tags(TagFlags const flags) const {
     if (flags & TagFlag::IncludeResolved)
         gsl_Ensures(std::ranges::all_of(result, [](auto const &v){ return !v.resolved.isEmpty(); }));
 
-    return result;
+    return withoutDuplicates(result) | std::ranges::to<std::vector>();
 }
 
 bool NodeObject::canSetTags() const {

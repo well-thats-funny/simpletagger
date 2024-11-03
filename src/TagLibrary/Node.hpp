@@ -88,6 +88,8 @@ public:
     struct Tag {
         QString raw;
         QString resolved;
+
+        bool operator==(Tag const &other) const;
     };
     [[nodiscard]] virtual std::vector<Tag> tags(TagFlags flags = TagFlag::IncludeResolved) const;
     [[nodiscard]] virtual bool canSetTags() const;

@@ -156,6 +156,10 @@ std::expected<void, QString> Node::setLinkTo(QUuid const &) {
     return std::unexpected(tr("Cannot set link on this object type"));
 }
 
+bool Node::Tag::operator==(Tag const &other) const {
+    return raw == other.raw && resolved == other.resolved;
+}
+
 std::vector<Node::Tag> Node::tags(TagFlags const) const {
     return {};
 }

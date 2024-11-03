@@ -148,9 +148,11 @@ std::vector<Node::Tag> NodeLink::tags(TagFlags const flags) const {
         if (!(flags & TagFlag::IncludeResolved)) {
             std::ranges::move(tags, std::back_inserter(result));
         } else {
-            for (auto const &tag: tags)
-                for (auto const &resolved: parent()->resolveChildTag(tag.resolved))
+            for (auto const &tag: tags) {
+                auto resolvedList = parent()->resolveChildTag(tag.resolved);
+                for (auto const &resolved: withoutDuplicates(resolvedList))
                     result.emplace_back(tag.raw, resolved);
+            }
         }
     }
 
