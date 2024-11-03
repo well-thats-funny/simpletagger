@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>597</width>
-    <height>419</height>
+    <width>730</width>
+    <height>522</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -97,6 +97,38 @@
        </item>
        <item>
         <widget class="QToolButton" name="buttonZoomOut"/>
+       </item>
+      </layout>
+     </item>
+     <item>
+      <layout class="QHBoxLayout" name="horizontalLayout_2">
+       <item>
+        <widget class="QLabel" name="labelNotification">
+         <property name="styleSheet">
+          <string notr="true">background-color: lightPink;
+border: 2px solid red;
+border-radius: 5px;</string>
+         </property>
+         <property name="text">
+          <string notr="true">Very long notification placeholder. Very long notification placeholder. Very long notification placeholder. Very long notification placeholder. </string>
+         </property>
+         <property name="wordWrap">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QToolButton" name="buttonNotificationCancel">
+         <property name="toolTip">
+          <string>Cancel</string>
+         </property>
+         <property name="text">
+          <string notr="true">...</string>
+         </property>
+         <property name="icon">
+          <iconset theme="QIcon::ThemeIcon::WindowClose"/>
+         </property>
+        </widget>
        </item>
       </layout>
      </item>

@@ -80,12 +80,18 @@ std::expected<void, QString> ImageViewer::init() {
         setZoom(1.0);
     });
 
+    connect(ui->buttonNotificationCancel, &QToolButton::clicked, this, [this]{
+        ZoneScoped;
+        hideNotification();
+    });
+
     ui->imageView->setScene(&viewFileScene);
     connect(ui->imageView, &ImageGraphicsView::wheelZoom, this, [this](QPoint const &angle){
         ZoneScoped;
         setZoom(zoom_ + static_cast<float>(angle.y()) * ZOOM_STEP_WHEEL);
     });
 
+    hideNotification();
     return {};
 }
 
@@ -380,5 +386,20 @@ void ImageViewer::setEnforcedAspectRatiosEnabled(bool const enabled) {
 
     if (viewSelectionRectItem)
         viewSelectionRectItem->setEnforcedAspectRatiosEnabled(enabled);
+}
+
+void ImageViewer::showNotification(QString const &notification, QString const &notificationTooltip) {
+    ZoneScoped;
+
+    ui->labelNotification->setText(notification);
+    ui->labelNotification->setToolTip(notificationTooltip);
+
+    ui->labelNotification->show();
+    ui->buttonNotificationCancel->show();
+}
+
+void ImageViewer::hideNotification() {
+    ui->labelNotification->hide();
+    ui->buttonNotificationCancel->hide();
 }
 }

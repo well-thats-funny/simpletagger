@@ -684,6 +684,30 @@ void MainWindow::loadFile(QString const &path) {
 
     loadFileTaggerTagsToTagLibrary();
 
+    QString notification;
+    QString notificationTooltip;
+
+    if (auto imageLibraryUuid = fileEditor_->imageTagLibraryUuid(); !imageLibraryUuid || imageLibraryUuid != tagLibrary->getUuid()) {
+        notification = tr("This image was edited using a different Tag Library. You may want to review the tags according to the current library");
+        notificationTooltip = tr("Image was edited with Tag Library with UUID: %1\nCurrent Tag Library has UUID: %2")
+                .arg(imageLibraryUuid ? imageLibraryUuid->toString(QUuid::WithoutBraces) : tr("(no library UUID saved)"))
+                .arg(tagLibrary->getUuid().toString(QUuid::WithoutBraces));
+    } else if (auto imageLibraryVersionUuid = fileEditor_->imageTagLibraryVersionUuid(); !imageLibraryVersionUuid || imageLibraryVersionUuid != tagLibrary->getVersionUuid()) {
+        notification = tr("This image was edited using a different Tag Library version. You may want to review the tags according to the current library");
+
+        auto imageLibraryVersion = fileEditor_->imageTagLibraryVersion();
+        notificationTooltip = tr("Image was edited with Tag Library version: %1 (%2)\nCurrent Tag Library has UUID: %3 (%4)")
+                .arg(imageLibraryVersion ? QString::number(*imageLibraryVersion) : "(no library version saved)")
+                .arg(imageLibraryUuid ? imageLibraryVersionUuid->toString(QUuid::WithoutBraces) : tr("no library UUID saved"))
+                .arg(tagLibrary->getVersion())
+                .arg(tagLibrary->getVersionUuid().toString(QUuid::WithoutBraces));
+    }
+
+    if (!notification.isEmpty())
+        imageViewer->showNotification(notification, notificationTooltip);
+    else
+        imageViewer->hideNotification();
+
     QSettings settings;
     settings.setValue(SettingsKey::LAST_VIEWED_FILE, currentPath);
 }

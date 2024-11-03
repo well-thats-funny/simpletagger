@@ -52,6 +52,9 @@ public:
 
     void setEnforcedAspectRatiosEnabled(bool enabled);
 
+    void showNotification(QString const &notification, QString const &notificationTooltip);
+    void hideNotification();
+
 private:
     std::unique_ptr<Ui_ImageViewer> ui;
 
