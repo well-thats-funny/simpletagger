@@ -18,6 +18,7 @@
 
 #include "FileTagsManager.hpp"
 #include "Utility.hpp"
+#include "../Utility.hpp"
 
 namespace FileBrowser {
 namespace {
@@ -122,32 +123,7 @@ QVariant DirectoryTreeModel::data(const QModelIndex &index, int role) const {
         switch (role) {
             case Qt::ItemDataRole::DisplayRole:
                 if (pathInfo.isDir()) {
-                    if (auto &stats = fileTagsManager_.directoryStats(path); stats.ready()) {
-                        QStringList lines;
-                        lines.push_back(pathInfo.fileName());
-
-                        if (stats.fileCount() == 0)
-                            lines.push_back(tr("no image files"));
-                        else {
-                            lines.push_back(tr("%1 / %2 files have tags (%3%)")
-                                    .arg(stats.filesWithTags())
-                                    .arg(stats.fileCount())
-                                    // I don't know how to format numbers with Qt :<
-                                    .arg(QString::fromStdString(std::format(
-                                            "{:.2f}",
-                                            (static_cast<float>(stats.filesWithTags()) /
-                                            static_cast<float>(stats.fileCount())) * 100.f
-                                    )))
-                            );
-                            lines.push_back(tr("%1 total tags").arg(stats.totalTags()));
-                        }
-
-                        return lines.join("\n");
-                    } else {
-                        return QString("%1\n%2")
-                            .arg(pathInfo.fileName())
-                            .arg(tr("(loading statistics...)"));
-                    }
+                    return formatDirectoryStats(fileTagsManager_.directoryStats(path));
                 } else {
                     auto &fileTags = fileTagsManager_.forFile(path);
                     QString label = pathInfo.fileName() + "\n";

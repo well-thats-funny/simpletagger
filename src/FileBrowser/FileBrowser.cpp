@@ -19,6 +19,7 @@
 #include "ProjectDirectoryListModel.hpp"
 #include "DirectoryTreeModel.hpp"
 #include "DirectoryTreeProxyModel.hpp"
+#include "Utility.hpp"
 
 #include "../FileTagsManager.hpp"
 
@@ -52,6 +53,10 @@ std::expected<void, QString> FileBrowser::init() {
     ZoneScoped;
 
     ui->setupUi(this);
+
+    connect(&fileTagsManager_, &FileTagsManager::directoryStatsChanged, this, [this](auto const &){
+        refreshDirectoryLabel();
+    }, Qt::QueuedConnection);
 
     ui->comboBoxDirectories->setModel(&*projectDirectoryListModel);
 
@@ -303,9 +308,9 @@ void FileBrowser::openDirectory(QString const &directory) {
 
     if (directory != currentDirectory_) {
         currentDirectory_ = directory;
+        currentDirectoryStats_ = &fileTagsManager_.directoryStats(QFileInfo(QDir(projectRootPath_), currentDirectory_).filePath());
 
         ui->buttonRemoveDirectory->setEnabled(true);
-        ui->labelDirectory->setText(directory);
         ui->actionShowExcluded->setEnabled(true);
 
         auto absoluteDirectory = QFileInfo(QDir(projectRootPath_), directory).filePath();
@@ -324,6 +329,8 @@ void FileBrowser::openDirectory(QString const &directory) {
             auto filePath = currentSource.isValid() ? directoryTreeModel->filePath(currentSource) : QString();
             fileSelectedHandle(filePath);
         });
+
+        refreshDirectoryLabel();
     }
 }
 
@@ -339,6 +346,17 @@ void FileBrowser::closeDirectory() {
     ui->actionShowExcluded->setEnabled(true);
     ui->labelDirectory->clear();
     ui->buttonRemoveDirectory->setEnabled(false);
+
+    currentDirectory_ = {};
+}
+
+void FileBrowser::refreshDirectoryLabel() {
+    gsl_Expects(!currentDirectory_.isNull() == static_cast<bool>(currentDirectoryStats_));
+
+    if (!currentDirectory_.isNull())
+        ui->labelDirectory->setText(formatDirectoryStats(*currentDirectoryStats_));
+    else
+        ui->labelDirectory->clear();
 }
 
 void FileBrowser::fileSelectedHandle(QString const &path) {

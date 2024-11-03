@@ -68,6 +68,7 @@ public:
 
     ~DirectoryTagsStats();
 
+    QString path() const;
     int fileCount() const;
     int filesWithTags() const;
     int totalTags() const;

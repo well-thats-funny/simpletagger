@@ -295,6 +295,10 @@ DirectoryTagsStats::DirectoryTagsStats(FileTagsManager &manager, QString const &
 
 DirectoryTagsStats::~DirectoryTagsStats() = default;
 
+QString DirectoryTagsStats::path() const {
+    return path_;
+}
+
 int DirectoryTagsStats::fileCount() const {
     ZoneScoped;
     QMutexLocker locker(&mutex_);
@@ -414,8 +418,8 @@ FileTags &FileTagsManager::forFile(const QString &path) {
 
 DirectoryTagsStats &FileTagsManager::directoryStats(QString const &path) {
     ZoneScoped;
-    gsl_Expects(QFileInfo(path).isDir());
     gsl_Expects(QFileInfo(path).isAbsolute());
+    gsl_Expects(QFileInfo(path).isDir());
 
     QMutexLocker locker(&directoryStatsMutex_);
 

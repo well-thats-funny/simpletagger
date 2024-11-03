@@ -18,6 +18,7 @@
 
 class Ui_FileBrowser;
 
+class DirectoryTagsStats;
 class FileTagsManager;
 
 namespace FileBrowser {
@@ -75,6 +76,7 @@ signals:
 private:
     void openDirectory(QString const &directory);
     void closeDirectory();
+    void refreshDirectoryLabel();
 
     void fileSelectedHandle(QString const &path);
 
@@ -90,6 +92,7 @@ private:
 
     QString projectRootPath_;
     QString currentDirectory_;
+    DirectoryTagsStats *currentDirectoryStats_ = nullptr;
 
     QMetaObject::Connection currentChangedConnection;
 };
