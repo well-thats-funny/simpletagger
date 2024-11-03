@@ -53,7 +53,6 @@ class MainWindow: public QMainWindow {
     MainWindow(Settings &settings, QTranslator &translator);
     [[nodiscard]] std::expected<void, QString> init();
 
-
     [[nodiscard]] std::expected<void, QString> setupGeneralActions();
     [[nodiscard]] std::expected<void, QString> setupStatusBar();
     [[nodiscard]] std::expected<void, QString> setupDocks();

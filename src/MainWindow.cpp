@@ -53,7 +53,6 @@ std::expected<void, QString> MainWindow::init() {
 
     fileTagger.emplace(fileTagsManager);
 
-
     if (auto result = setupGeneralActions(); !result)
         return std::unexpected(result.error());
 
@@ -165,7 +164,7 @@ std::expected<void, QString> MainWindow::setupStatusBar() {
         ZoneScoped;
 
         if (auto size = fetchMemoryUsage())
-            statusBarMemory->setText(tr("Memory usage: %1 | %2").arg(QString::number(size->resident), locale().formattedDataSize(size->resident)));
+            statusBarMemory->setText(tr("Memory usage (resident): %1 | %2").arg(QString::number(size->resident), locale().formattedDataSize(size->resident)));
         else
             statusBarMemory->setText(tr("Could not get memory usage"));
     });

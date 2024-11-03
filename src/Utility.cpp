@@ -16,8 +16,16 @@
 */
 #include "Utility.hpp"
 
+#include <unistd.h>
+
 std::optional<MemoryState> fetchMemoryUsage() {
+    // NOTE: this is linux specific!
+
     ZoneScoped;
+
+    static std::optional<int> pageSize;
+    if (!pageSize)
+        pageSize = ::getpagesize();
 
     QFile file{"/proc/self/statm"};
     if (!file.open(QIODevice::ReadOnly))
@@ -25,9 +33,18 @@ std::optional<MemoryState> fetchMemoryUsage() {
 
     QTextStream stream(&file);
 
+    std::uint64_t total, resident, shared, text, library, data, dirty;
+    stream >> total >> resident >> shared >> text >> library >> data >> dirty;
+    qDebug() << "statm: total:" << total << "; resident:" << resident << "; shared:" << shared << "; text:" << text << "; library (unused):" << library << "; data:" << data << "; dirty pages (unused):" << dirty;
+
     MemoryState result;
-    std::uint64_t unused;
-    stream >> result.total >> result.resident >> result.shared >> result.text >> unused >> result.data;
+    result.total = total * (*pageSize);
+    result.resident = resident * (*pageSize);
+    result.shared = shared * (*pageSize);
+    result.text = text * (*pageSize);
+    result.data = data * (*pageSize);
+
+    qDebug() << "statm (bytes): total:" << result.total << "; resident:" << result.resident << "; shared:" << result.shared << "; text:" << result.text << "; data:" << result.data;
     return result;
 }
 
