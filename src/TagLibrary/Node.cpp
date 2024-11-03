@@ -171,7 +171,7 @@ bool Node::canSetTags() const {
 std::expected<void, QString> Node::setTags(QStringList const &) {
     assert(!canSetTags() && "If canSet* has been overriden to return true, also set* should be overriden");
     assert(canSetTags() && "This function shouldn't be called if the respective canSet* returned false");
-    return std::unexpected(tr("Cannot set link on this object type"));
+    return std::unexpected(tr("Cannot set tags on this object type"));
 }
 
 QStringList Node::resolveChildTag(QString const &tag) const {
@@ -189,7 +189,7 @@ bool Node::canSetComment() const {
 std::expected<void, QString> Node::setComment(QString const &) {
     assert(!canSetComment() && "If canSet* has been overriden to return true, also set* should be overriden");
     assert(canSetComment() && "This function shouldn't be called if the respective canSet* returned false");
-    return std::unexpected(tr("Cannot set link on this object type"));
+    return std::unexpected(tr("Cannot set comment on this object type"));
 }
 
 std::optional<bool> Node::active() const {
@@ -203,7 +203,7 @@ bool Node::canSetActive() const {
 std::expected<void, QString> Node::setActive(bool const) {
     assert(!canSetActive() && "If canSet* has been overriden to return true, also set* should be overriden");
     assert(canSetActive() && "This function shouldn't be called if the respective canSet* returned false");
-    return std::unexpected(tr("Cannot set link on this object type"));
+    return std::unexpected(tr("Cannot set active on this object type"));
 }
 
 std::optional<bool> Node::highlighted() const {
@@ -217,7 +217,7 @@ bool Node::canSetHighlighted() const {
 std::expected<void, QString> Node::setHighlighted(bool const) {
     assert(!canSetHighlighted() && "If canSet* has been overriden to return true, also set* should be overriden");
     assert(canSetHighlighted() && "This function shouldn't be called if the respective canSet* returned false");
-    return std::unexpected(tr("Cannot set link on this object type"));
+    return std::unexpected(tr("Cannot set highlighted on this object type"));
 }
 
 bool Node::isVirtual() const {
