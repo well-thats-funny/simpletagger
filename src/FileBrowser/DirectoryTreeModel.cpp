@@ -195,7 +195,7 @@ QVariant DirectoryTreeModel::data(const QModelIndex &index, int role) const {
                 return QVariant::fromValue(brushes);
             }
             default:
-                return {};
+                return QFileSystemModel::data(index, role);
         }
     } else {
         qWarning() << "DirectoryTreeModel::data: invalid column " << index.column();
