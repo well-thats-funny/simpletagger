@@ -35,7 +35,7 @@ std::optional<MemoryState> fetchMemoryUsage() {
 
     std::uint64_t total, resident, shared, text, library, data, dirty;
     stream >> total >> resident >> shared >> text >> library >> data >> dirty;
-    qDebug() << "statm: total:" << total << "; resident:" << resident << "; shared:" << shared << "; text:" << text << "; library (unused):" << library << "; data:" << data << "; dirty pages (unused):" << dirty;
+//    qDebug() << "statm: total:" << total << "; resident:" << resident << "; shared:" << shared << "; text:" << text << "; library (unused):" << library << "; data:" << data << "; dirty pages (unused):" << dirty;
 
     MemoryState result;
     result.total = total * (*pageSize);
@@ -44,7 +44,7 @@ std::optional<MemoryState> fetchMemoryUsage() {
     result.text = text * (*pageSize);
     result.data = data * (*pageSize);
 
-    qDebug() << "statm (bytes): total:" << result.total << "; resident:" << result.resident << "; shared:" << result.shared << "; text:" << result.text << "; data:" << result.data;
+//    qDebug() << "statm (bytes): total:" << result.total << "; resident:" << result.resident << "; shared:" << result.shared << "; text:" << result.text << "; data:" << result.data;
     return result;
 }
 

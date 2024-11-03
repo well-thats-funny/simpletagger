@@ -164,7 +164,7 @@ std::expected<void, QString> MainWindow::setupStatusBar() {
         ZoneScoped;
 
         if (auto size = fetchMemoryUsage())
-            statusBarMemory->setText(tr("Memory usage (resident): %1 | %2").arg(QString::number(size->resident), locale().formattedDataSize(size->resident)));
+            statusBarMemory->setText(tr("Memory usage (resident): %1").arg(locale().formattedDataSize(size->resident)));
         else
             statusBarMemory->setText(tr("Could not get memory usage"));
     });
