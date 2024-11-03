@@ -30,16 +30,28 @@ QString formatDirectoryStats(DirectoryTagsStats const &stats, QString const &pat
             lines.push_back(QObject::tr("no image files"));
         else {
             auto precision = std::max(0, static_cast<int>(std::floor(std::log10(stats.fileCount()))) + 1 - 2);
-            lines.push_back(QObject::tr("%1 / %2 files have tags (%3%)")
-                                    .arg(stats.filesWithTags())
-                                    .arg(stats.fileCount())
-                                            // I don't know how to format numbers with Qt :<
-                                    .arg(QString::fromStdString(std::format(
-                                            std::runtime_format(std::format("{{:.{}f}}", precision)),
-                                            (static_cast<float>(stats.filesWithTags()) /
-                                             static_cast<float>(stats.fileCount())) * 100.f
-                                    )))
-            );
+            auto percentFiles = [&](auto const &v) {
+                // I don't know how to format numbers with Qt :<
+                return QString::fromStdString(std::format(
+                        std::runtime_format(std::format("{{:.{}f}}", precision)),
+                        (static_cast<float>(v) / static_cast<float>(stats.fileCount())) * 100.f
+                ));
+            };
+
+            QString secondLine = QObject::tr("%1 / %2 (%3%) files completed")
+                    .arg(stats.filesFlaggedComplete())
+                    .arg(stats.fileCount())
+                    .arg(percentFiles(stats.filesFlaggedComplete()));
+
+            if (auto filesIncomplete = stats.filesWithTags()-stats.filesFlaggedComplete(); filesIncomplete > 0) {
+                secondLine += QObject::tr(", %1 / %2 (%3%) files started but not completed")
+                        .arg(filesIncomplete)
+                        .arg(stats.fileCount())
+                        .arg(percentFiles(filesIncomplete));
+            }
+
+            lines.push_back(secondLine);
+
             lines.push_back(QObject::tr("%1 total tags").arg(stats.totalTags()));
         }
     }
