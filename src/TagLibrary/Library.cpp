@@ -444,6 +444,10 @@ std::expected<void, QString> Library::init() {
             description += tr("<b>Comment: </b> %1<br>").arg(node.comment());
             description += tr("<b>Hidden:</b> %1<br>").arg(node.isHidden() ? tr("yes"): tr("no"));
 
+            description += tr("<hr>");
+            description += tr("<b>Library UUID: </b> %1<br>").arg(libraryUuid_.toString(QUuid::WithoutBraces));
+            description += tr("<b>Library version: </b> %1 (%2)<br>").arg(libraryVersion_).arg(libraryVersionUuid_.toString(QUuid::WithoutBraces));
+
             ui->labelDescriptionText->setText(description);
             emit tagsSelected(node.tags()
                     | std::views::transform([](auto const &v){ return v.resolved; })
