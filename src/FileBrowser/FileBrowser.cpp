@@ -37,7 +37,7 @@ FileBrowser::FileBrowser(
         IsFileExcluded const &isFileExcluded,
         Qt::WindowFlags const flags
 ):
-    QDockWidget(nullptr, flags),
+    QWidget(nullptr, flags),
     ui(std::make_unique<Ui_FileBrowser>()),
     fileTagsManager_(fileTagsManager),
     fileEditor_(fileEditor),

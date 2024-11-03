@@ -27,7 +27,7 @@ class ProjectDirectoryListModel;
 class DirectoryTreeModel;
 class DirectoryTreeProxyModel;
 
-class FileBrowser: public QDockWidget {
+class FileBrowser: public QWidget {
     Q_OBJECT
 
     FileBrowser(FileBrowser const &other) = delete;
