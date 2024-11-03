@@ -29,7 +29,7 @@
 
 namespace TagLibrary {
 Library::Library(Qt::WindowFlags const flags):
-        QDockWidget(nullptr, flags),
+        QWidget(nullptr, flags),
         ui(std::make_unique<Ui_Library>()),
         libraryModel_(std::make_unique<Model>()),
         model_(std::make_unique<SelectionHelperProxyModel>()) {}

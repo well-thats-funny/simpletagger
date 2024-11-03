@@ -23,7 +23,7 @@ class Model;
 class SelectionHelperProxyModel;
 class NodeRoot;
 
-class Library : public QDockWidget {
+class Library : public QWidget {
     Q_OBJECT
 
     Library(Library const &other) = delete;

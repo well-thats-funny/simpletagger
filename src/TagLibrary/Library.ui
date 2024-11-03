@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
  <class>Library</class>
- <widget class="QDockWidget" name="Library">
+ <widget class="QWidget" name="Library">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -13,403 +13,413 @@
   <property name="windowTitle">
    <string>Form</string>
   </property>
-  <widget class="QWidget" name="dockWidgetContents">
-   <layout class="QHBoxLayout" name="horizontalLayout_2">
-    <item>
-     <widget class="QSplitter" name="splitter">
-      <property name="orientation">
-       <enum>Qt::Orientation::Vertical</enum>
-      </property>
-      <widget class="QWidget" name="verticalWidget_2" native="true">
-       <layout class="QVBoxLayout" name="verticalLayout_3">
-        <item>
-         <layout class="QHBoxLayout" name="horizontalLayout">
-          <item>
-           <widget class="QToolButton" name="buttonEditMode">
-            <property name="enabled">
-             <bool>true</bool>
-            </property>
-            <property name="text">
-             <string notr="true"/>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QWidget" name="buttonsEditMode" native="true">
-            <layout class="QHBoxLayout" name="layoutEditMode">
-             <item>
-              <widget class="QToolButton" name="buttonAdd">
-               <property name="text">
-                <string notr="true"/>
-               </property>
-               <property name="icon">
-                <iconset resource="../../cmake-build-relwithdebinfo/src/icons.qrc">
-                 <normaloff>:/icons/bx-plus-circle.svg</normaloff>:/icons/bx-plus-circle.svg</iconset>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QToolButton" name="buttonDelete">
-               <property name="text">
-                <string notr="true"/>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <spacer name="horizontalSpacer">
-               <property name="orientation">
-                <enum>Qt::Orientation::Horizontal</enum>
-               </property>
-               <property name="sizeHint" stdset="0">
-                <size>
-                 <width>40</width>
-                 <height>20</height>
-                </size>
-               </property>
-              </spacer>
-             </item>
-             <item>
-              <widget class="QToolButton" name="buttonRename">
-               <property name="text">
-                <string notr="true"/>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QToolButton" name="buttonSetIcon">
-               <property name="text">
-                <string notr="true"/>
-               </property>
-               <property name="icon">
-                <iconset resource="../../cmake-build-relwithdebinfo/src/icons.qrc">
-                 <normaloff>:/icons/bx-image.svg</normaloff>:/icons/bx-image.svg</iconset>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QToolButton" name="buttonLinkTo">
-               <property name="text">
-                <string notr="true"/>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QToolButton" name="buttonLinkReset"/>
-             </item>
-             <item>
-              <widget class="QToolButton" name="buttonComment">
-               <property name="text">
-                <string notr="true"/>
-               </property>
-              </widget>
-             </item>
-            </layout>
-           </widget>
-          </item>
-          <item>
-           <widget class="QWidget" name="buttonsNormalMode" native="true">
-            <layout class="QHBoxLayout" name="horizontalLayout_5">
-             <item>
-              <widget class="QToolButton" name="buttonToggleActive">
-               <property name="text">
-                <string notr="true"/>
-               </property>
-               <property name="checkable">
-                <bool>true</bool>
-               </property>
-               <property name="checked">
-                <bool>false</bool>
-               </property>
-              </widget>
-             </item>
-            </layout>
-           </widget>
-          </item>
-         </layout>
-        </item>
-        <item>
-         <layout class="QHBoxLayout" name="horizontalLayout_3">
-          <item>
-           <widget class="QLabel" name="labelTreeNotification">
-            <property name="styleSheet">
-             <string notr="true">background-color: lightPink;
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <layout class="QHBoxLayout" name="horizontalLayout_2">
+     <item>
+      <widget class="QSplitter" name="splitter">
+       <property name="orientation">
+        <enum>Qt::Orientation::Vertical</enum>
+       </property>
+       <widget class="QWidget" name="verticalWidget_2" native="true">
+        <layout class="QVBoxLayout" name="verticalLayout_3">
+         <item>
+          <layout class="QHBoxLayout" name="horizontalLayout">
+           <item>
+            <widget class="QToolButton" name="buttonEditMode">
+             <property name="enabled">
+              <bool>true</bool>
+             </property>
+             <property name="text">
+              <string notr="true"/>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QWidget" name="buttonsEditMode" native="true">
+             <layout class="QHBoxLayout" name="layoutEditMode">
+              <item>
+               <widget class="QToolButton" name="buttonAdd">
+                <property name="text">
+                 <string notr="true"/>
+                </property>
+                <property name="icon">
+                 <iconset resource="../../cmake-build-relwithdebinfo/src/icons.qrc">
+                  <normaloff>:/icons/bx-plus-circle.svg</normaloff>:/icons/bx-plus-circle.svg</iconset>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QToolButton" name="buttonDelete">
+                <property name="text">
+                 <string notr="true"/>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <spacer name="horizontalSpacer">
+                <property name="orientation">
+                 <enum>Qt::Orientation::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>40</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+              <item>
+               <widget class="QToolButton" name="buttonRename">
+                <property name="text">
+                 <string notr="true"/>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QToolButton" name="buttonSetIcon">
+                <property name="text">
+                 <string notr="true"/>
+                </property>
+                <property name="icon">
+                 <iconset resource="../../cmake-build-relwithdebinfo/src/icons.qrc">
+                  <normaloff>:/icons/bx-image.svg</normaloff>:/icons/bx-image.svg</iconset>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QToolButton" name="buttonLinkTo">
+                <property name="text">
+                 <string notr="true"/>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QToolButton" name="buttonLinkReset"/>
+              </item>
+              <item>
+               <widget class="QToolButton" name="buttonComment">
+                <property name="text">
+                 <string notr="true"/>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+           </item>
+           <item>
+            <widget class="QWidget" name="buttonsNormalMode" native="true">
+             <layout class="QHBoxLayout" name="horizontalLayout_5">
+              <item>
+               <widget class="QToolButton" name="buttonToggleActive">
+                <property name="text">
+                 <string notr="true"/>
+                </property>
+                <property name="checkable">
+                 <bool>true</bool>
+                </property>
+                <property name="checked">
+                 <bool>false</bool>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <layout class="QHBoxLayout" name="horizontalLayout_3">
+           <item>
+            <widget class="QLabel" name="labelTreeNotification">
+             <property name="styleSheet">
+              <string notr="true">background-color: lightPink;
 border: 2px solid red;
 border-radius: 5px;</string>
-            </property>
-            <property name="text">
-             <string notr="true">Very long notification placeholder. Very long notification placeholder. Very long notification placeholder. Very long notification placeholder. </string>
-            </property>
-            <property name="wordWrap">
-             <bool>true</bool>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QToolButton" name="buttonTreeNotificationCancel">
-            <property name="toolTip">
-             <string>Cancel</string>
-            </property>
-            <property name="text">
-             <string notr="true">...</string>
-            </property>
-            <property name="icon">
-             <iconset theme="QIcon::ThemeIcon::WindowClose"/>
-            </property>
-           </widget>
-          </item>
-         </layout>
-        </item>
-        <item>
-         <widget class="TagLibrary::TreeView" name="treeTags">
-          <property name="contextMenuPolicy">
-           <enum>Qt::ContextMenuPolicy::CustomContextMenu</enum>
-          </property>
-          <property name="acceptDrops">
-           <bool>true</bool>
-          </property>
-          <property name="editTriggers">
-           <set>QAbstractItemView::EditTrigger::EditKeyPressed</set>
-          </property>
-          <property name="dragEnabled">
-           <bool>true</bool>
-          </property>
-          <property name="dragDropMode">
-           <enum>QAbstractItemView::DragDropMode::DragDrop</enum>
-          </property>
-          <property name="defaultDropAction">
-           <enum>Qt::DropAction::MoveAction</enum>
-          </property>
-          <property name="indentation">
-           <number>10</number>
-          </property>
-          <property name="rootIsDecorated">
-           <bool>true</bool>
-          </property>
-          <property name="uniformRowHeights">
-           <bool>true</bool>
-          </property>
-          <property name="expandsOnDoubleClick">
-           <bool>false</bool>
-          </property>
-         </widget>
-        </item>
-       </layout>
-      </widget>
-      <widget class="QWidget" name="verticalWidget" native="true">
-       <layout class="QVBoxLayout" name="verticalLayout_2">
-        <item>
-         <widget class="QLabel" name="labelDescriptionTitle">
-          <property name="text">
-           <string notr="true"/>
-          </property>
-          <property name="wordWrap">
-           <bool>true</bool>
-          </property>
-          <property name="textInteractionFlags">
-           <set>Qt::TextInteractionFlag::LinksAccessibleByKeyboard|Qt::TextInteractionFlag::LinksAccessibleByMouse|Qt::TextInteractionFlag::TextBrowserInteraction|Qt::TextInteractionFlag::TextSelectableByKeyboard|Qt::TextInteractionFlag::TextSelectableByMouse</set>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QScrollArea" name="scrollArea">
-          <property name="horizontalScrollBarPolicy">
-           <enum>Qt::ScrollBarPolicy::ScrollBarAlwaysOff</enum>
-          </property>
-          <property name="widgetResizable">
-           <bool>true</bool>
-          </property>
-          <widget class="QWidget" name="scrollAreaWidgetContents">
-           <property name="geometry">
-            <rect>
-             <x>0</x>
-             <y>0</y>
-             <width>542</width>
-             <height>83</height>
-            </rect>
+             </property>
+             <property name="text">
+              <string notr="true">Very long notification placeholder. Very long notification placeholder. Very long notification placeholder. Very long notification placeholder. </string>
+             </property>
+             <property name="wordWrap">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QToolButton" name="buttonTreeNotificationCancel">
+             <property name="toolTip">
+              <string>Cancel</string>
+             </property>
+             <property name="text">
+              <string notr="true">...</string>
+             </property>
+             <property name="icon">
+              <iconset theme="QIcon::ThemeIcon::WindowClose"/>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <widget class="TagLibrary::TreeView" name="treeTags">
+           <property name="contextMenuPolicy">
+            <enum>Qt::ContextMenuPolicy::CustomContextMenu</enum>
            </property>
-           <layout class="QHBoxLayout" name="horizontalLayout_4">
-            <item>
-             <widget class="QLabel" name="labelDescriptionText">
-              <property name="text">
-               <string notr="true"/>
-              </property>
-              <property name="alignment">
-               <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignTop</set>
-              </property>
-              <property name="wordWrap">
-               <bool>true</bool>
-              </property>
-              <property name="textInteractionFlags">
-               <set>Qt::TextInteractionFlag::LinksAccessibleByKeyboard|Qt::TextInteractionFlag::LinksAccessibleByMouse|Qt::TextInteractionFlag::TextBrowserInteraction|Qt::TextInteractionFlag::TextSelectableByKeyboard|Qt::TextInteractionFlag::TextSelectableByMouse</set>
-              </property>
-             </widget>
-            </item>
-           </layout>
+           <property name="acceptDrops">
+            <bool>true</bool>
+           </property>
+           <property name="editTriggers">
+            <set>QAbstractItemView::EditTrigger::EditKeyPressed</set>
+           </property>
+           <property name="dragEnabled">
+            <bool>true</bool>
+           </property>
+           <property name="dragDropMode">
+            <enum>QAbstractItemView::DragDropMode::DragDrop</enum>
+           </property>
+           <property name="defaultDropAction">
+            <enum>Qt::DropAction::MoveAction</enum>
+           </property>
+           <property name="indentation">
+            <number>10</number>
+           </property>
+           <property name="rootIsDecorated">
+            <bool>true</bool>
+           </property>
+           <property name="uniformRowHeights">
+            <bool>true</bool>
+           </property>
+           <property name="expandsOnDoubleClick">
+            <bool>false</bool>
+           </property>
           </widget>
-         </widget>
-        </item>
-       </layout>
+         </item>
+        </layout>
+       </widget>
+       <widget class="QWidget" name="verticalWidget" native="true">
+        <layout class="QVBoxLayout" name="verticalLayout_2">
+         <item>
+          <widget class="QLabel" name="labelDescriptionTitle">
+           <property name="text">
+            <string notr="true"/>
+           </property>
+           <property name="wordWrap">
+            <bool>true</bool>
+           </property>
+           <property name="textInteractionFlags">
+            <set>Qt::TextInteractionFlag::LinksAccessibleByKeyboard|Qt::TextInteractionFlag::LinksAccessibleByMouse|Qt::TextInteractionFlag::TextBrowserInteraction|Qt::TextInteractionFlag::TextSelectableByKeyboard|Qt::TextInteractionFlag::TextSelectableByMouse</set>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QScrollArea" name="scrollArea">
+           <property name="horizontalScrollBarPolicy">
+            <enum>Qt::ScrollBarPolicy::ScrollBarAlwaysOff</enum>
+           </property>
+           <property name="widgetResizable">
+            <bool>true</bool>
+           </property>
+           <widget class="QWidget" name="scrollAreaWidgetContents">
+            <property name="geometry">
+             <rect>
+              <x>0</x>
+              <y>0</y>
+              <width>540</width>
+              <height>83</height>
+             </rect>
+            </property>
+            <layout class="QHBoxLayout" name="horizontalLayout_4">
+             <item>
+              <widget class="QLabel" name="labelDescriptionText">
+               <property name="text">
+                <string notr="true"/>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignTop</set>
+               </property>
+               <property name="wordWrap">
+                <bool>true</bool>
+               </property>
+               <property name="textInteractionFlags">
+                <set>Qt::TextInteractionFlag::LinksAccessibleByKeyboard|Qt::TextInteractionFlag::LinksAccessibleByMouse|Qt::TextInteractionFlag::TextBrowserInteraction|Qt::TextInteractionFlag::TextSelectableByKeyboard|Qt::TextInteractionFlag::TextSelectableByMouse</set>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </widget>
+          </widget>
+         </item>
+        </layout>
+       </widget>
       </widget>
-     </widget>
-    </item>
-   </layout>
-   <action name="actionToggleEditMode">
-    <property name="checkable">
-     <bool>true</bool>
-    </property>
-    <property name="icon">
-     <iconset resource="../../cmake-build-relwithdebinfo/src/icons.qrc">
-      <normaloff>:/icons/bx-edit.svg</normaloff>:/icons/bx-edit.svg</iconset>
-    </property>
-    <property name="text">
-     <string>Edit tree</string>
-    </property>
-    <property name="toolTip">
-     <string>Edit tree</string>
-    </property>
-    <property name="menuRole">
-     <enum>QAction::MenuRole::NoRole</enum>
-    </property>
-   </action>
-   <action name="actionToggleActive">
-    <property name="checkable">
-     <bool>true</bool>
-    </property>
-    <property name="icon">
-     <iconset resource="../../cmake-build-relwithdebinfo/src/icons.qrc">
-      <normaloff>:/icons/bx-toggle-left.svg</normaloff>
-      <normalon>:/icons/bx-toggle-right.svg</normalon>:/icons/bx-toggle-left.svg</iconset>
-    </property>
-    <property name="text">
-     <string>Toggle active</string>
-    </property>
-    <property name="toolTip">
-     <string>De/activate this tag</string>
-    </property>
-    <property name="menuRole">
-     <enum>QAction::MenuRole::NoRole</enum>
-    </property>
-   </action>
-   <action name="actionLinkTo">
-    <property name="icon">
-     <iconset resource="../../cmake-build-relwithdebinfo/src/icons.qrc">
-      <normaloff>:/icons/bx-link.svg</normaloff>:/icons/bx-link.svg</iconset>
-    </property>
-    <property name="text">
-     <string>Link to</string>
-    </property>
-    <property name="toolTip">
-     <string>Link to another element</string>
-    </property>
-    <property name="menuRole">
-     <enum>QAction::MenuRole::NoRole</enum>
-    </property>
-   </action>
-   <action name="actionRename">
-    <property name="icon">
-     <iconset resource="../../cmake-build-relwithdebinfo/src/icons.qrc">
-      <normaloff>:/icons/bx-rename.svg</normaloff>:/icons/bx-rename.svg</iconset>
-    </property>
-    <property name="text">
-     <string>Rename</string>
-    </property>
-    <property name="toolTip">
-     <string>Rename element</string>
-    </property>
-    <property name="menuRole">
-     <enum>QAction::MenuRole::NoRole</enum>
-    </property>
-   </action>
-   <action name="actionDelete">
-    <property name="icon">
-     <iconset theme="QIcon::ThemeIcon::EditDelete"/>
-    </property>
-    <property name="text">
-     <string>Delete</string>
-    </property>
-    <property name="toolTip">
-     <string>Delete element</string>
-    </property>
-    <property name="menuRole">
-     <enum>QAction::MenuRole::NoRole</enum>
-    </property>
-   </action>
-   <action name="actionCreateCollection">
-    <property name="icon">
-     <iconset resource="../../cmake-build-relwithdebinfo/src/icons.qrc">
-      <normaloff>:/icons/bx-book-add.svg</normaloff>:/icons/bx-book-add.svg</iconset>
-    </property>
-    <property name="text">
-     <string>New collection</string>
-    </property>
-    <property name="toolTip">
-     <string>Create a new collection</string>
-    </property>
-    <property name="menuRole">
-     <enum>QAction::MenuRole::NoRole</enum>
-    </property>
-   </action>
-   <action name="actionCreateObject">
-    <property name="icon">
-     <iconset resource="../../cmake-build-relwithdebinfo/src/icons.qrc">
-      <normaloff>:/icons/bx-cube.svg</normaloff>:/icons/bx-cube.svg</iconset>
-    </property>
-    <property name="text">
-     <string>New object</string>
-    </property>
-    <property name="toolTip">
-     <string>Create a new object</string>
-    </property>
-    <property name="menuRole">
-     <enum>QAction::MenuRole::NoRole</enum>
-    </property>
-   </action>
-   <action name="actionCreateLink">
-    <property name="icon">
-     <iconset resource="../../cmake-build-relwithdebinfo/src/icons.qrc">
-      <normaloff>:/icons/bx-link.svg</normaloff>:/icons/bx-link.svg</iconset>
-    </property>
-    <property name="text">
-     <string>New link</string>
-    </property>
-    <property name="toolTip">
-     <string>Create a new link</string>
-    </property>
-    <property name="menuRole">
-     <enum>QAction::MenuRole::NoRole</enum>
-    </property>
-   </action>
-   <action name="actionLinkReset">
-    <property name="icon">
-     <iconset resource="../../cmake-build-relwithdebinfo/src/icons.qrc">
-      <normaloff>:/icons/bx-unlink.svg</normaloff>:/icons/bx-unlink.svg</iconset>
-    </property>
-    <property name="text">
-     <string>Unlink</string>
-    </property>
-    <property name="toolTip">
-     <string>Unlink this link</string>
-    </property>
-    <property name="menuRole">
-     <enum>QAction::MenuRole::NoRole</enum>
-    </property>
-   </action>
-   <action name="actionComment">
-    <property name="icon">
-     <iconset resource="../../cmake-build-relwithdebinfo/src/icons.qrc">
-      <normaloff>:/icons/bx-comment-edit.svg</normaloff>:/icons/bx-comment-edit.svg</iconset>
-    </property>
-    <property name="text">
-     <string>Set comment</string>
-    </property>
-    <property name="toolTip">
-     <string>Set comment for the item</string>
-    </property>
-    <property name="menuRole">
-     <enum>QAction::MenuRole::NoRole</enum>
-    </property>
-   </action>
-  </widget>
+     </item>
+    </layout>
+   </item>
+  </layout>
+  <action name="actionToggleEditMode">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="../../cmake-build-relwithdebinfo/src/icons.qrc">
+     <normaloff>:/icons/bx-edit.svg</normaloff>:/icons/bx-edit.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Edit tree</string>
+   </property>
+   <property name="toolTip">
+    <string>Edit tree</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::MenuRole::NoRole</enum>
+   </property>
+  </action>
+  <action name="actionToggleActive">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="../../cmake-build-relwithdebinfo/src/icons.qrc">
+     <normaloff>:/icons/bx-toggle-left.svg</normaloff>
+     <normalon>:/icons/bx-toggle-right.svg</normalon>:/icons/bx-toggle-left.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Toggle active</string>
+   </property>
+   <property name="toolTip">
+    <string>De/activate this tag</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::MenuRole::NoRole</enum>
+   </property>
+  </action>
+  <action name="actionLinkTo">
+   <property name="icon">
+    <iconset resource="../../cmake-build-relwithdebinfo/src/icons.qrc">
+     <normaloff>:/icons/bx-link.svg</normaloff>:/icons/bx-link.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Link to</string>
+   </property>
+   <property name="toolTip">
+    <string>Link to another element</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::MenuRole::NoRole</enum>
+   </property>
+  </action>
+  <action name="actionRename">
+   <property name="icon">
+    <iconset resource="../../cmake-build-relwithdebinfo/src/icons.qrc">
+     <normaloff>:/icons/bx-rename.svg</normaloff>:/icons/bx-rename.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Rename</string>
+   </property>
+   <property name="toolTip">
+    <string>Rename element</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::MenuRole::NoRole</enum>
+   </property>
+  </action>
+  <action name="actionDelete">
+   <property name="icon">
+    <iconset theme="QIcon::ThemeIcon::EditDelete"/>
+   </property>
+   <property name="text">
+    <string>Delete</string>
+   </property>
+   <property name="toolTip">
+    <string>Delete element</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::MenuRole::NoRole</enum>
+   </property>
+  </action>
+  <action name="actionCreateCollection">
+   <property name="icon">
+    <iconset resource="../../cmake-build-relwithdebinfo/src/icons.qrc">
+     <normaloff>:/icons/bx-book-add.svg</normaloff>:/icons/bx-book-add.svg</iconset>
+   </property>
+   <property name="text">
+    <string>New collection</string>
+   </property>
+   <property name="toolTip">
+    <string>Create a new collection</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::MenuRole::NoRole</enum>
+   </property>
+  </action>
+  <action name="actionCreateObject">
+   <property name="icon">
+    <iconset resource="../../cmake-build-relwithdebinfo/src/icons.qrc">
+     <normaloff>:/icons/bx-cube.svg</normaloff>:/icons/bx-cube.svg</iconset>
+   </property>
+   <property name="text">
+    <string>New object</string>
+   </property>
+   <property name="toolTip">
+    <string>Create a new object</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::MenuRole::NoRole</enum>
+   </property>
+  </action>
+  <action name="actionCreateLink">
+   <property name="icon">
+    <iconset resource="../../cmake-build-relwithdebinfo/src/icons.qrc">
+     <normaloff>:/icons/bx-link.svg</normaloff>:/icons/bx-link.svg</iconset>
+   </property>
+   <property name="text">
+    <string>New link</string>
+   </property>
+   <property name="toolTip">
+    <string>Create a new link</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::MenuRole::NoRole</enum>
+   </property>
+  </action>
+  <action name="actionLinkReset">
+   <property name="icon">
+    <iconset resource="../../cmake-build-relwithdebinfo/src/icons.qrc">
+     <normaloff>:/icons/bx-unlink.svg</normaloff>:/icons/bx-unlink.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Unlink</string>
+   </property>
+   <property name="toolTip">
+    <string>Unlink this link</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::MenuRole::NoRole</enum>
+   </property>
+  </action>
+  <action name="actionComment">
+   <property name="icon">
+    <iconset resource="../../cmake-build-relwithdebinfo/src/icons.qrc">
+     <normaloff>:/icons/bx-comment-edit.svg</normaloff>:/icons/bx-comment-edit.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Set comment</string>
+   </property>
+   <property name="toolTip">
+    <string>Set comment for the item</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::MenuRole::NoRole</enum>
+   </property>
+  </action>
+  <action name="actionaaa">
+   <property name="text">
+    <string>aaa</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::MenuRole::NoRole</enum>
+   </property>
+  </action>
  </widget>
  <customwidgets>
   <customwidget>
