@@ -18,6 +18,8 @@
 
 #include "FileTagsManager.hpp"
 #include "Utility.hpp"
+#include "../DirectoryStats.hpp"
+#include "../DirectoryStatsManager.hpp"
 #include "../Utility.hpp"
 
 namespace FileBrowser {
@@ -64,10 +66,12 @@ public:
 DirectoryTreeModel::DirectoryTreeModel(
         QStyle *const style,
         FileTagsManager &fileTagsManager,
+        DirectoryStatsManager &directoryStatsManager,
         IsFileExcluded const & isFileExcluded
 ):
         style{style},
         fileTagsManager_{fileTagsManager},
+        directoryStatsManager_{directoryStatsManager},
         isFileExcluded_{isFileExcluded},
         directoryIcon{style->standardPixmap(QStyle::SP_DirIcon)},
         cacheDir{QStandardPaths::standardLocations(QStandardPaths::StandardLocation::CacheLocation).at(0)+"/DirectoryTreeModelCache"} {
@@ -80,7 +84,7 @@ DirectoryTreeModel::DirectoryTreeModel(
         if(!QDir{}.mkpath(cacheDir))
             qWarning() << "DirectoryTreeModel: could not create directory: " << cacheDir;
 
-    connect(&fileTagsManager, &FileTagsManager::directoryStatsChanged, this, [this](auto const &path){
+    connect(&directoryStatsManager, &DirectoryStatsManager::directoryStatsChanged, this, [this](auto const &path){
                 ZoneScoped;
                 gsl_Expects(QFileInfo(path).isAbsolute());
                 gsl_Expects(QFileInfo(path).isDir());
@@ -124,7 +128,7 @@ QVariant DirectoryTreeModel::data(const QModelIndex &index, int role) const {
             case Qt::ItemDataRole::DisplayRole:
             case Qt::ItemDataRole::ToolTipRole:
                 if (pathInfo.isDir()) {
-                    return formatDirectoryStats(fileTagsManager_.directoryStats(path), pathInfo.fileName());
+                    return formatDirectoryStats(directoryStatsManager_.directoryStats(path), pathInfo.fileName());
                 } else {
                     auto &fileTags = fileTagsManager_.forFile(path);
                     QString label = pathInfo.fileName() + "\n";
@@ -171,7 +175,7 @@ QVariant DirectoryTreeModel::data(const QModelIndex &index, int role) const {
             case Qt::ItemDataRole::BackgroundRole: {
                 std::vector<QBrush> brushes;
                 if (pathInfo.isDir()) {
-                    if (auto &stats = fileTagsManager_.directoryStats(path); stats.ready()) {
+                    if (auto &stats = directoryStatsManager_.directoryStats(path); stats.ready()) {
                         if (stats.filesFlaggedComplete() == stats.fileCount())
                             brushes.emplace_back(QColor(0, 255, 0, 64), Qt::BrushStyle::SolidPattern);
                         else if (stats.filesWithTags() != 0)

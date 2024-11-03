@@ -17,11 +17,21 @@
 #pragma once
 
 class Project {
+    Project();
+
 public:
+    Project(Project const &other) = delete;
+    Project(Project &&other);
+    Project& operator=(Project const &other) = delete;
+    Project& operator=(Project &&other);
+
+    ~Project();
+
     [[nodiscard]] static std::expected<void, QString> create(QString const &path);
     [[nodiscard]] std::expected<std::optional<int>, QString> save(bool backup);
     [[nodiscard]] static std::expected<Project, QString> open(QString const &path);
 
+    // these two methods are thread-safe
     [[nodiscard]] bool isExcludedFile(QString const &fileName);
     void setExcludedFile(QString const &fileName, bool excluded);
 
@@ -35,5 +45,8 @@ public:
 private:
     QString path_;
     QStringList directories_;
+
+    // dynamic storage, as QMutex is not moveable
+    std::unique_ptr<QMutex> excludedFilesMutex_;
     QStringList excludedFiles_;
 };

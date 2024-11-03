@@ -21,6 +21,8 @@
 #include "DirectoryTreeProxyModel.hpp"
 #include "Utility.hpp"
 
+#include "../DirectoryStats.hpp"
+#include "../DirectoryStatsManager.hpp"
 #include "../FileTagsManager.hpp"
 #include "../FileEditor.hpp"
 
@@ -33,6 +35,7 @@ const QStringList NAME_FILTERS = {"*.jpg", "*.png"};
 namespace FileBrowser {
 FileBrowser::FileBrowser(
         FileTagsManager &fileTagsManager,
+        DirectoryStatsManager &directoryStatsManager,
         FileEditor &fileEditor,
         IsFileExcluded const &isFileExcluded,
         Qt::WindowFlags const flags
@@ -40,12 +43,14 @@ FileBrowser::FileBrowser(
     QWidget(nullptr, flags),
     ui(std::make_unique<Ui_FileBrowser>()),
     fileTagsManager_(fileTagsManager),
+    directoryStatsManager_(directoryStatsManager),
     fileEditor_(fileEditor),
     isFileExcluded_(isFileExcluded),
     projectDirectoryListModel(std::make_unique<ProjectDirectoryListModel>()),
     directoryTreeModel(std::make_unique<DirectoryTreeModel>(
             style(),
             fileTagsManager,
+            directoryStatsManager_,
             [this](auto const &file) { return isFileExcludedAbsPath(file); }
     )),
     directoryTreeProxyModel(std::make_unique<DirectoryTreeProxyModel>(
@@ -57,7 +62,7 @@ std::expected<void, QString> FileBrowser::init() {
 
     ui->setupUi(this);
 
-    connect(&fileTagsManager_, &FileTagsManager::directoryStatsChanged, this, [this](auto const &){
+    connect(&directoryStatsManager_, &DirectoryStatsManager::directoryStatsChanged, this, [this](auto const &){
         refreshDirectoryLabel();
     }, Qt::QueuedConnection);
 
@@ -171,7 +176,7 @@ std::expected<void, QString> FileBrowser::init() {
         connect(refreshStatisticsAction, &QAction::triggered, this, [&]{
             ZoneScoped;
             gsl_Expects(QFileInfo(fileOver).isDir());
-            fileTagsManager_.directoryStats(fileOver).reload();
+            directoryStatsManager_.directoryStats(fileOver).reload();
         });
 
         menu.exec(ui->treeViewDirectories->mapToGlobal(pos));
@@ -220,13 +225,14 @@ std::expected<void, QString> FileBrowser::init() {
 std::expected<std::unique_ptr<FileBrowser>, QString>
 FileBrowser::create(
         FileTagsManager &fileTagsManager,
+        DirectoryStatsManager &directoryStatsManager,
         FileEditor &fileEditor,
         IsFileExcluded const &isFileExcluded,
         Qt::WindowFlags flags
 ) {
     ZoneScoped;
 
-    auto self = std::unique_ptr<FileBrowser>(new FileBrowser{fileTagsManager, fileEditor, isFileExcluded, flags});
+    auto self = std::unique_ptr<FileBrowser>(new FileBrowser{fileTagsManager, directoryStatsManager, fileEditor, isFileExcluded, flags});
     if (auto result = self->init(); !result)
         return std::unexpected(result.error());
 
@@ -317,7 +323,7 @@ void FileBrowser::openDirectory(QString const &directory) {
 
     if (directory != currentDirectory_) {
         currentDirectory_ = directory;
-        currentDirectoryStats_ = &fileTagsManager_.directoryStats(QFileInfo(QDir(projectRootPath_), currentDirectory_).filePath());
+        currentDirectoryStats_ = &directoryStatsManager_.directoryStats(QFileInfo(QDir(projectRootPath_), currentDirectory_).filePath());
 
         ui->buttonRemoveDirectory->setEnabled(true);
         ui->actionShowExcluded->setEnabled(true);

@@ -31,6 +31,14 @@ namespace {
     constexpr QAnyStringView valueApp = "SIMPLETAGGER-CXX";
 }
 
+Project::Project(): excludedFilesMutex_(std::make_unique<QMutex>()) {}
+
+Project::Project(Project &&) = default;
+
+Project &Project::operator=(Project &&) = default;
+
+Project::~Project() = default;
+
 std::expected<void, QString> Project::create(const QString &path) {
     ZoneScoped;
 
@@ -93,7 +101,6 @@ std::expected<std::optional<int>, QString> Project::save(bool const backup) {
 
 std::expected<Project, QString> Project::open(QString const &path) {
     ZoneScoped;
-
     qDebug() << "Opening project: " << path;
 
     QFile file{path};
@@ -103,7 +110,7 @@ std::expected<Project, QString> Project::open(QString const &path) {
     QByteArray content = file.readAll();
     auto map = QCborValue::fromCbor(content).toMap();
 
-    auto project = Project();
+    Project project;
     project.path_ = path;
 
     auto formatVersion = map.take(std::to_underlying(Keys::FORMAT_VERSION));
@@ -154,6 +161,7 @@ std::expected<Project, QString> Project::open(QString const &path) {
 
 bool Project::isExcludedFile(const QString &fileName) {
     ZoneScoped;
+    QMutexLocker locker(&*excludedFilesMutex_);
     gsl_Expects(QFileInfo(fileName).isRelative());
     return excludedFiles_.contains(fileName);
 }
@@ -161,6 +169,7 @@ bool Project::isExcludedFile(const QString &fileName) {
 void Project::setExcludedFile(QString const &fileName, bool const excluded) {
     ZoneScoped;
     gsl_Expects(QFileInfo(fileName).isRelative());
+    QMutexLocker locker(&*excludedFilesMutex_);
     if (excluded && !excludedFiles_.contains(fileName))
         excludedFiles_.push_back(fileName);
     else if (!excluded && excludedFiles_.contains(fileName))

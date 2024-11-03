@@ -16,10 +16,10 @@
 */
 #include "Utility.hpp"
 
-#include "../FileTagsManager.hpp"
+#include "../DirectoryStats.hpp"
 
 namespace FileBrowser {
-QString formatDirectoryStats(DirectoryTagsStats const &stats, QString const &path) {
+QString formatDirectoryStats(DirectoryStats const &stats, QString const &path) {
     QStringList lines;
     lines.push_back(path);
 
@@ -29,28 +29,53 @@ QString formatDirectoryStats(DirectoryTagsStats const &stats, QString const &pat
         if (stats.fileCount() == 0)
             lines.push_back(QObject::tr("no image files"));
         else {
+            auto fileCount = stats.fileCount() - stats.filesExcluded();
+
             auto precision = std::max(0, static_cast<int>(std::floor(std::log10(stats.fileCount()))) + 1 - 2);
             auto percentFiles = [&](auto const &v) {
                 // I don't know how to format numbers with Qt :<
                 return QString::fromStdString(std::format(
                         std::runtime_format(std::format("{{:.{}f}}", precision)),
-                        (static_cast<float>(v) / static_cast<float>(stats.fileCount())) * 100.f
+                        (static_cast<float>(v) / static_cast<float>(fileCount)) * 100.f
                 ));
             };
 
-            QString secondLine = QObject::tr("%1 / %2 (%3%) files completed")
-                    .arg(stats.filesFlaggedComplete())
-                    .arg(stats.fileCount())
-                    .arg(percentFiles(stats.filesFlaggedComplete()));
+            if (fileCount > 0) {
+                QString secondLine = QObject::tr(
+                            "%1 / %2 (%3%) file(s) completed", "", stats.filesFlaggedCompleteWithoutExcluded()
+                        )
+                        .arg(stats.filesFlaggedCompleteWithoutExcluded())
+                        .arg(fileCount)
+                        .arg(percentFiles(stats.filesFlaggedCompleteWithoutExcluded()));
 
-            if (auto filesIncomplete = stats.filesWithTags()-stats.filesFlaggedComplete(); filesIncomplete > 0) {
-                secondLine += QObject::tr(", %1 / %2 (%3%) files started but not completed")
-                        .arg(filesIncomplete)
-                        .arg(stats.fileCount())
-                        .arg(percentFiles(filesIncomplete));
+                if (auto filesIncomplete =
+                            stats.filesWithTagsWithoutExcluded() - stats.filesFlaggedCompleteWithoutExcluded();
+                        filesIncomplete > 0) {
+                    secondLine += QObject::tr(
+                                ", %1 / %2 (%3%) file(s) started but not completed",
+                                "",
+                                filesIncomplete
+                            )
+                            .arg(filesIncomplete)
+                            .arg(fileCount)
+                            .arg(percentFiles(filesIncomplete));
+                }
+
+                lines.push_back(secondLine);
             }
 
-            lines.push_back(secondLine);
+            if (stats.filesExcluded() != 0) {
+                if (fileCount == 0)
+                    lines.push_back(QObject::tr("%1 excluded file(s)", "", stats.filesExcluded()).arg(stats.filesExcluded()));
+                else
+                    lines.push_back(QObject::tr(
+                                    "%1 excluded file(s) (not included in the counters above)",
+                                    "",
+                                    stats.filesExcluded()
+                            )
+                            .arg(stats.filesExcluded())
+                    );
+            }
 
             lines.push_back(QObject::tr("%1 total tags").arg(stats.totalTags()));
         }

@@ -16,8 +16,8 @@
 */
 #pragma once
 
-class DirectoryTagsStats;
+class DirectoryStats;
 
 namespace FileBrowser {
-QString formatDirectoryStats(DirectoryTagsStats const &stats, QString const &path);
+QString formatDirectoryStats(DirectoryStats const &stats, QString const &path);
 }

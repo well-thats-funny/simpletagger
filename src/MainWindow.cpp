@@ -41,7 +41,8 @@ MainWindow::MainWindow(Settings &settings, QTranslator &translator):
     ui{std::make_unique<Ui_MainWindow>()},
     settings{settings},
     translator{translator},
-    fileTagsManager(settings.system.backupOnAnyChange) {}
+    fileTagsManager(settings.system.backupOnAnyChange),
+    directoryStatsManager(fileTagsManager) {}
 
 std::expected<void, QString> MainWindow::init() {
     ZoneScoped;
@@ -177,7 +178,7 @@ std::expected<void, QString> MainWindow::setupStatusBar() {
             statusBarMemory->setText(tr("Could not get memory usage"));
 
         statusCache->setText(tr("Cached %1 directories, %2 files")
-                .arg(fileTagsManager.cachedDirectories())
+                .arg(directoryStatsManager.cachedDirectories())
                 .arg(fileTagsManager.cachedFiles())
         );
     });
@@ -239,6 +240,7 @@ std::expected<void, QString> MainWindow::setupFileBrowserDock() {
 
     if (auto result = FileBrowser::FileBrowser::create(
                 fileTagsManager,
+                directoryStatsManager,
                 *fileEditor_,
                 [this](QString const &fileName)->bool{
                     ZoneScoped;
@@ -323,7 +325,7 @@ std::expected<void, QString> MainWindow::setupFileBrowserDock() {
     });
 
     connect(&*fileBrowser, &FileBrowser::FileBrowser::refresh, this, [this]{
-        fileTagsManager.invalidateDirectoryStatsCache();
+        directoryStatsManager.invalidateDirectoryStatsCache();
     });
 
     return {};
@@ -596,6 +598,7 @@ std::expected<void, QString> MainWindow::loadProject(QString const &filePath) {
 
     bool enabled = project.has_value();
     ui->widgetCentral->setEnabled(enabled);
+    directoryStatsManager.setProject(&*project);
     fileBrowser->setEnabled(enabled);
     tags_->setEnabled(enabled);
     ui->actionProjectSetup->setEnabled(enabled);

@@ -17,6 +17,7 @@
 #pragma once
 
 class FileTagsManager;
+class Project;
 
 class FileTags {
 public:
@@ -57,51 +58,6 @@ private:
     bool completeFlag_ = false;
 };
 
-class DirectoryTagsStats: public QObject {
-    Q_OBJECT
-
-    friend class FileTagsManager;
-
-    DirectoryTagsStats(FileTagsManager &manager, QString const &path);
-
-public:
-    DirectoryTagsStats(DirectoryTagsStats const &other) = delete;
-    DirectoryTagsStats(DirectoryTagsStats &&other) = delete;
-    DirectoryTagsStats& operator=(DirectoryTagsStats const &other) = delete;
-    DirectoryTagsStats& operator=(DirectoryTagsStats &&other) = delete;
-
-    ~DirectoryTagsStats();
-
-    QString path() const;
-    int fileCount() const;
-    int filesFlaggedComplete() const;
-    int filesWithTags() const;
-    int totalTags() const;
-
-    bool ready() const;
-
-    void reload();
-
-private:
-    void emitStatsUpdate();
-
-    FileTagsManager &manager_;
-    QString path_;
-
-    mutable QMutex mutex_;
-    struct Stats {
-        std::vector<std::reference_wrapper<DirectoryTagsStats>> childrenStats_;
-
-        bool loaded_ = false;
-        int fileCount_ = 0;
-        int filesFlaggedComplete_ = 0;
-        int filesWithTags_ = 0;
-        int totalTags_ = 0;
-    };
-
-    Stats stats_;
-};
-
 class FileTagsManager: public QObject {
     Q_OBJECT
 
@@ -119,29 +75,15 @@ public:
     void setBackupOnSave(bool value);
 
     FileTags &forFile(QString const &path);
-    DirectoryTagsStats &directoryStats(QString const &path);
-    void invalidateDirectoryStatsCache();
 
     int cachedFiles() const;
-    int cachedDirectories() const;
 
 signals:
     void tagsSaved(std::optional<int> const &backupCount);
-    void directoryStatsChanged(QString const &path);
 
 private:
     bool backupOnSave_ = false;
 
-    QMutex fileTagsMutex_;
+    mutable QMutex mutex_;
     std::unordered_map<QString, std::unique_ptr<FileTags>> fileTags_;
-
-    QMutex directoryStatsMutex_;
-    std::unordered_map<QString, std::unique_ptr<DirectoryTagsStats>> directoryStats_;
-
-    // TODO: this is placed AFTER directoryStats_ because at the moment, DirectoryTagsStats doesn't
-    //       interrupt (and wait) pending reloads in destructor. Doing it there would be "more correct",
-    //       but simpler way for now is ensuring the pool is destroyed before "directoryStats_" map.
-    std::atomic_flag directoryStatsThreadPoolInterrupt_;
-    // TODO: get threadpool as a dependency? We could have a global I/O threadpool
-    QThreadPool directoryStatsThreadPool_;
 };

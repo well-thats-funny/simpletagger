@@ -18,7 +18,8 @@
 
 class Ui_FileBrowser;
 
-class DirectoryTagsStats;
+class DirectoryStatsManager;
+class DirectoryStats;
 class FileEditor;
 class FileTagsManager;
 
@@ -39,6 +40,7 @@ class FileBrowser: public QWidget {
 
     FileBrowser(
             FileTagsManager &fileTagsManager,
+            DirectoryStatsManager &directoryStatsManager,
             FileEditor &fileEditor,
             IsFileExcluded const &isFileExcluded,
             Qt::WindowFlags flags = Qt::WindowFlags()
@@ -49,6 +51,7 @@ public:
     static std::expected<std::unique_ptr<FileBrowser>, QString>
     create(
             FileTagsManager &fileTagsManager,
+            DirectoryStatsManager &directoryStatsManager,
             FileEditor &fileEditor,
             IsFileExcluded const &isFileExcluded,
             Qt::WindowFlags flags = Qt::WindowFlags()
@@ -84,6 +87,7 @@ private:
 
     std::unique_ptr<Ui_FileBrowser> ui;
     FileTagsManager &fileTagsManager_;
+    DirectoryStatsManager &directoryStatsManager_;
     FileEditor &fileEditor_;
     IsFileExcluded isFileExcluded_;
 
@@ -93,7 +97,7 @@ private:
 
     QString projectRootPath_;
     QString currentDirectory_;
-    DirectoryTagsStats *currentDirectoryStats_ = nullptr;
+    DirectoryStats *currentDirectoryStats_ = nullptr;
 
     QMetaObject::Connection currentChangedConnection;
 };

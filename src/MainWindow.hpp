@@ -15,15 +15,14 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 #pragma once
+#include "DirectoryStatsManager.hpp"
 #include "FileEditor.hpp"
 #include "FileTagsManager.hpp"
 #include "Project.hpp"
-#include "Settings.hpp"
 
 class Ui_MainWindow;
 
-class DirectoryTreeModel;
-class DirectoriesListModel;
+class Settings;
 
 namespace ImageViewer {
 class ImageViewer;
@@ -98,6 +97,7 @@ private:
     std::optional<Project> project;
 
     FileTagsManager fileTagsManager;
+    DirectoryStatsManager directoryStatsManager;
     std::optional<FileEditor> fileEditor_;
 
     std::unique_ptr<ads::CDockManager> dockManager;

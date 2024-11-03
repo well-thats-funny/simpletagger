@@ -123,6 +123,10 @@ add_executable(simpletagger-cxx
         VerticalLine.hpp
         TagLibrary/FilterProxyModel.cpp
         TagLibrary/FilterProxyModel.hpp
+        DirectoryStatsManager.cpp
+        DirectoryStatsManager.hpp
+        DirectoryStats.cpp
+        DirectoryStats.hpp
 )
 target_compile_options(simpletagger-cxx PRIVATE -Wall -Wextra -Werror)
 
