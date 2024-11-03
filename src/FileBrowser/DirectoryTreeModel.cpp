@@ -186,16 +186,32 @@ QVariant DirectoryTreeModel::data(const QModelIndex &index, int role) const {
                 return font;
             }
             case Qt::ItemDataRole::BackgroundRole:
-                if (isFileExcluded_(path))
-                    return QBrush(Qt::GlobalColor::gray, Qt::BrushStyle::SolidPattern);
-                else
-                    return QBrush();
+                if (pathInfo.isDir()) {
+                    if (auto &stats = fileTagsManager_.directoryStats(path); stats.ready()) {
+                        if (stats.filesWithTags() == stats.fileCount())
+                            return QBrush(QColor(0, 255, 0, 64), Qt::BrushStyle::SolidPattern);
+                        else if (stats.filesWithTags() != 0)
+                            return QBrush(Qt::GlobalColor::green, Qt::BrushStyle::FDiagPattern);
+                        else
+                            return {};
+                    } else {
+                        return QBrush(Qt::GlobalColor::cyan, Qt::BrushStyle::FDiagPattern);
+                    }
+                } else {
+                    if (isFileExcluded_(path))
+                        return QBrush(Qt::GlobalColor::gray, Qt::BrushStyle::SolidPattern);
+                    else if (fileTagsManager_.forFile(path).assignedTags().size() != 0)
+                        return QBrush(QColor(0, 255, 0, 64), Qt::BrushStyle::SolidPattern);
+                    else
+                        return QBrush();
+                }
+                break;
             default:
-                return QVariant();
+                return {};
         }
     } else {
         qWarning() << "DirectoryTreeModel::data: invalid column " << index.column();
-        return QVariant();
+        return {};
     }
 }
 
