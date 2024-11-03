@@ -106,7 +106,8 @@ std::expected<void, QString> FileBrowser::init() {
             closeDirectory();
     });
 
-    connect(ui->buttonAddDirectory, &QToolButton::clicked, this, [this]{
+    ui->buttonAddDirectory->setDefaultAction(ui->actionAddDirectory);
+    connect(ui->actionAddDirectory, &QAction::triggered, this, [this]{
         ZoneScoped;
         assert(!projectRootPath_.isEmpty());
 
@@ -124,7 +125,8 @@ std::expected<void, QString> FileBrowser::init() {
         }
     });
 
-    connect(ui->buttonRemoveDirectory, &QToolButton::clicked, this, [this]{
+    ui->buttonRemoveDirectory->setDefaultAction(ui->actionRemoveDirectory);
+    connect(ui->actionRemoveDirectory, &QAction::triggered, this, [this]{
         ZoneScoped;
         int row = ui->comboBoxDirectories->currentIndex();
         auto directory = projectDirectoryListModel->directory(row);

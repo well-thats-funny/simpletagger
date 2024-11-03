@@ -27,23 +27,12 @@
           <property name="text">
            <string notr="true"/>
           </property>
-          <property name="icon">
-           <iconset resource="../../cmake-build-relwithdebinfo/src/icons.qrc">
-            <normaloff>:/icons/bx-plus-circle.svg</normaloff>:/icons/bx-plus-circle.svg</iconset>
-          </property>
          </widget>
         </item>
         <item>
          <widget class="QToolButton" name="buttonRemoveDirectory">
-          <property name="enabled">
-           <bool>false</bool>
-          </property>
           <property name="text">
            <string notr="true"/>
-          </property>
-          <property name="icon">
-           <iconset resource="../../cmake-build-relwithdebinfo/src/icons.qrc">
-            <normaloff>:/icons/bx-minus-circle.svg</normaloff>:/icons/bx-minus-circle.svg</iconset>
           </property>
          </widget>
         </item>
@@ -225,6 +214,36 @@
    </property>
    <property name="toolTip">
     <string>Mark as complete</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::MenuRole::NoRole</enum>
+   </property>
+  </action>
+  <action name="actionAddDirectory">
+   <property name="icon">
+    <iconset resource="../../cmake-build-relwithdebinfo/src/icons.qrc">
+     <normaloff>:/icons/bx-plus-circle.svg</normaloff>:/icons/bx-plus-circle.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Add directory to the project</string>
+   </property>
+   <property name="toolTip">
+    <string>Add directory to the project</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::MenuRole::NoRole</enum>
+   </property>
+  </action>
+  <action name="actionRemoveDirectory">
+   <property name="icon">
+    <iconset resource="../../cmake-build-relwithdebinfo/src/icons.qrc">
+     <normaloff>:/icons/bx-minus-circle.svg</normaloff>:/icons/bx-minus-circle.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Remove directory from the project</string>
+   </property>
+   <property name="toolTip">
+    <string>Remove directory from the project</string>
    </property>
    <property name="menuRole">
     <enum>QAction::MenuRole::NoRole</enum>
