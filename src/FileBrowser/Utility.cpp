@@ -29,12 +29,13 @@ QString formatDirectoryStats(DirectoryTagsStats const &stats) {
         if (stats.fileCount() == 0)
             lines.push_back(QObject::tr("no image files"));
         else {
+            auto precision = std::max(0, static_cast<int>(std::floor(std::log10(stats.fileCount()))) + 1 - 2);
             lines.push_back(QObject::tr("%1 / %2 files have tags (%3%)")
                                     .arg(stats.filesWithTags())
                                     .arg(stats.fileCount())
                                             // I don't know how to format numbers with Qt :<
                                     .arg(QString::fromStdString(std::format(
-                                            "{:.2f}",
+                                            std::runtime_format(std::format("{{:.{}f}}", precision)),
                                             (static_cast<float>(stats.filesWithTags()) /
                                              static_cast<float>(stats.fileCount())) * 100.f
                                     )))
