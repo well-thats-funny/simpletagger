@@ -51,6 +51,9 @@ std::expected<void, QString> MainWindow::init() {
 
     connect(&fileTagsManager, &FileTagsManager::tagsSaved, [this](auto const &count){
         showSavedStatusMessage(tr("image tags"), count);
+        if (auto result = load(currentPath, true); !result) // force refreshing e.g. version notification
+            if (auto error = std::get_if<Error>(&result.error())) // ignore cancel
+                reportError(tr("Reload failed"), *error);
     });
 
     fileEditor_.emplace(fileTagsManager);
