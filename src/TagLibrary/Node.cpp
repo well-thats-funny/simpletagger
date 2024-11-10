@@ -245,6 +245,41 @@ std::optional<int> Node::lastChangeVersion() const {
 
 void Node::setLastChangeVersion(int const) {}
 
+std::expected<bool, Error> Node::lastChangeAfter(int version, bool anyChild) {
+    if (!anyChild) {
+        // non-recursive - only check if we were changed after the "version"
+        if (auto v = lastChangeVersion())
+            return *v > version;
+        else
+            // no information about last change version, so assume there was NO change
+            return false;
+    } else {
+        // recursive - first, use the non-recursive approach and if we were changed, no point
+        // in checking the children too
+        if (auto result = lastChangeAfter(version, false); !result)
+            return result;
+        else if (*result)
+            return true;
+
+        // nope, we were not changed, but perhaps out child was? Go check
+        // TODO: this iteration stuff is repeated in many places. Could become a method of Node ?
+        auto count = childrenCount();
+        if (!count)
+            return std::unexpected(count.error());
+
+        for (int i = 0; i != *count; ++i) {
+            if (auto childNode = childOfRow(i); !childNode)
+                return std::unexpected(childNode.error());
+            else if (auto result = childNode->get().lastChangeAfter(version, true); !result)
+                return result;
+            else if (*result)
+                return true;
+        }
+
+        return false;
+    }
+}
+
 std::vector<QBrush> Node::background(bool const editMode) const {
     ZoneScoped;
 

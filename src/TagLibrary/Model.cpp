@@ -290,9 +290,12 @@ QVariant Model::data(const QModelIndex &index, int role) const {
                 if (auto active = node.active())
                     font.setBold(*active);
 
-                auto lastChange = node.lastChangeVersion();
-                auto highlight = lastChange && highlightChangedAfterVersion_ && *lastChange > *highlightChangedAfterVersion_;
-                font.setUnderline(highlight);
+                if (highlightChangedAfterVersion_) {
+                    if (auto highlight = node.lastChangeAfter(*highlightChangedAfterVersion_, true); !highlight)
+                        qCCritical(LoggingCategory) << "Could not compare last change of a node:" << highlight.error();
+                    else
+                        font.setUnderline(*highlight);
+                }
             }
 
             font.setItalic(node.isHidden());

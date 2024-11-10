@@ -18,6 +18,7 @@
 #include "Format.hpp"
 
 #include "../IconIdentifier.hpp"
+#include "../Utility.hpp"
 
 namespace TagLibrary {
 class Model;
@@ -122,6 +123,7 @@ public:
 
     [[nodiscard]] virtual std::optional<int> lastChangeVersion() const;
     virtual void setLastChangeVersion(int version);
+    [[nodiscard]] std::expected<bool, Error> lastChangeAfter(int version, bool anyChild);
 
     [[nodiscard]] virtual std::vector<QBrush> background(bool editMode) const;
 
