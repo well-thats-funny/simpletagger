@@ -20,7 +20,7 @@
 #include "NewProjectDialog.hpp"
 #include "Constants.hpp"
 
-StartupDialog::StartupDialog(QWidget *parent, Qt::WindowFlags f):
+StartupDialog::StartupDialog(QWidget *const parent, Qt::WindowFlags const f):
         QDialog{parent, f},
         ui{std::make_unique<Ui_StartupDialog>()} {
     ZoneScoped;
