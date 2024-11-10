@@ -148,6 +148,20 @@
             </widget>
            </item>
            <item>
+            <widget class="QToolButton" name="buttonExpandAll">
+             <property name="text">
+              <string notr="true"/>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QToolButton" name="buttonCollapseAll">
+             <property name="text">
+              <string notr="true"/>
+             </property>
+            </widget>
+           </item>
+           <item>
             <widget class="QToolButton" name="buttonEditMode">
              <property name="enabled">
               <bool>true</bool>
@@ -479,6 +493,36 @@ color: black;</string>
    </property>
    <property name="toolTip">
     <string>Show only changed tags</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::MenuRole::NoRole</enum>
+   </property>
+  </action>
+  <action name="actionExpandAll">
+   <property name="icon">
+    <iconset resource="../../cmake-build-relwithdebinfo/src/icons.qrc">
+     <normaloff>:/icons/bx-expand-vertical.svg</normaloff>:/icons/bx-expand-vertical.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Expand all elements</string>
+   </property>
+   <property name="toolTip">
+    <string>Expand all elements</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::MenuRole::NoRole</enum>
+   </property>
+  </action>
+  <action name="actionCollapseAll">
+   <property name="icon">
+    <iconset resource="../../cmake-build-relwithdebinfo/src/icons.qrc">
+     <normaloff>:/icons/bx-collapse-vertical.svg</normaloff>:/icons/bx-collapse-vertical.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Collapse all elements</string>
+   </property>
+   <property name="toolTip">
+    <string>Collapse all elements</string>
    </property>
    <property name="menuRole">
     <enum>QAction::MenuRole::NoRole</enum>

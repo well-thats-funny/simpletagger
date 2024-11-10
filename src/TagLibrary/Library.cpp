@@ -276,6 +276,9 @@ std::expected<void, QString> Library::init() {
 
     ui->buttonEditMode->setDefaultAction(ui->actionToggleEditMode);
 
+    ui->buttonExpandAll->setDefaultAction(ui->actionExpandAll);
+    ui->buttonCollapseAll->setDefaultAction(ui->actionCollapseAll);
+
     connect(ui->buttonAdd, &QToolButton::clicked, this, [this, addCreateActions] {
         ZoneScoped;
         QMenu menu;
@@ -465,6 +468,16 @@ std::expected<void, QString> Library::init() {
     connect(ui->actionToggleEditMode, &QAction::triggered, this, [this]{
         ZoneScoped;
         finishSelection(true);
+    });
+
+    connect(ui->actionExpandAll, &QAction::triggered, this, [this]{
+        ZoneScoped;
+        ui->treeTags->expandAll();
+    });
+
+    connect(ui->actionCollapseAll, &QAction::triggered, this, [this]{
+        ZoneScoped;
+        ui->treeTags->collapseAll();
     });
 
     connect(ui->buttonFilters, &QToolButton::clicked, this, [this]{
