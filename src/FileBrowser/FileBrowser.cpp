@@ -194,6 +194,7 @@ std::expected<void, QString> FileBrowser::init() {
     connect(ui->actionRefresh, &QAction::triggered, this, [this]{
         emit refresh();
         emit directoryTreeModel->dataChanged(QModelIndex(), QModelIndex());
+        refreshDirectoryLabel();
     });
 
     connect(ui->actionMarkComplete, &QAction::triggered, this, [this]{
@@ -327,7 +328,6 @@ void FileBrowser::openDirectory(QString const &directory) {
 
     if (directory != currentDirectory_) {
         currentDirectory_ = directory;
-        currentDirectoryStats_ = &directoryStatsManager_.directoryStats(QFileInfo(QDir(projectRootPath_), currentDirectory_).filePath());
 
         ui->buttonRemoveDirectory->setEnabled(true);
         ui->actionShowExcluded->setEnabled(true);
@@ -370,16 +370,15 @@ void FileBrowser::closeDirectory() {
     ui->buttonRemoveDirectory->setEnabled(false);
 
     currentDirectory_ = {};
-    currentDirectoryStats_ = nullptr;
 }
 
 void FileBrowser::refreshDirectoryLabel() {
-    gsl_Expects(!currentDirectory_.isNull() == static_cast<bool>(currentDirectoryStats_));
-
-    if (!currentDirectory_.isNull())
-        ui->labelDirectory->setText(formatDirectoryStats(*currentDirectoryStats_, QDir(projectRootPath_).relativeFilePath(currentDirectory_)));
-    else
+    if (!currentDirectory_.isNull()) {
+        auto &stats = directoryStatsManager_.directoryStats(QFileInfo(QDir(projectRootPath_), currentDirectory_).filePath());
+        ui->labelDirectory->setText(formatDirectoryStats(stats, QDir(projectRootPath_).relativeFilePath(currentDirectory_)));
+    } else {
         ui->labelDirectory->clear();
+    }
 }
 
 void FileBrowser::fileSelectedHandle(QString const &path) {

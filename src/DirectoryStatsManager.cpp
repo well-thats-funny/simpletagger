@@ -53,10 +53,12 @@ DirectoryStats &DirectoryStatsManager::directoryStats(QString const &path) {
 void DirectoryStatsManager::invalidateDirectoryStatsCache() {
     ZoneScoped;
 
-    QMutexLocker locker(&mutex_);
+    qDebug() << "Clearing directory stats cache";
 
-    for (auto const &stats: stats_)
-        stats.second->reload();
+    QMutexLocker locker(&mutex_);
+    stats_.clear();
+
+    qDebug() << "Clearing directory stats cache done";
 }
 
 int DirectoryStatsManager::cachedDirectories() const {

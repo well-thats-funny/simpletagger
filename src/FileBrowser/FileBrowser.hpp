@@ -101,7 +101,6 @@ private:
 
     QString projectRootPath_;
     QString currentDirectory_;
-    DirectoryStats *currentDirectoryStats_ = nullptr;
 
     QMetaObject::Connection currentChangedConnection;
 };
