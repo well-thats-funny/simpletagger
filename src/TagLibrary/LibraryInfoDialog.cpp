@@ -19,12 +19,13 @@
 #include "ui_TagLibraryInfoDialog.h"
 
 namespace TagLibrary {
-LibraryInfoDialog::LibraryInfoDialog(QWidget *const parent, Qt::WindowFlags const f):
+LibraryInfoDialog::LibraryInfoDialog(QString const &text, QWidget *const parent, Qt::WindowFlags const f):
         QDialog{parent, f},
         ui{std::make_unique<Ui_TagLibraryInfoDialog>()} {
     ZoneScoped;
 
     ui->setupUi(this);
+    ui->label->setText(text);
 }
 
 LibraryInfoDialog::~LibraryInfoDialog() = default;

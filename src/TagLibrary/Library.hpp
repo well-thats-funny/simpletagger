@@ -32,13 +32,15 @@ class Library : public QWidget {
     Library &operator=(Library const &other) = delete;
     Library &operator=(Library &&other) = delete;
 
-    Library(Qt::WindowFlags flags = Qt::WindowFlags());
+    Library(QString const &libraryPath, Qt::WindowFlags flags = Qt::WindowFlags());
     std::expected<void, QString> init();
 
 public:
     void finishSelection(bool cancel);
 
-    static std::expected<std::unique_ptr<Library>, QString> create(Qt::WindowFlags flags = Qt::WindowFlags());
+    static std::expected<std::unique_ptr<Library>, QString> create(
+            QString const &libraryPath, Qt::WindowFlags flags = Qt::WindowFlags()
+    );
     ~Library() override;
 
     [[nodiscard]] QUuid getUuid() const;
@@ -74,6 +76,7 @@ private:
     std::unique_ptr<FilterProxyModel> filterModel_;
 
     std::unique_ptr<SelectionHelperProxyModel> model_;
+    QString const libraryPath_; // informational only, as MainWindow is atm responsible for reading/writing the lib file
     QUuid libraryUuid_ = QUuid::createUuid();
     int currentLibraryVersion_ = 1;
     int nextLibraryVersion_ = 1;

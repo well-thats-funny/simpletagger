@@ -23,7 +23,7 @@ class LibraryInfoDialog: public QDialog {
     Q_OBJECT
 
 public:
-    explicit LibraryInfoDialog(QWidget *parent = nullptr, Qt::WindowFlags f = Qt::WindowFlags());
+    explicit LibraryInfoDialog(QString const &text, QWidget *parent = nullptr, Qt::WindowFlags f = Qt::WindowFlags());
     ~LibraryInfoDialog();
 
 private:

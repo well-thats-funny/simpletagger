@@ -30,12 +30,13 @@
 #include "ui_Library.h"
 
 namespace TagLibrary {
-Library::Library(Qt::WindowFlags const flags):
+Library::Library(QString const &libraryPath, Qt::WindowFlags const flags):
         QWidget(nullptr, flags),
         ui(std::make_unique<Ui_Library>()),
         libraryModel_(std::make_unique<Model>()),
         filterModel_(std::make_unique<FilterProxyModel>()),
-        model_(std::make_unique<SelectionHelperProxyModel>()) {}
+        model_(std::make_unique<SelectionHelperProxyModel>()),
+        libraryPath_(libraryPath) {}
 
 std::expected<void, QString> Library::init() {
     ZoneScoped;
@@ -449,10 +450,6 @@ std::expected<void, QString> Library::init() {
             description += tr("<b>Hidden:</b> %1<br>").arg(node.isHidden() ? tr("yes"): tr("no"));
             description += tr("<b>Last change version:</b> %1<br>").arg(node.lastChangeVersion() ? QString::number(*node.lastChangeVersion()) : tr("unknown"));
 
-            description += tr("<hr>");
-            description += tr("<b>Library UUID: </b> %1<br>").arg(libraryUuid_.toString(QUuid::WithoutBraces));
-            description += tr("<b>Library version: </b> %1 (<small>%2</small>)<br>").arg(currentLibraryVersion_).arg(currentLibraryVersionUuid_.toString(QUuid::WithoutBraces));
-
             ui->labelDescriptionText->setText(description);
             emit tagsSelected(node.tags()
                     | std::views::transform([](auto const &v){ return v.resolved; })
@@ -493,7 +490,13 @@ std::expected<void, QString> Library::init() {
 
     ui->buttonInfo->setDefaultAction(ui->actionInfo);
     connect(ui->actionInfo, &QAction::triggered, this, [this]{
-        LibraryInfoDialog libraryInfoDialog(this);
+        QString info;
+
+        info += tr("<b>Library path: </b> %1<br>").arg(libraryPath_);
+        info += tr("<b>Library UUID: </b> %1<br>").arg(libraryUuid_.toString(QUuid::WithoutBraces));
+        info += tr("<b>Library version: </b> %1 (<small>%2</small>)<br>").arg(currentLibraryVersion_).arg(currentLibraryVersionUuid_.toString(QUuid::WithoutBraces));
+
+        LibraryInfoDialog libraryInfoDialog(info, this);
         libraryInfoDialog.exec();
     });
 
@@ -530,10 +533,10 @@ void Library::finishSelection(bool const cancel) {
 }
 
 std::expected<std::unique_ptr<Library>, QString>
-Library::create(Qt::WindowFlags const flags) {
+Library::create(QString const &libraryPath, Qt::WindowFlags const flags) {
     ZoneScoped;
 
-    auto self = std::unique_ptr<Library>(new Library{flags});
+    auto self = std::unique_ptr<Library>(new Library{libraryPath, flags});
     if (auto result = self->init(); !result)
         return std::unexpected(result.error());
 

@@ -385,7 +385,14 @@ std::expected<void, QString> MainWindow::setupTagsDock() {
 std::expected<void, QString> MainWindow::setupTagLibraryDock() {
     ZoneScoped;
 
-    if (auto result = TagLibrary::Library::create(); !result) {
+    QDir appData{QStandardPaths::writableLocation(QStandardPaths::StandardLocation::AppDataLocation)};
+    if (!appData.exists())
+        // this is the ugliest way of saying "create the directory" I've ever written...
+        QFileInfo(appData.path()).dir().mkpath(appData.dirName());
+
+    auto tagLibraryPath = appData.filePath("TagLibrary.cbor");
+
+    if (auto result = TagLibrary::Library::create(tagLibraryPath); !result) {
         return std::unexpected(result.error());
     } else {
         tagLibrary = &**result;
@@ -393,13 +400,6 @@ std::expected<void, QString> MainWindow::setupTagLibraryDock() {
         fileTagsManager.setTagLibrary(tagLibrary);
         directoryStatsManager.setTagLibrary(tagLibrary);
     }
-
-    QDir appData{QStandardPaths::writableLocation(QStandardPaths::StandardLocation::AppDataLocation)};
-    if (!appData.exists())
-        // this is the ugliest way of saying "create the directory" I've ever written...
-        QFileInfo(appData.path()).dir().mkpath(appData.dirName());
-
-    auto tagLibraryPath = appData.filePath("TagLibrary.cbor");
 
     {
         QFile file(tagLibraryPath);
