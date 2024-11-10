@@ -712,7 +712,7 @@ void MainWindow::loadFile(QString const &path) {
         notification = tr("This image was edited using a different Tag Library version. You may want to review the tags according to the current library");
 
         auto imageLibraryVersion = fileEditor_->imageTagLibraryVersion();
-        notificationTooltip = tr("Image was edited with Tag Library version: %1 (%2)\nCurrent Tag Library has UUID: %3 (%4)")
+        notificationTooltip = tr("Image was edited with Tag Library version: %1 (%2)\nCurrent Tag Library version: %3 (%4)")
                 .arg(imageLibraryVersion ? QString::number(*imageLibraryVersion) : "(no library version saved)")
                 .arg(imageLibraryUuid ? imageLibraryVersionUuid->toString(QUuid::WithoutBraces) : tr("no library UUID saved"))
                 .arg(tagLibrary->getVersion())
