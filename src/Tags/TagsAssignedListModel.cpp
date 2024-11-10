@@ -104,10 +104,11 @@ QModelIndexList TagsAssignedListModel::setHighlightedTags(QStringList const &tag
     highlightedTags_ = tags;
 
     auto tagToIndex = [&](QString const &tag)->QModelIndex{
-        if (auto pos = fileEditor_.assignedTags()->indexOf(tag); pos != -1)
-            return this->index(pos, 0);
-        else
-            return {};
+        if (auto assignedTags = fileEditor_.assignedTags())
+            if (auto pos = assignedTags->indexOf(tag); pos != -1)
+                return this->index(pos, 0);
+
+        return QModelIndex{};
     };
 
     auto emitTagUpdate = [&](QString const &tag){
