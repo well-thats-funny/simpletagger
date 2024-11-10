@@ -23,11 +23,15 @@ public:
     ~FilterProxyModel() override;
 
     void setEditMode(bool editMode);
+    void setFilterOnlyChanged(bool onlyChanged);
+    void setChangedAfterVersion(std::optional<int> const &version);
 
 protected:
     bool filterAcceptsRow(int sourceRow, QModelIndex const &sourceParent) const override;
 
 private:
     bool editMode_ = false;
+    bool onlyChanged_ = false;
+    std::optional<int> changedAfterVersion_;
 };
 }

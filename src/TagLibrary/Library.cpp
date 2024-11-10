@@ -466,6 +466,17 @@ std::expected<void, QString> Library::init() {
         ZoneScoped;
         finishSelection(true);
     });
+
+    connect(ui->buttonFilters, &QToolButton::clicked, this, [this]{
+        QMenu menu;
+        menu.addAction(ui->actionFilterOnlyChanged);
+        menu.exec(ui->buttonFilters->mapToGlobal(QPoint(0, ui->buttonFilters->height())));
+    });
+
+    connect(ui->actionFilterOnlyChanged, &QAction::triggered, this, [this]{
+        filterModel_->setFilterOnlyChanged(ui->actionFilterOnlyChanged->isChecked());
+    });
+
     connect(ui->treeTags->selectionModel(), &QItemSelectionModel::currentRowChanged, this, updateSelection);
     connectionModelDataChanged = connect(&*libraryModel_, &Model::dataChanged, this, updateSelection);
     updateSelection();
@@ -696,6 +707,7 @@ std::expected<void, QString> Library::setHighlightedTags(QStringList const &tags
 
 void Library::setHighlightChangedAfterVersion(std::optional<int> const &version) {
     libraryModel_->setHighlightChangedAfterVersion(version);
+    filterModel_->setChangedAfterVersion(version);
 }
 
 QModelIndex Library::toLibraryModelIndex(QModelIndex const &viewModelIndex) {

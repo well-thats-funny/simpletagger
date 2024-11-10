@@ -26,16 +26,6 @@
          <item>
           <layout class="QHBoxLayout" name="horizontalLayout">
            <item>
-            <widget class="QToolButton" name="buttonEditMode">
-             <property name="enabled">
-              <bool>true</bool>
-             </property>
-             <property name="text">
-              <string notr="true"/>
-             </property>
-            </widget>
-           </item>
-           <item>
             <widget class="QWidget" name="buttonsEditMode" native="true">
              <layout class="QHBoxLayout" name="layoutEditMode">
               <item>
@@ -130,7 +120,41 @@
                 </property>
                </widget>
               </item>
+              <item>
+               <spacer name="horizontalSpacer_2">
+                <property name="orientation">
+                 <enum>Qt::Orientation::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>40</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+              <item>
+               <widget class="QToolButton" name="buttonFilters">
+                <property name="text">
+                 <string notr="true"/>
+                </property>
+                <property name="icon">
+                 <iconset resource="../../cmake-build-relwithdebinfo/src/icons.qrc">
+                  <normaloff>:/icons/bx-filter-alt.svg</normaloff>:/icons/bx-filter-alt.svg</iconset>
+                </property>
+               </widget>
+              </item>
              </layout>
+            </widget>
+           </item>
+           <item>
+            <widget class="QToolButton" name="buttonEditMode">
+             <property name="enabled">
+              <bool>true</bool>
+             </property>
+             <property name="text">
+              <string notr="true"/>
+             </property>
             </widget>
            </item>
           </layout>
@@ -441,6 +465,20 @@ color: black;</string>
    </property>
    <property name="toolTip">
     <string>Make this element hidden (in normal view)</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::MenuRole::NoRole</enum>
+   </property>
+  </action>
+  <action name="actionFilterOnlyChanged">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Show only changed tags</string>
+   </property>
+   <property name="toolTip">
+    <string>Show only changed tags</string>
    </property>
    <property name="menuRole">
     <enum>QAction::MenuRole::NoRole</enum>

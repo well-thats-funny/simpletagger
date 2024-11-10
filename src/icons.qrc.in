@@ -14,6 +14,7 @@
     <file alias="bx-image.svg">${boxicons_SOURCE_DIR}/svg/regular/bx-image.svg</file>
     <file alias="bx-import.svg">${boxicons_SOURCE_DIR}/svg/regular/bx-import.svg</file>
     <file alias="bx-info-circle.svg">${boxicons_SOURCE_DIR}/svg/regular/bx-info-circle.svg</file>
+    <file alias="bx-filter-alt.svg">${boxicons_SOURCE_DIR}/svg/regular/bx-filter-alt.svg</file>
     <file alias="bx-link.svg">${boxicons_SOURCE_DIR}/svg/regular/bx-link.svg</file>
     <file alias="bx-plus-circle.svg">${boxicons_SOURCE_DIR}/svg/regular/bx-plus-circle.svg</file>
     <file alias="bx-refresh.svg">${boxicons_SOURCE_DIR}/svg/regular/bx-refresh.svg</file>

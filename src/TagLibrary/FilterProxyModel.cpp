@@ -29,14 +29,36 @@ void FilterProxyModel::setEditMode(bool const editMode) {
     }
 }
 
+void FilterProxyModel::setFilterOnlyChanged(bool const onlyChanged) {
+    if (onlyChanged != onlyChanged_) {
+        onlyChanged_ = onlyChanged;
+        invalidateRowsFilter();
+    }
+}
+
+void FilterProxyModel::setChangedAfterVersion(std::optional<int> const &version) {
+    if (version != changedAfterVersion_) {
+        changedAfterVersion_ = version;
+        invalidateRowsFilter();
+    }
+}
+
 bool FilterProxyModel::filterAcceptsRow(int const sourceRow, QModelIndex const &sourceParent) const {
     auto source = qobject_cast<Model*>(sourceModel());
     gsl_Expects(source);
 
+    auto &node = source->fromIndex(source->index(sourceRow, 0, sourceParent));
+
+    if (changedAfterVersion_ && onlyChanged_) {
+        if (auto lastChangeAfter = node.lastChangeAfter(*changedAfterVersion_, true); !lastChangeAfter)
+            qWarning() << "lastChangeAfter error:" << lastChangeAfter.error();
+        else if (!*lastChangeAfter)
+            return false;
+    }
+
     if (editMode_) {
         return true;
     } else {
-        auto &node = source->fromIndex(source->index(sourceRow, 0, sourceParent));
         return !node.isHidden();
     }
 }
