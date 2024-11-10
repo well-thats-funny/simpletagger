@@ -228,6 +228,7 @@ bool FileTags::setCompleteFlag(bool const value) {
         return false;
     } else {
         completeFlag_ = value;
+        setModified_(true);
         return true;
     }
 }
