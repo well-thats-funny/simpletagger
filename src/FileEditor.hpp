@@ -15,6 +15,7 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 #pragma once
+#include "Utility.hpp"
 
 class FileTags;
 class FileTagsManager;
@@ -38,8 +39,8 @@ public:
     void setProject(Project &project);
     void resetProject();
 
-    [[nodiscard]] std::expected<void, QString> setFile(QString const &file);
-    void resetFile();
+    [[nodiscard]] std::expected<void, ErrorOrCancel> setFile(QString const &file);
+    [[nodiscard]] std::expected<void, ErrorOrCancel> resetFile();
 
     [[nodiscard]] std::optional<bool> isTagged(QString const &tag) const;
     void setTagged(QStringList const &tag, bool const value);

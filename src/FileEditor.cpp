@@ -55,11 +55,14 @@ void FileEditor::resetProject() {
     }
 }
 
-std::expected<void, QString> FileEditor::setFile(QString const &file) {
+std::expected<void, ErrorOrCancel> FileEditor::setFile(QString const &file) {
     ZoneScoped;
     gsl_Expects(!file.isEmpty());
 
     if (file != currentFile_) {
+        if (auto result = resetFile(); !result)
+            return result;
+
         currentFile_ = file;
 
         if (QFileInfo(file).isDir()) {
@@ -81,10 +84,34 @@ std::expected<void, QString> FileEditor::setFile(QString const &file) {
     return {};
 }
 
-void FileEditor::resetFile() {
+std::expected<void, ErrorOrCancel> FileEditor::resetFile() {
     ZoneScoped;
 
     if (!currentFile_.isEmpty()) {
+        if (fileTags && fileTags->get().isModified()) {
+            switch (QMessageBox::question(
+                    qApp->activeWindow(), tr("Unsaved changes"), tr("Save changes in tags data?"),
+                    QMessageBox::StandardButtons(
+                            QMessageBox::StandardButton::Yes
+                            | QMessageBox::StandardButton::No
+                            | QMessageBox::StandardButton::Cancel
+                    )
+            )) {
+                case QMessageBox::StandardButton::Yes:
+                    if (auto result = fileTags->get().save(); !result)
+                        return std::unexpected(result.error());
+                    break;
+                case QMessageBox::StandardButton::No:
+                    if (auto result = fileTags->get().rollbackChanges(); !result)
+                        return std::unexpected(result.error());
+                    break;
+                case QMessageBox::StandardButton::Cancel:
+                    return std::unexpected(CancelOperation{});
+                default:
+                    gsl_Expects(false); // unreachable
+            }
+        }
+
         currentFile_.clear();
         fileTags.reset();
         emit tagsChanged();
@@ -94,55 +121,58 @@ void FileEditor::resetFile() {
 
     gsl_Ensures(currentFile_.isEmpty());
     gsl_Ensures(!fileTags);
+    return {};
 }
 
 std::optional<bool> FileEditor::isTagged(QString const &tag) const {
     ZoneScoped;
-
+    // TODO: gsl_Expects(fileTags); and direct access below
     return assignedTags().transform([&](auto const &tags){ return tags.contains(tag); });
 }
 
 void FileEditor::setTagged(QStringList const &tags, bool const value) {
     ZoneScoped;
-
-    if (fileTags.transform([&](auto &f){ return f.get().setTags(tags, value); }).value_or(false))
+    // TODO: gsl_Expects(fileTags); and direct access below
+    if (fileTags && fileTags->get().setTags(tags, value))
         emit tagsChanged();
 }
 
 void FileEditor::setTagsState(std::unordered_map<QString, bool> const &state) {
     ZoneScoped;
-
-    if (fileTags.transform([&](auto &f){ return f.get().setTagsState(state); }).value_or(false))
+    // TODO: gsl_Expects(fileTags); and direct access below
+    if (fileTags && fileTags->get().setTagsState(state))
         emit tagsChanged();
 }
 
 void FileEditor::clearTags() {
     ZoneScoped;
-
+    // TODO: gsl_Expects(fileTags); and direct access below
     if (fileTags.transform([&](auto &f){ return f.get().clearTags(); }).value_or(false))
         emit tagsChanged();
 }
 
 std::optional<QStringList> FileEditor::assignedTags() const {
     ZoneScoped;
-
+    // TODO: gsl_Expects(fileTags); and direct access below
     return fileTags.transform([](auto const &v){ return v.get().assignedTags(); });
 }
 
 std::expected<bool, QString> FileEditor::moveAssignedTag(int const sourcePositon, int const targetPosition) {
+    ZoneScoped;
+    // TODO: gsl_Expects(fileTags); and direct access below
     return fileTags.transform([&](auto &v){ return v.get().moveAssignedTag(sourcePositon, targetPosition); }).value_or(false);
 }
 
 void FileEditor::setImageRegion(std::optional<QRect> const &rect) {
     ZoneScoped;
-
+    // TODO: gsl_Expects(fileTags); and direct access below
     if (fileTags.transform([&](auto &v){ return v.get().setImageRegion(rect); }).value_or(false))
         emit imageRegionChanged();
 }
 
 std::optional<QRect> FileEditor::imageRegion() const {
     ZoneScoped;
-
+    // TODO: gsl_Expects(fileTags); and direct access below
     return fileTags.and_then([&](auto const &v){ return v.get().imageRegion(); });
 }
 

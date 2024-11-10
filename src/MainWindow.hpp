@@ -19,6 +19,7 @@
 #include "FileEditor.hpp"
 #include "FileTagsManager.hpp"
 #include "Project.hpp"
+#include "Utility.hpp"
 
 class Ui_MainWindow;
 
@@ -78,9 +79,10 @@ private:
     void refreshRecentProjects();
     [[nodiscard]] std::expected<void, QString> loadProject(QString const &filePath = QString());
 
-    void load(const QString &path, bool forceReopen = false);
+    [[nodiscard]] std::expected<void, ErrorOrCancel> load(const QString &path, bool forceReopen = false);
     void loadFile(const QString &path);
-    void unload();
+    void loadDirectory(const QString &path);
+    [[nodiscard]] std::expected<void, ErrorOrCancel> unload();
 
     void loadFileTaggerTagsToTagLibrary();
     void saveProject();

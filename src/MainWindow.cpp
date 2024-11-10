@@ -297,7 +297,14 @@ std::expected<void, QString> MainWindow::setupFileBrowserDock() {
     connect(&*fileBrowser, &FileBrowser::FileBrowser::fileSelected, this, [this](auto const &file){
         ZoneScoped;
         gsl_Expects(file.isNull() || QFileInfo(file).isAbsolute());
-        load(file);
+        if (auto result = load(file); !result) {
+            if (std::holds_alternative<CancelOperation>(result.error())) {
+                if (auto result2 = fileBrowser->selectFileInTree(currentPath); !result2)
+                    reportError(tr("File selection error"), result2.error());
+            } else {
+                reportError(tr("File change error"), std::get<Error>(result.error()));
+            }
+        }
     });
 
     connect(&*fileBrowser, &FileBrowser::FileBrowser::requestTagsCopy, this, [this](auto const &sourceFile, auto const &targetFile) {
@@ -343,13 +350,7 @@ std::expected<void, QString> MainWindow::setupFileBrowserDock() {
             };
 
             if (auto result = doCopy(); !result)
-                QMessageBox::critical(
-                        this,
-                        tr("Copy tags failed"),
-                        tr("Could not copy tags: %1").arg(result.error())
-                );
-            else
-                load(targetFile, true);
+                reportError(tr("Copy tags failed"), result.error());
         }
     });
 
@@ -665,30 +666,29 @@ std::expected<void, QString> MainWindow::loadProject(QString const &filePath) {
     return {};
 }
 
-void MainWindow::load(QString const &path, bool forceReopen) {
+std::expected<void, ErrorOrCancel> MainWindow::load(QString const &path, bool forceReopen) {
     ZoneScoped;
     gsl_Expects(path.isEmpty() || QFileInfo(path).isAbsolute());
 
-    if (path != currentPath || forceReopen) {
-        unload();
-        fileEditor_->resetFile();
-        currentPath.clear();
+    auto previousPath = currentPath;
 
+    if (path != currentPath || forceReopen) {
         if (!path.isEmpty()) {
             // must be set first, as many components rely on it
-            if (auto result = fileEditor_->setFile(path); !result) {
-                QMessageBox::critical(this, tr("Cannot load file"), result.error());
-                return;
-            }
+            if (auto result = fileEditor_->setFile(path); !result)
+                return result;
 
             if (!QFileInfo(path).isDir())
                 loadFile(path);
+            else
+                loadDirectory(path);
 
             currentPath = path;
         }
     }
 
     gsl_Ensures(currentPath == path);
+    return {};
 }
 
 void MainWindow::loadFile(QString const &path) {
@@ -743,13 +743,27 @@ void MainWindow::loadFile(QString const &path) {
     settings.setValue(SettingsKey::LAST_VIEWED_FILE, currentPath);
 }
 
-void MainWindow::unload() {
+void MainWindow::loadDirectory(const QString &/*path*/) {
     ZoneScoped;
 
     tagLibrary->setEnabled(false);
 
     tags_->setEnabled(false);
     imageViewer->unloadFile();
+}
+
+std::expected<void, ErrorOrCancel> MainWindow::unload() {
+    ZoneScoped;
+
+    if (auto result = fileEditor_->resetFile(); !result)
+        return result;
+
+    tagLibrary->setEnabled(false);
+
+    tags_->setEnabled(false);
+    imageViewer->unloadFile();
+
+    return {};
 }
 
 void MainWindow::loadFileTaggerTagsToTagLibrary() {

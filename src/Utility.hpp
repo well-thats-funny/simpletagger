@@ -71,3 +71,10 @@ std::generator<std::ranges::range_value_t<R>> withoutDuplicates(R &&r) {
         }
     }
 }
+
+using Error = QString;
+struct CancelOperation {};
+
+using ErrorOrCancel = std::variant<Error, CancelOperation>;
+
+void reportError(QString const &title, Error const &content, bool messageBox = true);

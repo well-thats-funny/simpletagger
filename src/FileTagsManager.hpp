@@ -70,6 +70,7 @@ public:
     [[nodiscard]] std::optional<QUuid> tagLibraryVersionUuid() const;
 
     [[nodiscard]] bool isModified() const;
+    [[nodiscard]] std::expected<void, QString> rollbackChanges();
 
 private:
     [[nodiscard]] std::expected<void, QString> load();

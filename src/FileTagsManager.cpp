@@ -248,11 +248,21 @@ bool FileTags::isModified() const {
     return modified_;
 }
 
+std::expected<void, QString> FileTags::rollbackChanges() {
+    return load();
+}
+
 std::expected<void, QString> FileTags::load() {
     ZoneScoped;
 
     assignedTags_.clear();
     imageRegion_.reset();
+    completeFlag_ = false;
+    tagLibraryUuid_ = std::nullopt;
+    tagLibraryVersion_ = std::nullopt;
+    tagLibraryVersionUuid_ = std::nullopt;
+
+    setModified_(false);
 
     if (QFileInfo{tagsFilePath_}.exists()) {
         qDebug() << "Loading tags from" << tagsFilePath_;
@@ -321,7 +331,6 @@ std::expected<void, QString> FileTags::load() {
         qDebug() << "Loading tags from" << tagsFilePath_<< ": done";
     }
 
-    setModified_(false);
     return {};
 }
 

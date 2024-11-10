@@ -102,3 +102,10 @@ QString cborTypeToString(QCborValue::Type const type) {
     ZoneScoped;
     return QMetaEnum::fromType<QCborValue::Type>().valueToKey(type);
 }
+
+void reportError(QString const &title, Error const &content, bool const messageBox) {
+    qCritical() << "Error" << title << ":" << content;
+
+    if (messageBox)
+        QMessageBox::critical(qApp->activeWindow(), title, content);
+}
