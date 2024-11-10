@@ -447,7 +447,7 @@ std::expected<void, QString> Library::init() {
 
             description += tr("<hr>");
             description += tr("<b>Library UUID: </b> %1<br>").arg(libraryUuid_.toString(QUuid::WithoutBraces));
-            description += tr("<b>Library version: </b> %1 (<small>%2</small>)<br>").arg(currentLibraryVersion_).arg(libraryVersionUuid_.toString(QUuid::WithoutBraces));
+            description += tr("<b>Library version: </b> %1 (<small>%2</small>)<br>").arg(currentLibraryVersion_).arg(currentLibraryVersionUuid_.toString(QUuid::WithoutBraces));
 
             ui->labelDescriptionText->setText(description);
             emit tagsSelected(node.tags()
@@ -522,7 +522,7 @@ int Library::getVersion() const {
 }
 
 QUuid Library::getVersionUuid() const {
-    return libraryVersionUuid_;
+    return currentLibraryVersionUuid_;
 }
 
 std::expected<void, QString> Library::saveContent(QIODevice &io) {
@@ -541,15 +541,17 @@ std::expected<void, QString> Library::saveContent(QIODevice &io) {
     else
         return std::unexpected(value.error());
 
+    auto nextLibraryVersionUuid = QUuid::createUuid();
+
     map[std::to_underlying(Format::TopLevelKey::LibraryUuid)] = libraryUuid_.toRfc4122();
     map[std::to_underlying(Format::TopLevelKey::LibraryVersion)] = nextLibraryVersion_;
-    map[std::to_underlying(Format::TopLevelKey::LibraryVersionUuid)] = libraryVersionUuid_.toRfc4122();
+    map[std::to_underlying(Format::TopLevelKey::LibraryVersionUuid)] = nextLibraryVersionUuid.toRfc4122();
 
     QCborStreamWriter writer(&io);
     map.toCborValue().toCbor(writer);
 
     updateLibraryVersion(nextLibraryVersion_);
-    libraryVersionUuid_ = QUuid::createUuid();
+    currentLibraryVersionUuid_ = nextLibraryVersionUuid;
 
     return {};
 }
@@ -606,7 +608,7 @@ std::expected<void, QString> Library::loadContent(QIODevice &io) {
         return std::unexpected(tr("Library version UUID key doesn't exist"));
     if (!libraryVersionUuid.isByteArray())
         return std::unexpected(tr("Library version UUID is not a byte array but %1").arg(cborTypeToString(libraryVersionUuid.type())));
-    libraryVersionUuid_ = QUuid::fromRfc4122(libraryVersionUuid.toByteArray());
+    currentLibraryVersionUuid_ = QUuid::fromRfc4122(libraryVersionUuid.toByteArray());
 
     for (auto const &v: map)
         qCWarning(LoggingCategory) << "Unhandled element" << v.first << "=" << v.second;

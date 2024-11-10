@@ -77,7 +77,7 @@ private:
     QUuid libraryUuid_ = QUuid::createUuid();
     int currentLibraryVersion_ = 1;
     int nextLibraryVersion_ = 1;
-    QUuid libraryVersionUuid_;
+    QUuid currentLibraryVersionUuid_;
 
     QString transferLabel_;
     QIcon transferIcon_;
