@@ -26,7 +26,8 @@ class TagLibrary:
         6: 'link_to',
         7: 'tags',
         8: 'comment',
-        9: 'hidden'
+        9: 'hidden',
+        10: 'last_change_version'
     }
 
     node_types = {

@@ -41,6 +41,7 @@ enum class NodeKey {
     Tags = 7,
     Comment = 8,
     Hidden = 9,
+    LastChangeVersion = 10
 };
 
 enum class NodeType {

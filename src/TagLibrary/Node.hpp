@@ -120,6 +120,9 @@ public:
     [[nodiscard]] virtual bool canSetHidden() const;
     [[nodiscard]] virtual std::expected<void, QString> setHidden(bool hidden);
 
+    [[nodiscard]] virtual std::optional<int> lastChangeVersion() const;
+    virtual void setLastChangeVersion(int version);
+
     [[nodiscard]] virtual std::vector<QBrush> background(bool editMode) const;
 
     [[nodiscard]] std::expected<QString, QString> tooltip(bool editMode) const;

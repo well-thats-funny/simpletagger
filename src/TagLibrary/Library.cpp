@@ -443,10 +443,11 @@ std::expected<void, QString> Library::init() {
 
             description += tr("<b>Comment: </b> %1<br>").arg(node.comment());
             description += tr("<b>Hidden:</b> %1<br>").arg(node.isHidden() ? tr("yes"): tr("no"));
+            description += tr("<b>Last change version:</b> %1<br>").arg(node.lastChangeVersion() ? QString::number(*node.lastChangeVersion()) : tr("unknown"));
 
             description += tr("<hr>");
             description += tr("<b>Library UUID: </b> %1<br>").arg(libraryUuid_.toString(QUuid::WithoutBraces));
-            description += tr("<b>Library version: </b> %1 (%2)<br>").arg(libraryVersion_).arg(libraryVersionUuid_.toString(QUuid::WithoutBraces));
+            description += tr("<b>Library version: </b> %1 (<small>%2</small>)<br>").arg(currentLibraryVersion_).arg(libraryVersionUuid_.toString(QUuid::WithoutBraces));
 
             ui->labelDescriptionText->setText(description);
             emit tagsSelected(node.tags()
@@ -517,7 +518,7 @@ QUuid Library::getUuid() const {
 }
 
 int Library::getVersion() const {
-    return libraryVersion_;
+    return currentLibraryVersion_;
 }
 
 QUuid Library::getVersionUuid() const {
@@ -531,9 +532,6 @@ std::expected<void, QString> Library::saveContent(QIODevice &io) {
     if (!io.open(QIODevice::WriteOnly))
         return std::unexpected(tr("Cannot open for writing: %1").arg(io.errorString()));
 
-    libraryVersion_ += 1;
-    libraryVersionUuid_ = QUuid::createUuid();
-
     QCborMap map;
     map[std::to_underlying(Format::TopLevelKey::FormatVersion)] = Format::formatVersion;
     map[std::to_underlying(Format::TopLevelKey::App)] = Format::app.toString();
@@ -544,11 +542,14 @@ std::expected<void, QString> Library::saveContent(QIODevice &io) {
         return std::unexpected(value.error());
 
     map[std::to_underlying(Format::TopLevelKey::LibraryUuid)] = libraryUuid_.toRfc4122();
-    map[std::to_underlying(Format::TopLevelKey::LibraryVersion)] = libraryVersion_;
+    map[std::to_underlying(Format::TopLevelKey::LibraryVersion)] = nextLibraryVersion_;
     map[std::to_underlying(Format::TopLevelKey::LibraryVersionUuid)] = libraryVersionUuid_.toRfc4122();
 
     QCborStreamWriter writer(&io);
     map.toCborValue().toCbor(writer);
+
+    updateLibraryVersion(nextLibraryVersion_);
+    libraryVersionUuid_ = QUuid::createUuid();
 
     return {};
 }
@@ -598,7 +599,7 @@ std::expected<void, QString> Library::loadContent(QIODevice &io) {
         return std::unexpected(tr("Library version key doesn't exist"));
     if (!libraryVersion.isInteger())
         return std::unexpected(tr("Library version is not an integer but %1").arg(cborTypeToString(libraryVersion.type())));
-    libraryVersion_ = libraryVersion.toInteger();
+    updateLibraryVersion(libraryVersion.toInteger());
 
     auto libraryVersionUuid = map.take(std::to_underlying(Format::TopLevelKey::LibraryVersionUuid));
     if (libraryVersionUuid.isUndefined())
@@ -699,5 +700,11 @@ QModelIndex Library::toLibraryModelIndex(QModelIndex const &viewModelIndex) {
 QModelIndex Library::toViewModelIndex(QModelIndex const &libraryModelIndex) {
     auto filterModelIndex = filterModel_->mapFromSource(libraryModelIndex);
     return model_->mapFromSource(filterModelIndex);
+}
+
+void Library::updateLibraryVersion(int const currentLibraryVersion) {
+    currentLibraryVersion_ = currentLibraryVersion;
+    nextLibraryVersion_ = currentLibraryVersion + 1;
+    libraryModel_->setNextLibraryVersion(nextLibraryVersion_);
 }
 }

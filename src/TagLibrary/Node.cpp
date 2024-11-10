@@ -34,6 +34,7 @@ Node::Node(Model &model): model_(model) {
     connect(this, &Node::persistentDataChanged, this, [this]{
         ZoneScoped;
         emit dataChanged();
+        setLastChangeVersion(model_.nextLibraryVersion_);
         emit model_.persistentDataChanged();
     });
     connect(this, &Node::activeChanged, this, [this](bool const active){
@@ -237,6 +238,12 @@ std::expected<void, QString> Node::setHidden(bool const) {
     assert(canSetHidden() && "This function shouldn't be called if the respective canSet* returned false");
     return std::unexpected(tr("Cannot set hidde flag on this object type"));
 }
+
+std::optional<int> Node::lastChangeVersion() const {
+    return std::nullopt;
+}
+
+void Node::setLastChangeVersion(int const) {}
 
 std::vector<QBrush> Node::background(bool const editMode) const {
     ZoneScoped;

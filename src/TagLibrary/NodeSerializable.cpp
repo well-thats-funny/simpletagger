@@ -135,6 +135,14 @@ std::expected<QCborValue, QString> NodeSerializable::save() const {
     return map;
 }
 
+std::optional<int> NodeSerializable::lastChangeVersion() const {
+    return lastChangeVersion_;
+}
+
+void NodeSerializable::setLastChangeVersion(int const version) {
+    lastChangeVersion_ = version;
+}
+
 std::expected<std::unique_ptr<NodeSerializable>, QString> NodeSerializable::load(QCborValue const &value, Model &model, NodeSerializable const *const parent) {
     ZoneScoped;
 
@@ -171,6 +179,10 @@ std::expected<void, QString> NodeSerializable::saveNodeData(QCborMap &map) const
     map[std::to_underlying(Format::NodeKey::Type)] = std::to_underlying(type());
     map[std::to_underlying(Format::NodeKey::Uuid)] = uuid_.toRfc4122();
     map[std::to_underlying(Format::NodeKey::Hidden)] = hidden_;
+
+    if (lastChangeVersion_)
+        map[std::to_underlying(Format::NodeKey::LastChangeVersion)] = *lastChangeVersion_;
+
     return {};
 }
 
@@ -184,8 +196,18 @@ std::expected<void, QString> NodeSerializable::loadNodeData(QCborMap &map) {
 
     auto hidden = map.take(std::to_underlying(Format::NodeKey::Hidden));
     if (!hidden.isBool())
-        return std::unexpected(QObject::tr("Hidden element is not a bool but %1").arg(cborTypeToString(uuid.type())));
+        return std::unexpected(QObject::tr("Hidden element is not a bool but %1").arg(cborTypeToString(hidden.type())));
     hidden_ = hidden.toBool();
+
+    auto lastChangeVersion = map.take(std::to_underlying(Format::NodeKey::LastChangeVersion));
+    if (lastChangeVersion.isUndefined()) {
+        lastChangeVersion_ = std::nullopt;
+    } else {
+        if (!lastChangeVersion.isInteger())
+            return std::unexpected(QObject::tr("Last change version element is not a bool but %1").arg(
+                    cborTypeToString(lastChangeVersion.type())));
+        lastChangeVersion_ = hidden.toBool();
+    }
 
     return {};
 }

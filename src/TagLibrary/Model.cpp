@@ -786,4 +786,8 @@ std::expected<QModelIndexList, QString> Model::setHighlightedTags(QStringList co
     };
     return visit(*root);
 }
+
+void Model::setNextLibraryVersion(int const nextVersion) {
+    nextLibraryVersion_ = nextVersion;
+}
 }

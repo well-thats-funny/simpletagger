@@ -84,6 +84,8 @@ public:
     void setRowHeight(int rowHeight);
     [[nodiscard]] std::expected<QModelIndexList, QString> setHighlightedTags(QStringList const &tags);
 
+    void setNextLibraryVersion(int nextVersion);
+
 signals:
     void loadComplete();
     void activeChanged(Node const &node, bool active);
@@ -93,5 +95,6 @@ private:
     std::unique_ptr<NodeRoot> root;
     bool editMode_ = false;
     int rowHeight_ = 0;
+    int nextLibraryVersion_ = -1;
 };
 }

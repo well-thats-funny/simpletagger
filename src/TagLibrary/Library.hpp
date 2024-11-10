@@ -65,6 +65,7 @@ signals:
 private:
     QModelIndex toLibraryModelIndex(QModelIndex const &viewModelIndex);
     QModelIndex toViewModelIndex(QModelIndex const &libraryModelIndex);
+    void updateLibraryVersion(int currentLibraryVersion);
 
     std::unique_ptr<Ui_Library> ui;
     std::unique_ptr<Model> libraryModel_;
@@ -72,7 +73,8 @@ private:
 
     std::unique_ptr<SelectionHelperProxyModel> model_;
     QUuid libraryUuid_ = QUuid::createUuid();
-    int libraryVersion_ = 0;
+    int currentLibraryVersion_ = 1;
+    int nextLibraryVersion_ = 1;
     QUuid libraryVersionUuid_;
 
     QString transferLabel_;
