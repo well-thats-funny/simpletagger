@@ -268,6 +268,11 @@ bool NodeLinkSubtree::isVirtual() const {
     return true;
 }
 
+std::optional<int> NodeLinkSubtree::lastChangeVersion() const {
+    ZoneScoped;
+    return target_.lastChangeVersion();
+}
+
 std::vector<QBrush> NodeLinkSubtree::background(bool const editMode) const {
     ZoneScoped;
     auto result = Node::background(editMode);

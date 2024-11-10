@@ -289,6 +289,10 @@ QVariant Model::data(const QModelIndex &index, int role) const {
             if (!editMode_) {
                 if (auto active = node.active())
                     font.setBold(*active);
+
+                auto lastChange = node.lastChangeVersion();
+                auto highlight = lastChange && highlightChangedAfterVersion_ && *lastChange > *highlightChangedAfterVersion_;
+                font.setUnderline(highlight);
             }
 
             font.setItalic(node.isHidden());
@@ -785,6 +789,10 @@ std::expected<QModelIndexList, QString> Model::setHighlightedTags(QStringList co
         return resultList;
     };
     return visit(*root);
+}
+
+void Model::setHighlightChangedAfterVersion(std::optional<int> const &version) {
+    highlightChangedAfterVersion_ = version;
 }
 
 void Model::setNextLibraryVersion(int const nextVersion) {

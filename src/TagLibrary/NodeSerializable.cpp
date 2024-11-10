@@ -204,9 +204,9 @@ std::expected<void, QString> NodeSerializable::loadNodeData(QCborMap &map) {
         lastChangeVersion_ = std::nullopt;
     } else {
         if (!lastChangeVersion.isInteger())
-            return std::unexpected(QObject::tr("Last change version element is not a bool but %1").arg(
+            return std::unexpected(QObject::tr("Last change version element is not an integer but %1").arg(
                     cborTypeToString(lastChangeVersion.type())));
-        lastChangeVersion_ = hidden.toBool();
+        lastChangeVersion_ = lastChangeVersion.toInteger();
     }
 
     return {};

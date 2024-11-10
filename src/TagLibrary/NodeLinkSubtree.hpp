@@ -62,6 +62,8 @@ public:
     [[nodiscard]] NodeType type() const override;
     [[nodiscard]] bool isVirtual() const override;
 
+    [[nodiscard]] std::optional<int> lastChangeVersion() const override;
+
     [[nodiscard]] std::vector<QBrush> background(bool editMode) const override;
 
 signals:

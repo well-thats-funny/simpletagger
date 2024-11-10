@@ -692,6 +692,10 @@ std::expected<void, QString> Library::setHighlightedTags(QStringList const &tags
     return {};
 }
 
+void Library::setHighlightChangedAfterVersion(std::optional<int> const &version) {
+    libraryModel_->setHighlightChangedAfterVersion(version);
+}
+
 QModelIndex Library::toLibraryModelIndex(QModelIndex const &viewModelIndex) {
     auto filterModelIndex = model_->mapToSource(viewModelIndex);
     return filterModel_->mapToSource(filterModelIndex);

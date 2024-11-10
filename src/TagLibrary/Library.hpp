@@ -57,6 +57,8 @@ public:
     void setRowHeight(int rowHeight);
     [[nodiscard]] std::expected<void, QString> setHighlightedTags(QStringList const &tags);
 
+    void setHighlightChangedAfterVersion(std::optional<int> const &version);
+
 signals:
     void contentChanged();
     void tagsSelected(QStringList const &tags);
