@@ -20,16 +20,21 @@
 #include "FileTagsManager.hpp"
 #include "Project.hpp"
 
-FileEditor::FileEditor(FileTagsManager &fileTagsManager): fileTagsManager(fileTagsManager) {}
+FileEditor::FileEditor(FileTagsManager &fileTagsManager): fileTagsManager(fileTagsManager) {
+    connect(&fileTagsManager, &FileTagsManager::modifiedStateChanged, this, [this](QString const &imageFilePath, bool const modified){
+        if (imageFilePath == currentFile_)
+            emit modifiedStateChanged(modified);
+    });
+}
 
 FileEditor::~FileEditor() = default;
 
-void FileEditor::setBackupOnEveryChange(bool const enable) {
-    backupOnEveryChange_ = enable;
+void FileEditor::setBackupOnEverySave(bool const enable) {
+    backupOnEverySave_ = enable;
 }
 
-bool FileEditor::isBackupOnEveryChange() const {
-    return backupOnEveryChange_;
+bool FileEditor::isBackupOnEverySave() const {
+    return backupOnEverySave_;
 }
 
 void FileEditor::setProject(Project &project) {
@@ -57,11 +62,15 @@ std::expected<void, QString> FileEditor::setFile(QString const &file) {
     if (file != currentFile_) {
         currentFile_ = file;
 
-        if (!QFileInfo(file).isDir()) {
+        if (QFileInfo(file).isDir()) {
+            emit modifiedStateChanged(false);
+        } else {
             if (auto result = fileTagsManager.forFile(file); !result)
                 return std::unexpected(result.error());
             else
                 fileTags = *result;
+
+            emit modifiedStateChanged(fileTags->get().isModified());
         }
 
         emit tagsChanged();
@@ -80,6 +89,7 @@ void FileEditor::resetFile() {
         fileTags.reset();
         emit tagsChanged();
         emit imageRegionChanged();
+        emit modifiedStateChanged(false);
     }
 
     gsl_Ensures(currentFile_.isEmpty());
@@ -136,7 +146,7 @@ std::optional<QRect> FileEditor::imageRegion() const {
     return fileTags.and_then([&](auto const &v){ return v.get().imageRegion(); });
 }
 
-std::expected<void, QString> FileEditor::setCompleteFlag(bool const complete) {
+bool FileEditor::setCompleteFlag(bool const complete) {
     ZoneScoped;
     gsl_Expects(fileTags);
     return fileTags->get().setCompleteFlag(complete);
@@ -155,7 +165,7 @@ std::expected<void, QString> FileEditor::setFileExcluded(bool const excluded) {
 
     auto relative = QDir(project_->rootDir()).relativeFilePath(currentFile_);
     project_->setExcludedFile(relative, excluded);
-    if (auto result = project_->save(backupOnEveryChange_); !result) {
+    if (auto result = project_->save(backupOnEverySave_); !result) {
         return std::unexpected(result.error());
     } else {
         emit projectSaved(*result);
@@ -190,4 +200,10 @@ std::optional<QUuid> FileEditor::imageTagLibraryVersionUuid() const {
     ZoneScoped;
     gsl_Expects(fileTags);
     return fileTags->get().tagLibraryVersionUuid();
+}
+
+std::expected<void, QString> FileEditor::save() const {
+    ZoneScoped;
+    gsl_Expects(fileTags);
+    return fileTags->get().save();
 }

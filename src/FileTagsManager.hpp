@@ -24,7 +24,12 @@ class Library;
 }
 
 class FileTags {
-    FileTags(FileTagsManager &manager, QString const &tagsFilePath, bool backupOnSave);
+    FileTags(
+            FileTagsManager &manager,
+            QString const &imageFilePath,
+            QString const &tagsFilePath,
+            bool backupOnSave
+    );
 
     [[nodiscard]] std::expected<void, QString> init();
 
@@ -34,37 +39,53 @@ public:
     FileTags &operator=(FileTags const &other) = delete;
     FileTags &operator=(FileTags &&other) = delete;
 
-    [[nodiscard]] static std::expected<std::unique_ptr<FileTags>, QString> create(FileTagsManager &manager, QString const &tagsFilePath, bool backupOnSave);
+    [[nodiscard]] static std::expected<std::unique_ptr<FileTags>, QString>
+    create(
+            FileTagsManager &manager,
+            QString const &imageFilePath,
+            QString const &tagsFilePath,
+            bool backupOnSave
+    );
     ~FileTags();
 
     [[nodiscard]] QStringList assignedTags() const;
-    [[nodiscard]] std::expected<bool, QString> setTags(QStringList const &tag, bool value);
-    [[nodiscard]] std::expected<bool, QString> setTagsState(std::unordered_map<QString, bool> const &state);
-    [[nodiscard]] std::expected<void, QString> overwriteAssignedTags(QStringList const &activeTags);
-    [[nodiscard]] std::expected<bool, QString> moveAssignedTag(int sourcePositon, int targetPosition);
-    [[nodiscard]] std::expected<bool, QString> clearTags();
+    [[nodiscard]] bool setTags(QStringList const &tag, bool value);
+    [[nodiscard]] bool setTagsState(std::unordered_map<QString, bool> const &state);
+    [[nodiscard]] bool overwriteAssignedTags(QStringList const &activeTags);
+    [[nodiscard]] bool moveAssignedTag(int sourcePositon, int targetPosition);
+    [[nodiscard]] bool clearTags();
 
 private:
     bool setTag_(QString const &tag, bool value);
 
 public:
     [[nodiscard]] std::optional<QRect> imageRegion() const;
-    [[nodiscard]] std::expected<bool, QString> setImageRegion(std::optional<QRect> const &rect);
+    [[nodiscard]] bool setImageRegion(std::optional<QRect> const &rect);
 
     [[nodiscard]] bool isCompleteFlag() const;
-    [[nodiscard]] std::expected<void, QString> setCompleteFlag(bool value);
+    [[nodiscard]] bool setCompleteFlag(bool value);
 
     [[nodiscard]] std::optional<QUuid> tagLibraryUuid() const;
     [[nodiscard]] std::optional<int> tagLibraryVersion() const;
     [[nodiscard]] std::optional<QUuid> tagLibraryVersionUuid() const;
 
+    [[nodiscard]] bool isModified() const;
+
 private:
     [[nodiscard]] std::expected<void, QString> load();
-    [[nodiscard]] std::expected<void, QString> save(bool backup);
+
+public:
+    [[nodiscard]] std::expected<void, QString> save(bool forceSave = false, bool forceBackup = false);
+
+private:
+    void setModified_(bool modified);
 
     FileTagsManager &manager_;
+    QString imageFilePath_;
     QString tagsFilePath_;
     bool backupOnSave_ = false;
+    bool modified_ = false;
+
     QStringList assignedTags_;
     std::optional<QRect> imageRegion_;
     bool completeFlag_ = false;
@@ -98,6 +119,7 @@ public:
 
 signals:
     void tagsSaved(std::optional<int> const &backupCount);
+    void modifiedStateChanged(QString const &imageFileName, bool modified);
 
 private:
     TagLibrary::Library *tagLibrary_ = nullptr;

@@ -32,8 +32,8 @@ public:
     explicit FileEditor(FileTagsManager &fileTagsManager);
     ~FileEditor();
 
-    void setBackupOnEveryChange(bool enable);
-    bool isBackupOnEveryChange() const;
+    void setBackupOnEverySave(bool enable);
+    bool isBackupOnEverySave() const;
 
     void setProject(Project &project);
     void resetProject();
@@ -52,7 +52,7 @@ public:
     void setImageRegion(std::optional<QRect> const &rect);
     [[nodiscard]] std::optional<QRect> imageRegion() const;
 
-    [[nodiscard]] std::expected<void, QString> setCompleteFlag(bool complete);
+    bool setCompleteFlag(bool complete);
     [[nodiscard]] bool isCompleteFlag() const;
 
     [[nodiscard]] std::expected<void, QString> setFileExcluded(bool excluded);
@@ -62,11 +62,15 @@ public:
     [[nodiscard]] std::optional<int> imageTagLibraryVersion() const;
     [[nodiscard]] std::optional<QUuid> imageTagLibraryVersionUuid() const;
 
+    [[nodiscard]] std::expected<void, QString> save() const;
+
 signals:
     void projectSaved(std::optional<int> backupCount);
 
     void tagsChanged();
     void imageRegionChanged();
+
+    void modifiedStateChanged(bool modified);
 
 private:
     Project *project_ = nullptr;
@@ -76,5 +80,5 @@ private:
     FileTagsManager &fileTagsManager;
     std::optional<std::reference_wrapper<FileTags>> fileTags;
 
-    bool backupOnEveryChange_ = false;
+    bool backupOnEverySave_ = false;
 };

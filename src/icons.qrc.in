@@ -20,12 +20,14 @@
     <file alias="bx-minus-circle.svg">${boxicons_SOURCE_DIR}/svg/regular/bx-minus-circle.svg</file>
     <file alias="bx-rectangle.svg">${boxicons_SOURCE_DIR}/svg/regular/bx-rectangle.svg</file>
     <file alias="bx-rename.svg">${boxicons_SOURCE_DIR}/svg/regular/bx-rename.svg</file>
+    <file alias="bx-save.svg">${boxicons_SOURCE_DIR}/svg/regular/bx-save.svg</file>
     <file alias="bx-show.svg">${boxicons_SOURCE_DIR}/svg/regular/bx-show.svg</file>
     <file alias="bx-toggle-left.svg">${boxicons_SOURCE_DIR}/svg/regular/bx-toggle-left.svg</file>
     <file alias="bx-toggle-right.svg">${boxicons_SOURCE_DIR}/svg/regular/bx-toggle-right.svg</file>
     <file alias="bx-unlink.svg">${boxicons_SOURCE_DIR}/svg/regular/bx-unlink.svg</file>
     <file alias="bx-zoom-in.svg">${boxicons_SOURCE_DIR}/svg/regular/bx-zoom-in.svg</file>
     <file alias="bx-zoom-out.svg">${boxicons_SOURCE_DIR}/svg/regular/bx-zoom-out.svg</file>
+
     <file alias="bx-eraser-red.svg">${CMAKE_CURRENT_SOURCE_DIR}/../icons/bx-eraser-red.svg</file>
     <file alias="bx-minus-circle-red.svg">${CMAKE_CURRENT_SOURCE_DIR}/../icons/bx-minus-circle-red.svg</file>
     <file alias="bx-zoom.svg">${CMAKE_CURRENT_SOURCE_DIR}/../icons/bx-zoom.svg</file>

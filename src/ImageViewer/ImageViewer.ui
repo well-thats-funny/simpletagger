@@ -43,6 +43,13 @@
         </layout>
        </item>
        <item>
+        <widget class="QToolButton" name="buttonSaveData">
+         <property name="text">
+          <string notr="true"/>
+         </property>
+        </widget>
+       </item>
+       <item>
         <widget class="QToolButton" name="buttonInterrogate">
          <property name="toolTip">
           <string>Automatically assign tags</string>
@@ -254,6 +261,21 @@ color: black;</string>
    </property>
    <property name="toolTip">
     <string>Open in external application</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::MenuRole::NoRole</enum>
+   </property>
+  </action>
+  <action name="actionSaveData">
+   <property name="icon">
+    <iconset resource="../../cmake-build-relwithdebinfo/src/icons.qrc">
+     <normaloff>:/icons/bx-save.svg</normaloff>:/icons/bx-save.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Save data</string>
+   </property>
+   <property name="toolTip">
+    <string>Save tagging data (source image won't be modified)</string>
    </property>
    <property name="menuRole">
     <enum>QAction::MenuRole::NoRole</enum>

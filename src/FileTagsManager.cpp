@@ -84,8 +84,13 @@ namespace {
     }
 }
 
-FileTags::FileTags(FileTagsManager &manager, QString const &tagsFilePath, bool const backupOnSave):
-    manager_(manager), tagsFilePath_(tagsFilePath), backupOnSave_(backupOnSave) {}
+FileTags::FileTags(
+        FileTagsManager &manager,
+        QString const &imageFilePath,
+        QString const &tagsFilePath,
+        bool const backupOnSave
+):
+    manager_(manager), imageFilePath_(imageFilePath), tagsFilePath_(tagsFilePath), backupOnSave_(backupOnSave) {}
 
 std::expected<void, QString> FileTags::init() {
     ZoneScoped;
@@ -93,8 +98,8 @@ std::expected<void, QString> FileTags::init() {
 }
 
 std::expected<std::unique_ptr<FileTags>, QString>
-FileTags::create(FileTagsManager &manager, QString const &tagsFilePath, bool const backupOnSave) {
-    std::unique_ptr<FileTags> self{new FileTags(manager, tagsFilePath, backupOnSave)};
+FileTags::create(FileTagsManager &manager, QString const &imageFilePath, QString const &tagsFilePath, bool const backupOnSave) {
+    std::unique_ptr<FileTags> self{new FileTags(manager, imageFilePath, tagsFilePath, backupOnSave)};
     if (auto result = self->init(); !result)
         return std::unexpected(result.error());
     else
@@ -109,7 +114,7 @@ QStringList FileTags::assignedTags() const {
     return assignedTags_;
 }
 
-std::expected<bool, QString> FileTags::setTags(QStringList const &tags, bool const value) {
+bool FileTags::setTags(QStringList const &tags, bool const value) {
     ZoneScoped;
 
     bool changed = false;
@@ -118,16 +123,13 @@ std::expected<bool, QString> FileTags::setTags(QStringList const &tags, bool con
         if (setTag_(tag, value))
             changed = true;
 
-    if (changed) {
-        if (auto result = save(backupOnSave_); !result)
-            // TODO: it'd be probably appropriate to rollback changes here
-            return std::unexpected(result.error());
-    }
+    if (changed)
+        setModified_(true);
 
     return changed;
 }
 
-std::expected<bool, QString> FileTags::setTagsState(std::unordered_map<QString, bool> const &state) {
+bool FileTags::setTagsState(std::unordered_map<QString, bool> const &state) {
     ZoneScoped;
 
     bool changed = false;
@@ -136,58 +138,49 @@ std::expected<bool, QString> FileTags::setTagsState(std::unordered_map<QString, 
         if (setTag_(tag, value))
             changed = true;
 
-    if (changed) {
-        if (auto result = save(backupOnSave_); !result)
-            // TODO: it'd be probably appropriate to rollback changes here
-            return std::unexpected(result.error());
-    }
+    if (changed)
+        setModified_(true);
 
     return changed;
 }
 
-std::expected<void, QString> FileTags::overwriteAssignedTags(QStringList const &activeTags) {
+bool FileTags::overwriteAssignedTags(QStringList const &activeTags) {
     ZoneScoped;
 
-    assignedTags_ = activeTags;
-    if (auto result = save(backupOnSave_); !result)
-        // TODO: it'd be probably appropriate to rollback changes here
-        return std::unexpected(result.error());
-    else
-        return {};
+    if (assignedTags_ == activeTags) {
+        return false;
+    } else {
+        assignedTags_ = activeTags;
+        setModified_(true);
+        return true;
+    }
 }
 
-std::expected<bool, QString> FileTags::moveAssignedTag(int const sourcePositon, int const targetPosition) {
+bool FileTags::moveAssignedTag(int const sourcePositon, int const targetPosition) {
     ZoneScoped;
     gsl_Expects(sourcePositon >= 0);
     gsl_Expects(sourcePositon < assignedTags_.size());
     gsl_Expects(targetPosition >= 0);
     gsl_Expects(targetPosition < assignedTags_.size());
 
-    if (sourcePositon == targetPosition)
+    if (sourcePositon == targetPosition) {
         return false;
-
-    assignedTags_.move(sourcePositon, targetPosition);
-
-    if (auto result = save(backupOnSave_); !result)
-        // TODO: it'd be probably appropriate to rollback changes here
-        return std::unexpected(result.error());
-
-    return true;
+    } else {
+        assignedTags_.move(sourcePositon, targetPosition);
+        setModified_(true);
+        return true;
+    }
 }
 
-std::expected<bool, QString> FileTags::clearTags() {
+bool FileTags::clearTags() {
     ZoneScoped;
 
-    if (!assignedTags_.empty()) {
-        assignedTags_.clear();
-
-        if (auto result = save(backupOnSave_); !result)
-            // TODO: it'd be probably appropriate to rollback changes here
-            return std::unexpected(result.error());
-
-        return true;
-    } else {
+    if (assignedTags_.empty()) {
         return false;
+    } else {
+        assignedTags_.clear();
+        setModified_(true);
+        return true;
     }
 }
 
@@ -212,37 +205,31 @@ std::optional<QRect> FileTags::imageRegion() const {
     return imageRegion_;
 }
 
-std::expected<bool, QString> FileTags::setImageRegion(const std::optional<QRect> &rect) {
+bool FileTags::setImageRegion(const std::optional<QRect> &rect) {
     ZoneScoped;
 
-    if (rect == imageRegion_)
+    if (rect == imageRegion_) {
         return false;
-
-    imageRegion_ = rect;
-
-    if (auto result = save(backupOnSave_); !result)
-        // TODO: it'd be probably appropriate to rollback changes here
-        return std::unexpected(result.error());
-
-    return true;
+    } else {
+        imageRegion_ = rect;
+        setModified_(true);
+        return true;
+    }
 }
 
 bool FileTags::isCompleteFlag() const {
     return completeFlag_;
 }
 
-std::expected<void, QString> FileTags::setCompleteFlag(bool const value) {
+bool FileTags::setCompleteFlag(bool const value) {
     ZoneScoped;
 
-    if (value != completeFlag_) {
+    if (value == completeFlag_) {
+        return false;
+    } else {
         completeFlag_ = value;
-
-        if (auto result = save(backupOnSave_); !result)
-            // TODO: it'd be probably appropriate to rollback changes here
-            return std::unexpected(result.error());
+        return true;
     }
-
-    return {};
 }
 
 std::optional<QUuid> FileTags::tagLibraryUuid() const {
@@ -255,6 +242,10 @@ std::optional<int> FileTags::tagLibraryVersion() const {
 
 std::optional<QUuid> FileTags::tagLibraryVersionUuid() const {
     return tagLibraryVersionUuid_;
+}
+
+bool FileTags::isModified() const {
+    return modified_;
 }
 
 std::expected<void, QString> FileTags::load() {
@@ -330,23 +321,31 @@ std::expected<void, QString> FileTags::load() {
         qDebug() << "Loading tags from" << tagsFilePath_<< ": done";
     }
 
+    setModified_(false);
     return {};
 }
 
-std::expected<void, QString> FileTags::save(bool backup) {
+std::expected<void, QString> FileTags::save(bool const forceSave, bool const forceBackup) {
     ZoneScoped;
     gsl_Expects(manager_.tagLibrary_);
     tagLibraryUuid_ = manager_.tagLibrary_->getUuid();
     tagLibraryVersion_ = manager_.tagLibrary_->getVersion();
     tagLibraryVersionUuid_ = manager_.tagLibrary_->getVersionUuid();
 
-    // First, open the original file, to see whether it can be opened without warnings. In case there were warnings,
-    // we first backup the original file
-    QFileInfo tagsFileInfo{tagsFilePath_};
+    if (!forceSave && !modified_)
+        return {};
 
-    if (tagsFileInfo.exists()) {
-        auto res = loadTagsFile(tagsFilePath_);
-        backup = backup || !res.has_value() || res->warningsOccurred;
+    bool backup = forceBackup || backupOnSave_;
+
+    if (!backup) {
+        // First, open the original file, to see whether it can be opened without warnings. In case there were warnings,
+        // we first backup the original file
+        QFileInfo tagsFileInfo{tagsFilePath_};
+
+        if (tagsFileInfo.exists()) {
+            auto res = loadTagsFile(tagsFilePath_);
+            backup = backup || !res.has_value() || res->warningsOccurred;
+        }
     }
 
     std::optional<int> backupCount;
@@ -389,9 +388,16 @@ std::expected<void, QString> FileTags::save(bool backup) {
     if (!saveFile.commit())
         return std::unexpected(QObject::tr("Failed to write file %1: %2").arg(tagsFilePath_).arg(saveFile.errorString()));
 
+    setModified_(false);
+
     qDebug() << "Total saving time:" << saveTimer.elapsed() << "ms";
     emit manager_.tagsSaved(backupCount);
     return {};
+}
+
+void FileTags::setModified_(bool const modified) {
+    modified_ = modified;
+    emit manager_.modifiedStateChanged(imageFilePath_, modified);
 }
 
 FileTagsManager::FileTagsManager(bool const backupOnSave): backupOnSave_(backupOnSave) {}
@@ -420,7 +426,7 @@ std::expected<std::reference_wrapper<FileTags>, QString> FileTagsManager::forFil
 
         auto tagsFilePath = fileInfo.dir().filePath(fileInfo.fileName() + Constants::TAGS_FILE_SUFFIX.toString());
 
-        if (auto result = FileTags::create(*this, tagsFilePath, backupOnSave_); !result)
+        if (auto result = FileTags::create(*this, path, tagsFilePath, backupOnSave_); !result)
             return std::unexpected(result.error());
         else
             std::tie(it, std::ignore) = fileTags_.emplace(path, std::move(*result));

@@ -335,7 +335,11 @@ std::expected<void, QString> MainWindow::setupFileBrowserDock() {
                 if (!target)
                     return std::unexpected(target.error());
 
-                return target->get().overwriteAssignedTags(source->get().assignedTags());
+                if (target->get().overwriteAssignedTags(source->get().assignedTags()))
+                    if (auto result = target->get().save(); !result)
+                        return std::unexpected(result.error());
+
+                return {};
             };
 
             if (auto result = doCopy(); !result)
@@ -566,7 +570,7 @@ void MainWindow::readSettings() {
 
     setStyleSheet(QString("Font: %1pt").arg(this->settings.interface.fontSize));
 
-    fileEditor_->setBackupOnEveryChange(this->settings.system.backupOnAnyChange);
+    fileEditor_->setBackupOnEverySave(this->settings.system.backupOnAnyChange);
     fileTagsManager.setBackupOnSave(this->settings.system.backupOnAnyChange);
 
     QFont font;

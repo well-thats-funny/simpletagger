@@ -35,6 +35,17 @@ std::expected<void, QString> ImageViewer::init() {
     ZoneScoped;
     ui->setupUi(this);
 
+    connect(&fileEditor_, &FileEditor::modifiedStateChanged, this, [this](bool const modified){
+        ui->actionSaveData->setEnabled(modified);
+    });
+
+    ui->buttonSaveData->setDefaultAction(ui->actionSaveData);
+    connect(ui->actionSaveData, &QAction::triggered, this, [this]{
+        ZoneScoped;
+        if (auto result = fileEditor_.save(); !result)
+            QMessageBox::critical(this, tr("Save failed"), result.error());
+    });
+
     ui->buttonOpenExternal->setDefaultAction(ui->actionOpenExternal);
     connect(ui->actionOpenExternal, &QAction::triggered, this, [this]{
         ZoneScoped;
