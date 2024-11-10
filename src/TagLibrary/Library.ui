@@ -171,6 +171,13 @@
              </property>
             </widget>
            </item>
+           <item>
+            <widget class="QToolButton" name="buttonInfo">
+             <property name="text">
+              <string notr="true"/>
+             </property>
+            </widget>
+           </item>
           </layout>
          </item>
          <item>
@@ -523,6 +530,21 @@ color: black;</string>
    </property>
    <property name="toolTip">
     <string>Collapse all elements</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::MenuRole::NoRole</enum>
+   </property>
+  </action>
+  <action name="actionInfo">
+   <property name="icon">
+    <iconset resource="../../cmake-build-relwithdebinfo/src/icons.qrc">
+     <normaloff>:/icons/bx-info-circle.svg</normaloff>:/icons/bx-info-circle.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Tag library information</string>
+   </property>
+   <property name="toolTip">
+    <string>Tag library information</string>
    </property>
    <property name="menuRole">
     <enum>QAction::MenuRole::NoRole</enum>

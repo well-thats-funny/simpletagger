@@ -19,6 +19,7 @@
 #include "CommentEditor.hpp"
 #include "FilterProxyModel.hpp"
 #include "Format.hpp"
+#include "LibraryInfoDialog.hpp"
 #include "Logging.hpp"
 #include "Model.hpp"
 #include "NodeSerializable.hpp"
@@ -488,6 +489,12 @@ std::expected<void, QString> Library::init() {
 
     connect(ui->actionFilterOnlyChanged, &QAction::triggered, this, [this]{
         filterModel_->setFilterOnlyChanged(ui->actionFilterOnlyChanged->isChecked());
+    });
+
+    ui->buttonInfo->setDefaultAction(ui->actionInfo);
+    connect(ui->actionInfo, &QAction::triggered, this, [this]{
+        LibraryInfoDialog libraryInfoDialog(this);
+        libraryInfoDialog.exec();
     });
 
     connect(ui->treeTags->selectionModel(), &QItemSelectionModel::currentRowChanged, this, updateSelection);
