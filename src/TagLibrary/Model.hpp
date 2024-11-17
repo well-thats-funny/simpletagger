@@ -88,6 +88,8 @@ public:
 
     void setNextLibraryVersion(int nextVersion);
 
+    [[nodiscard]] std::expected<void, Error> invalidateTagCaches() const;
+
 signals:
     void loadComplete();
     void activeChanged(Node const &node, bool active);

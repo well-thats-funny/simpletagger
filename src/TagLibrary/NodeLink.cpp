@@ -137,7 +137,7 @@ std::expected<void, QString> NodeLink::setLinkTo(QUuid const &uuid) {
     return {};
 }
 
-std::vector<Node::Tag> NodeLink::tags(TagFlags const flags) const {
+std::vector<Node::Tag> NodeLink::generateTags(TagFlags const flags) const {
     ZoneScoped;
 
     std::vector<Tag> result;

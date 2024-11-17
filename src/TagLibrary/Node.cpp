@@ -161,8 +161,19 @@ bool Node::Tag::operator==(Tag const &other) const {
     return raw == other.raw && resolved == other.resolved;
 }
 
-std::vector<Node::Tag> Node::tags(TagFlags const) const {
+std::vector<Node::Tag> Node::tags(TagFlags const flags) const {
+    auto it = tagCache_.find(flags);
+    if (it == tagCache_.end())
+        it = tagCache_.emplace(flags, generateTags(flags));
+    return *it;
+}
+
+std::vector<Node::Tag> Node::generateTags(TagLibrary::Node::TagFlags const) const {
     return {};
+}
+
+void Node::invalidateTagCache() const {
+    tagCache_.clear();
 }
 
 bool Node::canSetTags() const {

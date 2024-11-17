@@ -23,7 +23,12 @@
 #include "../Utility.hpp"
 
 namespace TagLibrary {
-Model::Model() = default;
+Model::Model() {
+    connect(this, &Model::persistentDataChanged, this, [this]{
+        if (auto result = invalidateTagCaches(); !result)
+            reportError(QObject::tr("Tags cache invalidation failed"), result.error());
+    });
+}
 
 Model::~Model() {
     root->deinit();
@@ -800,5 +805,28 @@ void Model::setHighlightChangedAfterVersion(std::optional<int> const &version) {
 
 void Model::setNextLibraryVersion(int const nextVersion) {
     nextLibraryVersion_ = nextVersion;
+}
+
+std::expected<void, Error> Model::invalidateTagCaches() const {
+    auto visit = [](this auto &&self, Node &node)->std::expected<void, Error> {
+        node.invalidateTagCache();
+
+        // TODO: this iteration stuff is repeated in many places. Could become a method of Node ?
+        auto count = node.childrenCount();
+        if (!count)
+            return std::unexpected(count.error());
+
+        for (int i = 0; i != *count; ++i) {
+            auto childNode = node.childOfRow(i);
+            if (!childNode)
+                return std::unexpected(childNode.error());
+
+            if (auto result = self(childNode->get()); !result)
+                return std::unexpected(result.error());
+        }
+
+        return {};
+    };
+    return visit(*root);
 }
 }

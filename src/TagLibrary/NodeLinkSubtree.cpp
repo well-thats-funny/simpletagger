@@ -184,7 +184,7 @@ QUuid NodeLinkSubtree::uuid() const {
     return target_.uuid();
 }
 
-std::vector<Node::Tag> NodeLinkSubtree::tags(TagFlags const flags) const {
+std::vector<Node::Tag> NodeLinkSubtree::generateTags(TagFlags const flags) const {
     ZoneScoped;
 
     std::vector<Tag> result;

@@ -36,7 +36,7 @@ public:
     [[nodiscard]] bool canSetIcon() const override;
     [[nodiscard]] bool setIcon(const QString &path) override;
 
-    [[nodiscard]] std::vector<Tag> tags(TagFlags flags = TagFlag::IncludeResolved) const override;
+    [[nodiscard]] std::vector<Tag> generateTags(TagFlags flags = TagFlag::IncludeResolved) const override;
     [[nodiscard]] bool canSetTags() const override;
     [[nodiscard]] std::expected<void, QString> setTags(QStringList const &tags) override;
     [[nodiscard]] QStringList resolveChildTag(QString const &tag) const override;

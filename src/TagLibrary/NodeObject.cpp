@@ -77,7 +77,7 @@ bool NodeObject::setIcon(const QString &path) {
     return true;
 }
 
-std::vector<Node::Tag> NodeObject::tags(TagFlags const flags) const {
+std::vector<Node::Tag> NodeObject::generateTags(TagFlags const flags) const {
     ZoneScoped;
 
     std::vector<Tag> result;

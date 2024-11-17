@@ -46,7 +46,7 @@ public:
     [[nodiscard]] bool canLinkTo() const override;
     [[nodiscard]] std::expected<void, QString> setLinkTo(QUuid const &uuid) override;
 
-    [[nodiscard]] std::vector<Tag> tags(TagFlags flags = TagFlag::IncludeResolved) const override;
+    [[nodiscard]] std::vector<Tag> generateTags(TagFlags flags = TagFlag::IncludeResolved) const override;
     [[nodiscard]] QStringList resolveChildTag(QString const &tag) const override;
 
     [[nodiscard]] QString comment() const override;

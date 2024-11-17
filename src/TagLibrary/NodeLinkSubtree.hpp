@@ -43,7 +43,7 @@ public:
     [[nodiscard]] std::vector<IconIdentifier> icons() const override;
     [[nodiscard]] std::optional<QUuid> linkTo() const override;
 
-    [[nodiscard]] std::vector<Tag> tags(TagFlags flags = TagFlag::IncludeResolved) const override;
+    [[nodiscard]] std::vector<Tag> generateTags(TagFlags flags = TagFlag::IncludeResolved) const override;
     [[nodiscard]] QStringList resolveChildTag(QString const &tag) const override;
 
     [[nodiscard]] QString comment() const override;

@@ -92,7 +92,11 @@ public:
 
         bool operator==(Tag const &other) const;
     };
-    [[nodiscard]] virtual std::vector<Tag> tags(TagFlags flags = TagFlag::IncludeResolved) const;
+    [[nodiscard]] std::vector<Tag> tags(TagFlags flags = TagFlag::IncludeResolved) const;
+protected:
+    [[nodiscard]] virtual std::vector<Tag> generateTags(TagFlags flags = TagFlag::IncludeResolved) const;
+public:
+    void invalidateTagCache() const;
     [[nodiscard]] virtual bool canSetTags() const;
     [[nodiscard]] virtual std::expected<void, QString> setTags(QStringList const &tags);
     [[nodiscard]] virtual QStringList resolveChildTag(QString const &tag) const;
@@ -174,6 +178,8 @@ signals:
 private:
     Model &model_;
     bool deinitialized_ = false;
+
+    mutable QHash<TagFlags, std::vector<Tag>> tagCache_;
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(Node::TagFlags);
