@@ -16,6 +16,8 @@
 */
 #include "DirectoryStatsManager.hpp"
 
+#include "TagLibrary/Library.hpp"
+
 #include "DirectoryStats.hpp"
 
 DirectoryStatsManager::DirectoryStatsManager(FileTagsManager &fileTagsManager): fileTagsManager_(fileTagsManager) {
@@ -63,4 +65,8 @@ void DirectoryStatsManager::invalidateDirectoryStatsCache() {
 
 int DirectoryStatsManager::cachedDirectories() const {
     return stats_.size();
+}
+
+QStringList DirectoryStatsManager::knownTags() const {
+    return tagLibrary_->allTags();
 }

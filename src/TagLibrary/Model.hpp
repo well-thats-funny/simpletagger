@@ -103,6 +103,8 @@ private:
     int rowHeight_ = 0;
     int nextLibraryVersion_ = -1;
     std::optional<int> highlightChangedAfterVersion_;
+
+    mutable QMutex allTagsMutex_;
     mutable std::optional<QStringList> allTags_;
 };
 }

@@ -45,6 +45,8 @@ public:
     void invalidateDirectoryStatsCache();
     int cachedDirectories() const;
 
+    QStringList knownTags() const;
+
 signals:
     void directoryStatsChanged(QString const &path);
 

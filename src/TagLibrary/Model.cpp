@@ -833,6 +833,17 @@ std::expected<void, Error> Model::invalidateTagCaches() const {
 }
 
 QStringList Model::allTags() const {
+    // TODO: this mutex only protects against multiple threads calling allTags().
+    //       it doesn't however protect against a situation where on thread calls allTags()
+    //       while another modifies the tags structure. To solve this, a separate mutex would
+    //       be necessary to protect against all modifications of the nodes' structure.
+    //       It can't be done on Library or Model level, as some modifications come from
+    //       QAbstractItemModel calls, so we need to lock on them too.
+    //
+    // TODO: Also, one more reason to move iteration to a dedicated helper method - this
+    //       method would ensure appropriate mutexes are locked in right places.
+    QMutexLocker locker(&allTagsMutex_);
+
     if (!allTags_) {
         allTags_.emplace();
 

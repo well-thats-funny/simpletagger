@@ -20,6 +20,8 @@ namespace FileBrowser {
 DirectoryTreeView::DirectoryTreeView(QWidget *const parent): CustomTreeView(parent) {
     ZoneScoped;
 
+    CustomTreeView::itemDelegate()->setExtendFirstColumnBackground(true);
+
     connect(this, &DirectoryTreeView::entered, this, [this](QModelIndex const &index){
         mouseOverIndex_ = index;
     });

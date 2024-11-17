@@ -152,13 +152,31 @@ QVariant DirectoryTreeModel::data(const QModelIndex &index, int role) const {
                         if (fileTags->get().assignedTags().isEmpty())
                             label += "no assigned tags\n";
                         else if (fileTags->get().assignedTags().size() <= maxTags)
-                            label += QString("%1 tags: %2\n")
+                            label += tr("%1 tag(s): %2\n", "", fileTags->get().assignedTags().size())
                                     .arg(fileTags->get().assignedTags().size())
                                     .arg(fileTags->get().assignedTags().join(", "));
                         else
-                            label += QString("%1 tags: %2, ...\n")
+                            label += tr("%1 tag(s): %2, ...\n", "", fileTags->get().assignedTags().size())
                                     .arg(fileTags->get().assignedTags().size())
                                     .arg(fileTags->get().assignedTags().sliced(0, maxTags).join(", "));
+
+                        auto knownTags = directoryStatsManager_.knownTags();
+                        auto unknownTags =
+                                fileTags->get().assignedTags()
+                                | std::views::filter([&](auto const &tag){
+                                    return !knownTags.contains(tag);
+                                })
+                                | std::ranges::to<QStringList>();
+                        if (unknownTags.size() > 0) {
+                            if (unknownTags.size() <= maxTags)
+                                label += tr("%1 unknown tag(s): %2\n", "", unknownTags.size())
+                                        .arg(unknownTags.size())
+                                        .arg(unknownTags.join(", "));
+                            else
+                                label += tr("%1 unknown tag(s): %2, ...\n", "", unknownTags.size())
+                                        .arg(unknownTags.size())
+                                        .arg(unknownTags.sliced(0, maxTags).join(", "));
+                        }
 
                         if (isOtherLibraryOrVersion_(fileTags->get()))
                             label += QString("Tagged with other tag library or version");

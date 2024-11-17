@@ -218,7 +218,7 @@ void DirectoryStats::reload() {
                 stats.unknownTags_ += std::ranges::count_if(
                         tags->get().assignedTags(),
                         [&](auto const &tag){
-                                return !manager_.tagLibrary_->allTags().contains(tag);
+                                return !manager_.knownTags().contains(tag);
                         }
                 );
             }
