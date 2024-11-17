@@ -98,11 +98,15 @@ signals:
     void persistentDataChanged();
 
 private:
+    void populateUuidMap();
+
     std::unique_ptr<NodeRoot> root;
     bool editMode_ = false;
     int rowHeight_ = 0;
     int nextLibraryVersion_ = -1;
     std::optional<int> highlightChangedAfterVersion_;
+
+    QHash<QUuid, Node *> uuidToNode_;
 
     mutable QMutex allTagsMutex_;
     mutable std::optional<QStringList> allTags_;

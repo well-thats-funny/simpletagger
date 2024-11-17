@@ -29,6 +29,25 @@ Model::Model() {
         if (auto result = invalidateTagCaches(); !result)
             reportError(QObject::tr("Tags cache invalidation failed"), result.error());
     });
+    connect(this, &Model::modelReset, this, [this](){
+        populateUuidMap();
+    });
+    connect(this, &Model::rowsInserted, this, [this](QModelIndex const &parent, int const first, int const last){
+        for (int row = first; row <= last; ++row) {
+            auto childIndex = index(row, 0, parent);
+            auto child = fromIndex(childIndex);
+            if (!child->isVirtual())
+                uuidToNode_.emplace(child->uuid(), child);
+        }
+    });
+    connect(this, &Model::rowsAboutToBeRemoved, this, [this](QModelIndex const &parent, int const first, int const last){
+        for (int row = first; row <= last; ++row) {
+            auto childIndex = index(row, 0, parent);
+            auto child = fromIndex(childIndex);
+            if (!child->isVirtual())
+                uuidToNode_.remove(child->uuid());
+        }
+    });
 }
 
 Model::~Model() {
@@ -76,14 +95,11 @@ Node *Model::fromIndex(QModelIndex const &index) const {
 std::expected<std::reference_wrapper<Node>, QString> Model::fromUuid(const QUuid &uuid) const {
     ZoneScoped;
 
-    if (auto node = root->find(Node::VisitFlag::Recursive | Node::VisitFlag::SkipVirtual, [&](auto const &node){
-        return node.uuid() == uuid;
-    }); !node)
-        return std::unexpected(node.error());
-    else if (*node)
-        return **node;
-    else
+    auto ptr = uuidToNode_.value(uuid);
+    if (!ptr)
         return std::unexpected(tr("No node with Uuid %1").arg(uuid.toString(QUuid::WithoutBraces)));
+    else
+        return *ptr;
 }
 
 QModelIndex Model::index(int const row, int const column, QModelIndex const &parent) const {
@@ -684,6 +700,8 @@ std::expected<void, QString> Model::load(QCborValue const &value) {
         root->deinit();
         root = std::move(newRoot);
 
+        populateUuidMap();
+
         if (auto result = root->repopulateLinked(); !result)
             return std::unexpected(result.error());
     }
@@ -841,5 +859,15 @@ QStringList Model::allTags() const {
             reportError("allTags visit", result.error(), false);
     }
     return *allTags_;
+}
+
+void Model::populateUuidMap() {
+    uuidToNode_.clear();
+    if (auto result = root->visit(Node::VisitFlag::Recursive | Node::VisitFlag::SkipVirtual, [&](auto &&node)->std::expected<bool, Error>{
+            assert(!node.isVirtual());
+            uuidToNode_.emplace(node.uuid(), &node);
+            return true;
+        }); !result)
+        reportError("modelReset visit", result.error());
 }
 }
