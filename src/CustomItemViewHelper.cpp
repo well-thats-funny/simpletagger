@@ -16,6 +16,7 @@
 */
 #include "CustomItemViewHelper.hpp"
 
+#include "CustomItemDataRole.hpp"
 #include "Utility.hpp"
 
 CustomItemDelegate::~CustomItemDelegate() = default;
@@ -39,15 +40,11 @@ void CustomItemDelegate::paint(QPainter *const painter, QStyleOptionViewItem con
         rect.setLeft(0);
     }
 
-    if (auto brushes = index.data(Qt::ItemDataRole::BackgroundRole); !brushes.isNull()) {
-        if (brushes.canConvert<std::vector<QBrush>>()) {
-            auto brushesVector = brushes.value<std::vector<QBrush>>();
-            for (auto const &brush: withoutDuplicates(brushesVector))
-                painter->fillRect(rect, brush);
-        } else if (brushes.canConvert<QBrush>()) {
-            painter->fillRect(rect, brushes.value<QBrush>());
-        } else
-            gsl_Expects(false);
+    if (auto brushes = index.data(std::to_underlying(CustomItemDataRole::ExtendedBackgroundRole)); !brushes.isNull()) {
+        gsl_Expects(brushes.canConvert<std::vector<QBrush>>());
+        auto brushesVector = brushes.value<std::vector<QBrush>>();
+        for (auto const &brush: withoutDuplicates(brushesVector))
+            painter->fillRect(rect, brush);
     }
 
     return QStyledItemDelegate::paint(painter, option, index);

@@ -17,5 +17,8 @@
 #pragma once
 
 enum class CustomItemDataRole {
-    TagRole = Qt::ItemDataRole::UserRole + 1
+    // TODO: big number, to lessen a chance of conflict with other custom roles
+    // Problem: e.g. QFileSystemModel defines some own custom roles.
+    TagRole = Qt::ItemDataRole::UserRole + 1000,
+    ExtendedBackgroundRole
 };

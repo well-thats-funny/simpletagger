@@ -18,6 +18,7 @@
 
 #include "FileTagsManager.hpp"
 #include "Utility.hpp"
+#include "../CustomItemDataRole.hpp"
 #include "../DirectoryStats.hpp"
 #include "../DirectoryStatsManager.hpp"
 #include "../Utility.hpp"
@@ -198,7 +199,7 @@ QVariant DirectoryTreeModel::data(const QModelIndex &index, int role) const {
                 font.setItalic(isFileExcluded_(path));
                 return font;
             }
-            case Qt::ItemDataRole::BackgroundRole: {
+            case std::to_underlying(CustomItemDataRole::ExtendedBackgroundRole): {
                 std::vector<QBrush> brushes;
                 if (pathInfo.isDir()) {
                     if (auto &stats = directoryStatsManager_.directoryStats(path); stats.ready()) {

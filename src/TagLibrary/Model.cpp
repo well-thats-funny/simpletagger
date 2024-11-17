@@ -20,6 +20,7 @@
 #include "NodeHierarchical.hpp"
 #include "NodeRoot.hpp"
 
+#include "../CustomItemDataRole.hpp"
 #include "../Utility.hpp"
 
 namespace TagLibrary {
@@ -321,7 +322,7 @@ QVariant Model::data(const QModelIndex &index, int role) const {
             result = font;
             break;
         }
-        case Qt::ItemDataRole::BackgroundRole: {
+        case std::to_underlying(CustomItemDataRole::ExtendedBackgroundRole): {
             result = QVariant::fromValue(node->background(editMode_));
             break;
         }

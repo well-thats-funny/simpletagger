@@ -71,7 +71,7 @@ QVariant TagsAssignedListModel::data(const QModelIndex &index, int role) const {
         case Qt::ItemDataRole::DisplayRole:
         case std::to_underlying(CustomItemDataRole::TagRole):
             return tag;
-        case Qt::ItemDataRole::BackgroundRole: {
+        case std::to_underlying(CustomItemDataRole::ExtendedBackgroundRole): {
             std::vector<QBrush> result;
             if (highlightedTags_.contains(tag))
                 result.emplace_back(QColor(64, 64, 255, 128), Qt::BrushStyle::SolidPattern);

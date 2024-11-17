@@ -16,6 +16,8 @@
 */
 #include "SelectionHelperProxyModel.hpp"
 
+#include "../CustomItemDataRole.hpp"
+
 namespace TagLibrary {
 SelectionHelperProxyModel::SelectionHelperProxyModel(QObject *parent):
         QIdentityProxyModel(parent), brushNotSelectable(Qt::GlobalColor::red, Qt::BrushStyle::BDiagPattern) {}
@@ -25,7 +27,8 @@ SelectionHelperProxyModel::~SelectionHelperProxyModel() = default;
 QVariant SelectionHelperProxyModel::data(QModelIndex const &proxyIndex, int const role) const {
     ZoneScoped;
 
-    if (role == Qt::ItemDataRole::BackgroundRole && selectionOperation && !selectionOperation->isSelectable(proxyIndex)) {
+    if (role == std::to_underlying(CustomItemDataRole::ExtendedBackgroundRole)
+            && selectionOperation && !selectionOperation->isSelectable(proxyIndex)) {
         auto brushVariant = QIdentityProxyModel::data(proxyIndex, role);
         assert(brushVariant.canConvert<std::vector<QBrush>>());
         auto brushes = brushVariant.value<std::vector<QBrush>>();
