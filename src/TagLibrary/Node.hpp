@@ -25,6 +25,10 @@ class Model;
 
 using NodeType = Format::NodeType;
 
+#ifndef NDEBUG
+class NodeShadow;
+#endif
+
 class Node: public QObject {
     Q_OBJECT
 
@@ -180,6 +184,11 @@ private:
     bool deinitialized_ = false;
 
     mutable QHash<TagFlags, std::vector<Tag>> tagCache_;
+
+#ifndef NDEBUG
+    friend class NodeShadow;
+    std::vector<NodeShadow*> shadowNodes_;
+#endif
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(Node::TagFlags);

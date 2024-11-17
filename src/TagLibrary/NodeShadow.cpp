@@ -21,11 +21,21 @@
 #include "../Utility.hpp"
 
 namespace TagLibrary {
-NodeShadow::NodeShadow(Model &model, Node const *parent, Node const &target, Node *subtreeRootOwner, IconIdentifier const &linkingIcon):
+NodeShadow::NodeShadow(Model &model, Node const *parent, Node &target, Node *subtreeRootOwner, IconIdentifier const &linkingIcon):
     Node(model), parent_(parent), target_(target), subtreeRootOwner_(subtreeRootOwner), linkingIcon_(linkingIcon) {
+#ifndef NDEBUG
+    target_.shadowNodes_.emplace_back(this);
+#endif
 }
 
-NodeShadow::~NodeShadow() = default;
+NodeShadow::~NodeShadow() {
+#ifndef NDEBUG
+    auto it = std::ranges::find(target_.shadowNodes_, this);
+    assert(it != std::ranges::end(target_.shadowNodes_) && "shadow node not tracked in its target node");
+    target_.shadowNodes_.erase(it);
+    assert(std::ranges::find(target_.shadowNodes_, this) == std::ranges::end(target_.shadowNodes_) && "shadow node tracked more than once in its target node");
+#endif
+}
 
 std::expected<void, QString> NodeShadow::init() {
     ZoneScoped;

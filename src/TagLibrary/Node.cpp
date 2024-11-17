@@ -63,6 +63,9 @@ Node::Node(Model &model): model_(model) {
 
 Node::~Node() {
     assert(deinitialized_ && "deinit() should be called before destroying a node");
+#ifndef NDEBUG
+    assert(shadowNodes_.empty() && "node is deleted while there's still shadow nodes pointing at it");
+#endif
 }
 
 std::expected<void, QString> Node::init() {

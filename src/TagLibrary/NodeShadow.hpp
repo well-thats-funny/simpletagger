@@ -24,7 +24,7 @@ class NodeShadow: public Node {
     Q_OBJECT
 
 public:
-    NodeShadow(Model &model, Node const *parent, Node const &target, Node *subtreeRootOwner, IconIdentifier const &linkingIcon);
+    NodeShadow(Model &model, Node const *parent, Node &target, Node *subtreeRootOwner, IconIdentifier const &linkingIcon);
     ~NodeShadow();
 
     [[nodiscard]] std::expected<void, QString> init() override;
@@ -77,7 +77,7 @@ private:
     [[nodiscard]] std::expected<std::unique_ptr<NodeShadow>, QString> createChild(int row);
 
     Node const *parent_ = nullptr;
-    Node const & target_;
+    Node &target_;
     Node *subtreeRootOwner_ = nullptr;
     std::vector<std::unique_ptr<NodeShadow>> children_;
     mutable std::optional<std::vector<IconIdentifier>> icons_;
