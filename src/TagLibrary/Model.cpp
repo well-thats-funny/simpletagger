@@ -143,6 +143,9 @@ int Model::rowCount(QModelIndex const &parent) const {
     ZoneScoped;
     gsl_Expects(!parent.isValid() || parent.model() == this);
 
+    if (parent.column() > 0)
+        return 0;
+
     auto node = fromIndex(parent);
     if (!node) {
         qCDebug(LoggingCategory) << "rowCount(" << node->name() << ") -> 0 (no node)";
