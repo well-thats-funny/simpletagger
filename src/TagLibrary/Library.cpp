@@ -484,9 +484,18 @@ std::expected<void, QString> Library::init() {
         menu.exec(ui->buttonFilters->mapToGlobal(QPoint(0, ui->buttonFilters->height())));
     });
 
-    connect(ui->actionFilterOnlyChanged, &QAction::triggered, this, [this]{
+    auto updateFilterButton = [this](){
+        auto anyFilterActive = filterModel_->isFilterOnlyChanged();
+        // TODO: what about bright/dark mode?
+        ui->buttonFilters->setStyleSheet(anyFilterActive ? "background-color: aqua;" : "");
+    };
+
+    connect(ui->actionFilterOnlyChanged, &QAction::triggered, this, [this, updateFilterButton]{
         filterModel_->setFilterOnlyChanged(ui->actionFilterOnlyChanged->isChecked());
+        updateFilterButton();
     });
+
+    updateFilterButton();
 
     ui->buttonInfo->setDefaultAction(ui->actionInfo);
     connect(ui->actionInfo, &QAction::triggered, this, [this]{
@@ -495,6 +504,7 @@ std::expected<void, QString> Library::init() {
         info += tr("<b>Library path: </b> %1<br>").arg(libraryPath_);
         info += tr("<b>Library UUID: </b> %1<br>").arg(libraryUuid_.toString(QUuid::WithoutBraces));
         info += tr("<b>Library version: </b> %1 (<small>%2</small>)<br>").arg(currentLibraryVersion_).arg(currentLibraryVersionUuid_.toString(QUuid::WithoutBraces));
+        info += tr("<b>Tags count: </b> %1<br>").arg(allTags().size());
 
         LibraryInfoDialog libraryInfoDialog(info, this);
         libraryInfoDialog.exec();

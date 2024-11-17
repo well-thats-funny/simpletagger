@@ -24,6 +24,8 @@ public:
 
     void setEditMode(bool editMode);
     void setFilterOnlyChanged(bool onlyChanged);
+
+    [[nodiscard]] bool isFilterOnlyChanged() const;
     void setChangedAfterVersion(std::optional<int> const &version);
 
 protected:

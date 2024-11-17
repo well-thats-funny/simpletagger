@@ -29,6 +29,10 @@ void FilterProxyModel::setEditMode(bool const editMode) {
     }
 }
 
+bool FilterProxyModel::isFilterOnlyChanged() const {
+    return onlyChanged_;
+}
+
 void FilterProxyModel::setFilterOnlyChanged(bool const onlyChanged) {
     if (onlyChanged != onlyChanged_) {
         onlyChanged_ = onlyChanged;
