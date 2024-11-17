@@ -287,65 +287,20 @@ std::expected<bool, Error> Node::lastChangeAfter(int const version, bool const a
             return true;
 
         // nope, we were not changed, but perhaps out child was? Go check
-        // TODO: this iteration stuff is repeated in many places. Could become a method of Node ?
-        auto count = childrenCount(true);
-        if (!count)
-            return std::unexpected(count.error());
-
-        for (int i = 0; i != *count; ++i) {
-            if (auto childNode = childOfRow(i, true); !childNode)
-                return std::unexpected(childNode.error());
-            else if (auto result = childNode->get().lastChangeAfter(version, true, false); !result)
+        if (auto result = find(VisitFlag::Recursive | VisitFlag::ExcludeSelf, [&](Node const &node)->std::expected<bool, Error>{
+            if (auto result = node.lastChangeAfter(version, true, false); !result)
                 return result;
-            else if (*result)
-                return true;
-        }
-
-        return false;
+            else
+                return *result;
+        }); !result)
+            return std::unexpected(result.error());
+        else
+            return *result;
     }
 }
 
 std::vector<QBrush> Node::background(bool const editMode) const {
     ZoneScoped;
-
-    struct VisitResult {
-        bool anyDescendantActive = false;
-        bool anyDescendantHighlighted = false;
-    };
-
-    auto visit = [](this auto &&self, Node const &node, bool const skipRoot = true)->std::expected<VisitResult, QString>{
-        VisitResult result;
-
-        if (!skipRoot) {
-            if (auto a = node.active(); a && *a)
-                result.anyDescendantActive = true;
-
-            if (auto h = node.highlighted(); h && *h)
-                result.anyDescendantHighlighted = true;
-        }
-
-        auto count = node.childrenCount(true);
-        if (!count)
-            return std::unexpected(count.error());
-
-        for (int i = 0; i != *count; ++i) {
-            auto child = node.childOfRow(i, true);
-            if (!child)
-                return std::unexpected(child.error());
-
-            if (auto subResult = self(*child, false); !subResult)
-                return std::unexpected(subResult.error());
-            else {
-                if (subResult->anyDescendantActive)
-                    result.anyDescendantActive = true;
-
-                if (subResult->anyDescendantHighlighted)
-                    result.anyDescendantHighlighted = true;
-            }
-        }
-
-        return result;
-    };
 
     std::vector<QBrush> result;
 
@@ -359,19 +314,34 @@ std::vector<QBrush> Node::background(bool const editMode) const {
         if (auto h = this->highlighted(); h && *h)
             highlighted = true;
 
-        VisitResult visitResult;
+        bool anyDescendantActive = false;
+        bool anyDescendantHighlighted = false;
 
-        if (auto vr = visit(*this); !vr)
-            qCCritical(LoggingCategory) << "Could not check descendants:" << vr.error();
-        else
-            visitResult = *vr;
+        if (auto result = visit(VisitFlag::Recursive, [&](auto const &node)->std::expected<bool, Error>{
+            if (!anyDescendantActive) {
+                if (auto active = node.active(); active && *active)
+                    anyDescendantActive = true;
+            }
+
+            if (!anyDescendantHighlighted) {
+                if (auto highlighted = node.highlighted(); highlighted && *highlighted)
+                    anyDescendantHighlighted = true;
+            }
+
+            // if we already know we've got an active descendant and a highlighted descendant,
+            // then we don't have to look for anything more
+            return !anyDescendantActive || !anyDescendantHighlighted;
+        }); !result) {
+            reportError("Node::background visit", result.error());
+            return {};
+        }
 
         static constexpr QColor activeColor = QColor(0, 255, 0, 128);
 
         if (active)
             result.emplace_back(QBrush(activeColor));
 
-        if (visitResult.anyDescendantActive)
+        if (anyDescendantActive)
             result.emplace_back(QBrush(activeColor, Qt::BrushStyle::FDiagPattern));
 
         static constexpr QColor highlightColor = QColor(0, 0, 255, 128);
@@ -379,7 +349,7 @@ std::vector<QBrush> Node::background(bool const editMode) const {
         if (highlighted)
             result.emplace_back(QBrush(highlightColor));
 
-        if (visitResult.anyDescendantHighlighted)
+        if (anyDescendantHighlighted)
             result.emplace_back(QBrush(highlightColor, Qt::BrushStyle::BDiagPattern));
     }
 
@@ -390,42 +360,23 @@ std::expected<QString, QString> Node::tooltip(bool const editMode) const {
     ZoneScoped;
 
     if (!editMode) {
-        auto visit = [](this auto &&self, Node const &node) -> std::expected<std::vector<QString>, QString> {
-            std::vector<QString> result;
-
-            if (auto a = node.active(); a && *a)
-                result.emplace_back(node.tags()
-                    | std::views::transform([](auto const &tag){ return tag.resolved; })
-                    | std::views::join_with(QString(", "))
-                    | std::ranges::to<QString>());
-
-            auto count = node.childrenCount(true);
-            if (!count)
-                return std::unexpected(count.error());
-
-            for (int i = 0; i != *count; ++i) {
-                auto child = node.childOfRow(i, true);
-                if (!child)
-                    return std::unexpected(child.error());
-
-                if (auto subresult = self(*child); !subresult)
-                    return std::unexpected(subresult.error());
-                else
-                    std::ranges::move(*subresult, std::back_inserter(result));
-            }
-
-            return result;
-        };
-
         QString tooltip;
 
         if (auto comment = this->comment(); !comment.isEmpty())
             tooltip += QString("%1").arg(comment);
 
-        if (auto result = visit(*this); !result) {
+        QStringList activeTagsLines;
+        if (auto result = visit(VisitFlag::Recursive, [&](auto &&node)->std::expected<bool, Error>{
+                if (auto active = node.active(); active && *active)
+                    activeTagsLines.emplace_back(node.tags()
+                            | std::views::transform([](auto const &tag){ return tag.resolved; })
+                            | std::views::join_with(QString(", "))
+                            | std::ranges::to<QString>());
+                return true;
+        }); !result) {
             return std::unexpected(result.error());
         } else {
-            auto activeTags = *result
+            auto activeTags = activeTagsLines
                     | std::views::join_with(QString("<br>"))
                     | std::ranges::to<QString>();
 
@@ -499,20 +450,12 @@ std::expected<void, QStringList> Node::verify(VerifyContext &context) const {
 std::expected<void, QStringList> Node::verifyRecursive(VerifyContext &context) const {
     QStringList unexpected;
 
-    if (auto result = verify(context); !result)
-        unexpected.append(result.error());
-
-    // TODO: this iteration stuff is repeated in many places. Could become a method of Node ?
-    auto count = childrenCount(true);
-    if (!count)
-        return std::unexpected(QStringList{count.error()}); // cannot continue
-
-    for (int i = 0; i != *count; ++i) {
-        if (auto childNode = childOfRow(i, true); !childNode)
-            unexpected.append(childNode.error());
-        else if (auto result = childNode->get().verify(context); !result)
+    if (auto result = visit(VisitFlag::Recursive, [&](auto &&node)->std::expected<bool, Error>{
+        if (auto result = node.verify(context); !result)
             unexpected.append(result.error());
-    }
+        return true;
+    }); !result)
+        unexpected.emplace_back(result.error());
 
     if (!unexpected.isEmpty())
         return std::unexpected(unexpected);

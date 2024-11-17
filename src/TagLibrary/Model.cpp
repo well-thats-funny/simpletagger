@@ -76,26 +76,9 @@ Node *Model::fromIndex(QModelIndex const &index) const {
 std::expected<std::reference_wrapper<Node>, QString> Model::fromUuid(const QUuid &uuid) const {
     ZoneScoped;
 
-    auto find = [&](this auto &&self, Node &parent)->std::expected<Node*, QString> {
-        ZoneScoped;
-
-        if (parent.isVirtual())
-            return nullptr;
-
-        if (parent.uuid() == uuid)
-            return &parent;
-
-        for (int i = 0; i != parent.childrenCount(false); ++i)
-            if (auto child = parent.childOfRow(i, false); !child)
-                return std::unexpected(child.error());
-            else if (auto found = self(child->get()); !found)
-                return std::unexpected(found.error());
-            else if (*found)
-                return *found;
-
-        return nullptr;
-    };
-    if (auto node = find(*root); !node)
+    if (auto node = root->find(Node::VisitFlag::Recursive | Node::VisitFlag::SkipVirtual, [&](auto const &node){
+        return node.uuid() == uuid;
+    }); !node)
         return std::unexpected(node.error());
     else if (*node)
         return **node;
@@ -741,7 +724,7 @@ std::expected<void, QString> Model::setTagsActive(QStringList const &tags) {
     {
         QSignalBlocker blocker(*this);
 
-        auto visit = [&](this auto &&self, Node &node) -> std::expected<void, QString> {
+        if (auto result = root->visit(Node::VisitFlag::Recursive, [&](auto &node)->std::expected<bool, Error>{
             ZoneScoped;
 
             if (node.canSetActive()) {
@@ -761,38 +744,19 @@ std::expected<void, QString> Model::setTagsActive(QStringList const &tags) {
                     return std::unexpected(result.error());
             }
 
-            auto count = node.childrenCount(false);
-            if (!count)
-                return std::unexpected(count.error());
-
-            for (int i = 0; i != *count; ++i) {
-                auto childNode = node.childOfRow(i, false);
-                if (!childNode)
-                    return std::unexpected(childNode.error());
-
-                if (auto result = self(childNode->get()); !result)
-                    return std::unexpected(result.error());
-            }
-
-            return {};
-        };
-        result = visit(*root);
+            return true;
+        }); !result)
+            return std::unexpected(result.error());
     }
 
     // potentially many tags might be modified in this function, that's why we block signals for the time of
     // visit and only fire dataChanged here
-    // TODO: this iteration stuff is repeated in many places. Could become a method of Node ?
-    auto count = root->childrenCount(false);
-    if (!count)
-        return std::unexpected(count.error());
-
-    for (int i = 0; i != *count; ++i) {
-        auto childNode = root->childOfRow(i, false);
-        if (!childNode)
-            return std::unexpected(childNode.error());
-
-        emit dataChanged(toIndex(*childNode), toIndex(*childNode));
-    }
+    if (auto result = root->visit(Node::VisitFlag::ExcludeSelf, [&](auto &node)->std::expected<bool, Error>{
+        ZoneScoped;
+        emit dataChanged(toIndex(node), toIndex(node));
+        return true;
+    }); !result)
+        return std::unexpected(result.error());
 
     return result;
 }
@@ -807,10 +771,10 @@ void Model::setRowHeight(int const rowHeight) {
 std::expected<QModelIndexList, QString> Model::setHighlightedTags(QStringList const &tags) {
     ZoneScoped;
 
-    auto visit = [&, t=this](this auto &&self, Node &node)->std::expected<QModelIndexList, QString>{
-        ZoneScoped;
+    QModelIndexList collected;
 
-        QModelIndexList resultList;
+    if (auto result = root->visit(Node::VisitFlag::Recursive, [&](auto &node)->std::expected<bool, Error>{
+        ZoneScoped;
 
         auto nodeTags = node.tags()
                 | std::views::transform([](auto const &v){ return v.resolved; })
@@ -823,31 +787,14 @@ std::expected<QModelIndexList, QString> Model::setHighlightedTags(QStringList co
             if (auto result = node.setHighlighted(highlight); !result)
                 return std::unexpected(result.error());
             else if (highlight)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Warray-bounds" // TODO: error or false positive in Qt ?
-                resultList.push_back(t->toIndex(node));
-#pragma GCC diagnostic pop
+                collected.push_back(toIndex(node));
         }
 
-        // TODO: this iteration stuff is repeated in many places. Could become a method of Node ?
-        auto count = node.childrenCount(true);
-        if (!count)
-            return std::unexpected(count.error());
-
-        for (int i = 0; i != *count; ++i) {
-            auto childNode = node.childOfRow(i, true);
-            if (!childNode)
-                return std::unexpected(childNode.error());
-
-            if (auto result = self(childNode->get()); !result)
-                return std::unexpected(result.error());
-            else
-                resultList += *result;
-        }
-
-        return resultList;
-    };
-    return visit(*root);
+        return true;
+    }); !result)
+        return std::unexpected(result.error());
+    else
+        return collected;
 }
 
 void Model::setHighlightChangedAfterVersion(std::optional<int> const &version) {
@@ -860,27 +807,13 @@ void Model::setNextLibraryVersion(int const nextVersion) {
 
 std::expected<void, Error> Model::invalidateTagCaches() const {
     allTags_ = std::nullopt;
-
-    auto visit = [](this auto &&self, Node &node)->std::expected<void, Error> {
+    if (auto result = root->visit(Node::VisitFlag::Recursive, [](auto &node)->std::expected<bool, Error>{
         node.invalidateTagCache();
-
-        // TODO: this iteration stuff is repeated in many places. Could become a method of Node ?
-        auto count = node.childrenCount(true);
-        if (!count)
-            return std::unexpected(count.error());
-
-        for (int i = 0; i != *count; ++i) {
-            auto childNode = node.childOfRow(i, true);
-            if (!childNode)
-                return std::unexpected(childNode.error());
-
-            if (auto result = self(childNode->get()); !result)
-                return std::unexpected(result.error());
-        }
-
+        return true;
+    }); !result)
+        return std::unexpected(result.error());
+    else
         return {};
-    };
-    return visit(*root);
 }
 
 QStringList Model::allTags() const {
@@ -897,30 +830,15 @@ QStringList Model::allTags() const {
 
     if (!allTags_) {
         allTags_.emplace();
-
-        auto visit = [t=this](this auto &&self, Node &node) -> std::expected<void, Error> {
+        if (auto result = root->visit(Node::VisitFlag::Recursive, [&](auto const &node)mutable->std::expected<bool, Error>{
             std::ranges::copy(
                     node.tags() | std::views::transform([](auto const &tag){ return tag.resolved; }),
-                    std::back_inserter(*t->allTags_)
+                    std::back_inserter(*allTags_)
             );
 
-            // TODO: this iteration stuff is repeated in many places. Could become a method of Node ?
-            auto count = node.childrenCount(true);
-            if (!count)
-                return std::unexpected(count.error());
-
-            for (int i = 0; i != *count; ++i) {
-                auto childNode = node.childOfRow(i, true);
-                if (!childNode)
-                    return std::unexpected(childNode.error());
-
-                if (auto result = self(childNode->get()); !result)
-                    return std::unexpected(result.error());
-            }
-
-            return {};
-        };
-        visit(*root);
+            return true;
+        }); !result)
+            reportError("allTags visit", result.error(), false);
     }
     return *allTags_;
 }

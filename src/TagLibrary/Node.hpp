@@ -60,6 +60,83 @@ public:
     [[nodiscard]] virtual std::expected<int, QString> rowOfChild(Node const &node, bool replaceReplaced) const = 0;
     [[nodiscard]] virtual std::expected<std::reference_wrapper<Node>, QString> childOfRow(int row, bool replaceReplaced) const = 0;
     [[nodiscard]] virtual std::expected<int, QString> childrenCount(bool replaceReplaced) const = 0;
+    enum class VisitFlag {
+        NoFlags         = 0x0,
+        ExcludeSelf     = 0x1, // don't call the visitor on the node itself
+        Recursive       = 0x2, // visit not only direct children of the node, but all descendants
+        ReplaceReplaced = 0x4, // visit replaced nodes
+        SkipVirtual     = 0x8, // don't visit nor traverse virtual nodes
+    };
+    Q_DECLARE_FLAGS(VisitFlags, VisitFlag)
+
+    // if visitor returns false, iteration gets iterrupted
+    template<typename Self, typename Visitor>
+    requires std::invocable<Visitor, copyConst<Self, Node> &> && std::same_as<std::invoke_result_t<Visitor, copyConst<Self, Node> &>, std::expected<bool, Error>>
+    [[nodiscard]] std::expected<void, Error> visit(this Self &&self, VisitFlags const flags, Visitor &&visitor) {
+        if (!(flags & VisitFlag::ExcludeSelf)) {
+            if (auto result = visitor(self); !result)
+                return std::unexpected(result.error());
+            else if (!*result)
+                return {};
+        }
+
+        auto count = self.childrenCount(flags & VisitFlag::ReplaceReplaced);
+        if (!count)
+            return std::unexpected(count.error());
+
+        for (int i = 0; i != *count; ++i) {
+            auto childNode = self.childOfRow(i, flags & VisitFlag::ReplaceReplaced);
+            if (!childNode)
+                return std::unexpected(childNode.error());
+
+            if (flags & VisitFlag::SkipVirtual && childNode->get().isVirtual())
+                continue;
+
+            if (auto result = visitor(childNode->get()); !result)
+                return std::unexpected(result.error());
+            else if (!*result)
+                break;
+
+            if (flags & VisitFlag::Recursive) {
+                // ExcludeSelf to prevent visitor being called with the same argument second time
+                if (auto result = childNode->get().visit(flags | VisitFlag::ExcludeSelf, visitor); !result)
+                    return std::unexpected(result.error());
+            }
+        }
+
+        return {};
+    }
+
+    template<typename Checker>
+    requires std::invocable<Checker, Node const &> && (
+               std::same_as<std::invoke_result_t<Checker, Node const &>, std::expected<bool, Error>>
+            || std::same_as<std::invoke_result_t<Checker, Node const &>, bool>
+    )
+    [[nodiscard]] auto find(this auto &&self, VisitFlags const flags, Checker const &checker) -> std::expected<copyConst<decltype(self), Node> *, Error> {
+        copyConst<decltype(self), Node> *foundNode = nullptr;
+        if (auto result = self.visit(flags, [&](auto &&node)->std::expected<bool, Error>{
+            auto cmp = checker(node);
+            bool bcmp;
+            if constexpr (std::same_as<decltype(cmp), std::expected<bool, Error>>) {
+                if (!cmp)
+                    return std::unexpected(cmp.error());
+                else
+                    bcmp = *cmp;
+            } else {
+                bcmp = cmp;
+            }
+
+            if (bcmp) {
+                foundNode = &node;
+                return false;
+            } else {
+                return true;
+            }
+        }); !result)
+            return std::unexpected(result.error());
+        else
+            return foundNode;
+    }
 
     // children modification
     [[nodiscard]] virtual bool canInsertChild(NodeType childType) const;
@@ -191,6 +268,7 @@ private:
 #endif
 };
 
+Q_DECLARE_OPERATORS_FOR_FLAGS(Node::VisitFlags);
 Q_DECLARE_OPERATORS_FOR_FLAGS(Node::TagFlags);
 Q_DECLARE_OPERATORS_FOR_FLAGS(Node::PathFlags);
 }

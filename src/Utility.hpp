@@ -72,6 +72,19 @@ std::generator<std::ranges::range_value_t<R>> withoutDuplicates(R &&r) {
     }
 }
 
+namespace impl {
+template<typename A, typename B>
+struct copyConst {
+    using tA = std::remove_reference_t<A>;
+    using tB = std::remove_cvref_t<B>;
+    using type = std::conditional_t<std::is_const_v<tA>, std::add_const_t<tB>, tB>;
+};
+}
+
+// copy constness category from type A and apply it to type B
+template<typename A, typename B>
+using copyConst = impl::copyConst<A, B>::type;
+
 using Error = QString;
 struct CancelOperation {};
 
