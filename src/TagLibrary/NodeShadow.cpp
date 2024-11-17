@@ -99,7 +99,7 @@ std::expected<void, QString> NodeShadow::init() {
             emit removeChildrenEnd(first, last);
     });
 
-    auto count = target->childrenCount(true);
+    auto count = target->childrenCount(!model().editMode());
     if (!count)
         return std::unexpected(count.error());
 
@@ -416,7 +416,7 @@ std::expected<void, QString> NodeShadow::repopulateShadows(RepopulationRequest c
 std::expected<std::shared_ptr<NodeShadow>, QString> NodeShadow::createChild(int const row) {
     ZoneScoped;
 
-    auto targetChildNode = target()->childOfRow(row, true);
+    auto targetChildNode = target()->childOfRow(row, !model().editMode());
     if (!targetChildNode)
         return std::unexpected(targetChildNode.error());
 
