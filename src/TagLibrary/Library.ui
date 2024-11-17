@@ -465,14 +465,6 @@ color: black;</string>
     <enum>QAction::MenuRole::NoRole</enum>
    </property>
   </action>
-  <action name="actionaaa">
-   <property name="text">
-    <string>aaa</string>
-   </property>
-   <property name="menuRole">
-    <enum>QAction::MenuRole::NoRole</enum>
-   </property>
-  </action>
   <action name="actionSetHidden">
    <property name="checkable">
     <bool>true</bool>
