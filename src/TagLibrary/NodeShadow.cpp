@@ -347,6 +347,14 @@ std::vector<QBrush> NodeShadow::background(bool const editMode) const {
     return result;
 }
 
+std::expected<void, QString> NodeShadow::repopulateLinked(RepopulationRequest const &repopulationRequest) {
+    ZoneScoped;
+    for (auto &child: children_)
+        if (auto result = child->repopulateLinked(repopulationRequest); !result)
+            return result;
+    return {};
+}
+
 [[nodiscard]] std::expected<std::unique_ptr<NodeShadow>, QString> NodeShadow::createChild(int const row) {
     ZoneScoped;
 

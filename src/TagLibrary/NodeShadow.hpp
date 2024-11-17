@@ -68,6 +68,8 @@ public:
 
     [[nodiscard]] std::vector<QBrush> background(bool editMode) const override;
 
+    [[nodiscard]] std::expected<void, QString> repopulateLinked(RepopulationRequest const &repopulationRequest = {}) override;
+
 signals:
     void targetAboutToRemove();
 

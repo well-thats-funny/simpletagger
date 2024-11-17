@@ -615,7 +615,7 @@ bool Model::dropMimeData(
         }
     }
 
-    if (auto result = root->repopulateLinkedRecursive(repopulationRequest); !result) {
+    if (auto result = root->repopulateLinked(repopulationRequest); !result) {
         qCCritical(LoggingCategory) << "Cannot repopulate links:" << result.error();
         return false;
     }
@@ -669,7 +669,7 @@ std::expected<void, QString> Model::load(QCborValue const &value) {
         root = std::move(newRoot);
     }
 
-    if (auto result = root->repopulateLinkedRecursive(); !result)
+    if (auto result = root->repopulateLinked(); !result)
         return std::unexpected(result.error());
 
     emit loadComplete();

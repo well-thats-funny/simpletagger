@@ -402,6 +402,9 @@ std::expected<void, QString> NodeLink::repopulateLinked(RepopulationRequest cons
             return std::unexpected(result.error());
     }
 
-    return {};
+    if (linkSubtreeRoot_)
+        return linkSubtreeRoot_->repopulateLinked(repopulationRequest);
+    else
+        return {};
 }
 }

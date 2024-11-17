@@ -467,31 +467,6 @@ std::expected<void, QString> Node::repopulateLinked(RepopulationRequest const &)
     return {};
 }
 
-std::expected<void, QString> Node::repopulateLinkedRecursive(RepopulationRequest const &repopulationRequest) {
-    ZoneScoped;
-
-    // TODO: this iteration stuff is repeated in many places. Could become a method of Node ?
-    if (auto result = repopulateLinked(repopulationRequest); !result)
-        return std::unexpected(result.error());
-
-    // both variants, to be sure we reached all children
-    // TODO: quick, dirty and inefficient
-    for (auto const replaceReplaced: {true, false}) {
-        auto count = childrenCount(replaceReplaced);
-        if (!count)
-            return std::unexpected(count.error());
-
-        for (int i = 0; i != *count; ++i) {
-            if (auto childNode = childOfRow(i, replaceReplaced); !childNode)
-                return std::unexpected(childNode.error());
-            else if (auto result = childNode->get().repopulateLinkedRecursive(repopulationRequest); !result)
-                return std::unexpected(result.error());
-        }
-    }
-
-    return {};
-}
-
 std::expected<void, QStringList> Node::verify(VerifyContext &context) const {
     gsl_Expects(&model_);  // this is not an acceptable circumstance ever
     gsl_Expects(!deinitialized_);  // this one too

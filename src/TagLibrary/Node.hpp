@@ -153,7 +153,6 @@ public:
         std::optional<QList<QUuid>> modifiedUuids;
     };
     [[nodiscard]] virtual std::expected<void, QString> repopulateLinked(RepopulationRequest const &repopulationRequest = {});
-    [[nodiscard]] std::expected<void, QString> repopulateLinkedRecursive(RepopulationRequest const &repopulationRequest = {});
 
 protected:
     struct VerifyContext {

@@ -40,6 +40,8 @@ public:
 
     [[nodiscard]] NodeType type() const override;
 
+    [[nodiscard]] std::expected<void, QString> repopulateLinked(RepopulationRequest const &repopulationRequest = {}) override;
+
 protected:
     [[nodiscard]] std::expected<void, QString> saveNodeData(QCborMap &map) const override;
     [[nodiscard]] std::expected<void, QString> loadNodeData(QCborMap &map) override;

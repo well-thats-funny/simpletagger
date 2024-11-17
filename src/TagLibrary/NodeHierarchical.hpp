@@ -48,6 +48,8 @@ public:
     [[nodiscard]] bool canAcceptDrop() const override; // does it accept drops at all?
     [[nodiscard]] bool canAcceptDrop(NodeType type) const override; // does it accept drops of this node type?
 
+    [[nodiscard]] std::expected<void, QString> repopulateLinked(RepopulationRequest const &repopulationRequest = {}) override;
+
 protected:
     [[nodiscard]] std::expected<void, QString> saveNodeData(QCborMap &map) const override;
     [[nodiscard]] virtual std::expected<std::optional<QCborArray>, QString> saveChildrenNodes() const;

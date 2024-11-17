@@ -200,6 +200,13 @@ bool NodeHierarchical::canAcceptDrop(NodeType const type) const {
     return canInsertChild(type);
 }
 
+std::expected<void, QString> NodeHierarchical::repopulateLinked(RepopulationRequest const &repopulationRequest) {
+    for (auto &child: children_)
+        if (auto result = child->repopulateLinked(repopulationRequest); !result)
+            return result;
+    return {};
+}
+
 std::expected<void, QString> NodeHierarchical::saveNodeData(QCborMap &map) const {
     ZoneScoped;
 

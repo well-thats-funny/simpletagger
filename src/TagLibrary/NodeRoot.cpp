@@ -84,6 +84,13 @@ NodeType NodeRoot::type() const {
     return NodeType::Root;
 }
 
+std::expected<void, QString> NodeRoot::repopulateLinked(RepopulationRequest const &repopulationRequest) {
+    if (rootCollection_)
+        return rootCollection_->repopulateLinked(repopulationRequest);
+    else
+        return {};
+}
+
 std::expected<void, QString> NodeRoot::saveNodeData(QCborMap &map) const {
     ZoneScoped;
 
