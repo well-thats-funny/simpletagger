@@ -129,6 +129,10 @@ add_executable(simpletagger-cxx
         DirectoryStats.hpp
         TagLibrary/LibraryInfoDialog.cpp
         TagLibrary/LibraryInfoDialog.hpp
+        Tags/ListView.cpp
+        Tags/ListView.hpp
+        CustomListView.cpp
+        CustomListView.hpp
         CustomItemViewHelper.cpp
         CustomItemViewHelper.hpp
 )
@@ -187,6 +191,7 @@ target_precompile_headers(simpletagger-cxx PRIVATE
         <QJsonObject>
         <QJsonValue>
         <QLabel>
+        <QListView>
         <QLoggingCategory>
         <QMainWindow>
         <QMenu>
