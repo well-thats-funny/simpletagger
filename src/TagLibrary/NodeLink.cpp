@@ -293,7 +293,7 @@ std::expected<void, QString> NodeLink::populateLinked() {
         if (!target)
             return std::unexpected(target.error());
 
-        auto subtreeRoot = std::make_unique<NodeLinkSubtree>(model(), this, target->get(), this);
+        auto subtreeRoot = std::make_unique<NodeLinkSubtree>(model(), this, target->get(), this, linkingIcon());
         if (auto result = subtreeRoot->init(); !result)
             return std::unexpected(result.error());
 
@@ -339,6 +339,10 @@ std::expected<void, QString> NodeLink::unpopulateLinked() {
 
     gsl_Ensures(!linkSubtreeRoot_);
     return {};
+}
+
+IconIdentifier NodeLink::linkingIcon() const {
+    return IconIdentifier(":/icons/bx-link.svg");
 }
 
 void NodeLink::emitInsertChildrenBegin(int const count) {

@@ -33,6 +33,7 @@ public:
     [[nodiscard]] bool isReplaced() const override;
 
 protected:
+    [[nodiscard]] IconIdentifier linkingIcon() const override;
     void emitInsertChildrenBegin(int count) override;
     void emitInsertChildrenEnd(int count) override;
     void emitRemoveChildrenBegin(int count) override;

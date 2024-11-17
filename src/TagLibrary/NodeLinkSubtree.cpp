@@ -21,8 +21,8 @@
 #include "../Utility.hpp"
 
 namespace TagLibrary {
-NodeLinkSubtree::NodeLinkSubtree(Model &model, Node const *parent, Node const &target, Node *subtreeRootOwner):
-    Node(model), parent_(parent), target_(target), subtreeRootOwner_(subtreeRootOwner) {
+NodeLinkSubtree::NodeLinkSubtree(Model &model, Node const *parent, Node const &target, Node *subtreeRootOwner, IconIdentifier const &linkingIcon):
+    Node(model), parent_(parent), target_(target), subtreeRootOwner_(subtreeRootOwner), linkingIcon_(linkingIcon) {
 }
 
 NodeLinkSubtree::~NodeLinkSubtree() = default;
@@ -221,7 +221,7 @@ std::vector<IconIdentifier> NodeLinkSubtree::icons() const {
     ZoneScoped;
 
     if (!icons_) {
-        icons_.emplace({IconIdentifier(":/icons/bx-link.svg")});
+        icons_.emplace({linkingIcon_});
 
         auto targetIcons = target_.icons();
         icons_->reserve(icons_->size() + targetIcons.size());
@@ -349,7 +349,7 @@ std::vector<QBrush> NodeLinkSubtree::background(bool const editMode) const {
     if (!targetChildNode)
         return std::unexpected(targetChildNode.error());
 
-    auto linkChild = std::make_unique<NodeLinkSubtree>(model(), this, targetChildNode->get(), nullptr);
+    auto linkChild = std::make_unique<NodeLinkSubtree>(model(), this, targetChildNode->get(), nullptr, linkingIcon_);
     if (auto result = linkChild->init(); !result)
         return std::unexpected(result.error());
 

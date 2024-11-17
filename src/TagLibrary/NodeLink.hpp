@@ -73,6 +73,7 @@ protected:
     [[nodiscard]] std::expected<void, QString> populateLinked();
     [[nodiscard]] std::expected<void, QString> unpopulateLinked();
 
+    [[nodiscard]] virtual IconIdentifier linkingIcon() const;
     virtual void emitInsertChildrenBegin(int count);
     virtual void emitInsertChildrenEnd(int count);
     virtual void emitRemoveChildrenBegin(int count);

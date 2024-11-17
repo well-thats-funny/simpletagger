@@ -45,6 +45,10 @@ bool NodeInheritance::isReplaced() const {
     return true;
 }
 
+IconIdentifier NodeInheritance::linkingIcon() const {
+    return IconIdentifier(":/icons/bx-up-arrow.svg");
+}
+
 void NodeInheritance::emitInsertChildrenBegin(int const count) {
     if (model().editMode()) {
         // if we're in edit mode, we behave like any link

@@ -24,7 +24,7 @@ class NodeLinkSubtree: public Node {
     Q_OBJECT
 
 public:
-    NodeLinkSubtree(Model &model, Node const *parent, Node const &target, Node *subtreeRootOwner);
+    NodeLinkSubtree(Model &model, Node const *parent, Node const &target, Node *subtreeRootOwner, IconIdentifier const &linkingIcon);
     ~NodeLinkSubtree();
 
     [[nodiscard]] std::expected<void, QString> init() override;
@@ -79,5 +79,6 @@ private:
     mutable std::optional<std::vector<IconIdentifier>> icons_;
     bool active_ = false;
     bool highlighted_ = false;
+    IconIdentifier linkingIcon_;
 };
 }
