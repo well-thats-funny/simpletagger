@@ -148,7 +148,7 @@ int Model::rowCount(QModelIndex const &parent) const {
 
     auto node = fromIndex(parent);
     if (!node) {
-        qCDebug(LoggingCategory) << "rowCount(" << node->name() << ") -> 0 (no node)";
+        qCDebug(LoggingCategory) << "rowCount(<no node>) -> 0 (no node)";
         return 0;
     }
 
