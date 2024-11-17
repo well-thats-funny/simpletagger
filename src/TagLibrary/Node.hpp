@@ -120,6 +120,7 @@ public:
 
     [[nodiscard]] virtual NodeType type() const = 0;
     [[nodiscard]] virtual bool isVirtual() const;
+    [[nodiscard]] virtual bool isReplaced() const;
 
     [[nodiscard]] virtual bool isHidden() const;
     [[nodiscard]] virtual bool canSetHidden() const;

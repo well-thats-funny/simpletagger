@@ -18,6 +18,7 @@
 
 #include "Logging.hpp"
 #include "NodeCollection.hpp"
+#include "NodeInheritance.hpp"
 #include "NodeLink.hpp"
 #include "NodeObject.hpp"
 #include "NodeRoot.hpp"
@@ -44,6 +45,9 @@ NodeSerializable::createNode(NodeType const type, Model &model, NodeSerializable
         case NodeType::Link:
             childNode = std::make_unique<NodeLink>(model, parent);
             break;
+        case NodeType::Inheritance:
+            childNode = std::make_unique<NodeInheritance>(model, parent);
+            break;
         default:
             return std::unexpected(QObject::tr("Unknown node type: %1 (%2)").arg(
                     QString::number(std::to_underlying(type)),
@@ -69,6 +73,8 @@ NodeSerializable::createNode(NodeType const type, Model &model, NodeSerializable
             return NodeObject::genericIcon();
         case NodeType::Link:
             return NodeLink::genericIcon();
+        case NodeType::Inheritance:
+            return NodeInheritance::genericIcon();
         default:
             gsl_Expects(false);
             return {};

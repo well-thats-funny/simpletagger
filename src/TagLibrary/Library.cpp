@@ -87,6 +87,7 @@ std::expected<void, QString> Library::init() {
     connect(ui->actionCreateCollection, &QAction::triggered, this, [createNode]{ createNode(NodeType::Collection); });
     connect(ui->actionCreateObject, &QAction::triggered, this, [createNode]{ createNode(NodeType::Object); });
     connect(ui->actionCreateLink, &QAction::triggered, this, [createNode]{ createNode(NodeType::Link); });
+    connect(ui->actionCreateInheritance, &QAction::triggered, this, [createNode]{ createNode(NodeType::Inheritance); });
 
     connect(ui->actionDelete, &QAction::triggered, this, [this]{
         ZoneScoped;
@@ -242,6 +243,7 @@ std::expected<void, QString> Library::init() {
         menu.addAction(ui->actionCreateCollection);
         menu.addAction(ui->actionCreateObject);
         menu.addAction(ui->actionCreateLink);
+        menu.addAction(ui->actionCreateInheritance);
     };
 
     connect(ui->treeTags, &QTreeView::customContextMenuRequested, this, [this, addCreateActions](QPoint const &pos){
@@ -354,6 +356,7 @@ std::expected<void, QString> Library::init() {
         ui->actionCreateCollection->setEnabled(editMode && node.canInsertChild(NodeType::Collection));
         ui->actionCreateObject->setEnabled(editMode && node.canInsertChild(NodeType::Object));
         ui->actionCreateLink->setEnabled(editMode && node.canInsertChild(NodeType::Link));
+        ui->actionCreateInheritance->setEnabled(editMode && node.canInsertChild(NodeType::Inheritance));
         ui->buttonAdd->setEnabled(editMode && (ui->actionCreateCollection->isEnabled() || ui->actionCreateObject->isEnabled() || ui->actionCreateLink->isEnabled()));
         ui->actionDelete->setEnabled(editMode && node.canRemove());
         ui->actionRename->setEnabled(editMode && node.canSetName());

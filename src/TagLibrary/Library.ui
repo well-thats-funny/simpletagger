@@ -550,6 +550,21 @@ color: black;</string>
     <enum>QAction::MenuRole::NoRole</enum>
    </property>
   </action>
+  <action name="actionCreateInheritance">
+   <property name="icon">
+    <iconset resource="../../cmake-build-relwithdebinfo/src/icons.qrc">
+     <normaloff>:/icons/bx-up-arrow.svg</normaloff>:/icons/bx-up-arrow.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Create inheritance node</string>
+   </property>
+   <property name="toolTip">
+    <string>Create inheritance node</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::MenuRole::NoRole</enum>
+   </property>
+  </action>
  </widget>
  <customwidgets>
   <customwidget>

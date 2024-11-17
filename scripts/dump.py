@@ -34,7 +34,8 @@ class TagLibrary:
         1: 'root',
         2: 'collection',
         3: 'object',
-        4: 'link'
+        4: 'link',
+        5: 'inheritance'
     }
 
     @classmethod

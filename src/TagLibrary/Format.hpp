@@ -48,7 +48,8 @@ enum class NodeType {
     Root = 1,
     Collection = 2,
     Object = 3,
-    Link = 4
+    Link = 4,
+    Inheritance = 5
 };
 Q_ENUM_NS(NodeType);
 

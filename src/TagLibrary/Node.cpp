@@ -236,6 +236,10 @@ bool Node::isVirtual() const {
     return false;
 }
 
+bool Node::isReplaced() const {
+    return true;
+}
+
 bool Node::isHidden() const {
     return false;
 }

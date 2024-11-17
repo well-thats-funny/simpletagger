@@ -28,7 +28,7 @@ NodeObject::NodeObject(Model &model, NodeSerializable const *const parent):
 NodeObject::~NodeObject() = default;
 
 bool NodeObject::canInsertChild(NodeType const type) const {
-    if (type == NodeType::Object || type == NodeType::Link)
+    if (type == NodeType::Object || type == NodeType::Link || type == NodeType::Inheritance)
         return true;
 
     return false;

@@ -135,6 +135,8 @@ add_executable(simpletagger-cxx
         CustomListView.hpp
         CustomItemViewHelper.cpp
         CustomItemViewHelper.hpp
+        TagLibrary/NodeInheritance.hpp
+        TagLibrary/NodeInheritance.cpp
 )
 target_compile_options(simpletagger-cxx PRIVATE -Wall -Wextra -Werror)
 
