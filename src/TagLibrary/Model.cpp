@@ -296,7 +296,7 @@ QVariant Model::data(const QModelIndex &index, int role) const {
                     font.setBold(*active);
 
                 if (highlightChangedAfterVersion_) {
-                    if (auto highlight = node.lastChangeAfter(*highlightChangedAfterVersion_, true); !highlight)
+                    if (auto highlight = node.lastChangeAfter(*highlightChangedAfterVersion_, true, true); !highlight)
                         qCCritical(LoggingCategory) << "Could not compare last change of a node:" << highlight.error();
                     else
                         font.setUnderline(*highlight);

@@ -256,7 +256,14 @@ std::optional<int> Node::lastChangeVersion() const {
 
 void Node::setLastChangeVersion(int const) {}
 
-std::expected<bool, Error> Node::lastChangeAfter(int version, bool anyChild) {
+std::expected<bool, Error> Node::lastChangeAfter(int const version, bool const anyChild, bool const anyParent) const {
+    if (anyParent && parent()) {
+        if (auto v = parent()->lastChangeAfter(version, false, true); !v)
+            return v;
+        else if (*v)
+            return true;
+    }
+
     if (!anyChild) {
         // non-recursive - only check if we were changed after the "version"
         if (auto v = lastChangeVersion())
@@ -267,7 +274,7 @@ std::expected<bool, Error> Node::lastChangeAfter(int version, bool anyChild) {
     } else {
         // recursive - first, use the non-recursive approach and if we were changed, no point
         // in checking the children too
-        if (auto result = lastChangeAfter(version, false); !result)
+        if (auto result = lastChangeAfter(version, false, anyParent); !result)
             return result;
         else if (*result)
             return true;
@@ -281,7 +288,7 @@ std::expected<bool, Error> Node::lastChangeAfter(int version, bool anyChild) {
         for (int i = 0; i != *count; ++i) {
             if (auto childNode = childOfRow(i); !childNode)
                 return std::unexpected(childNode.error());
-            else if (auto result = childNode->get().lastChangeAfter(version, true); !result)
+            else if (auto result = childNode->get().lastChangeAfter(version, true, false); !result)
                 return result;
             else if (*result)
                 return true;

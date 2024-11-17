@@ -127,7 +127,7 @@ public:
 
     [[nodiscard]] virtual std::optional<int> lastChangeVersion() const;
     virtual void setLastChangeVersion(int version);
-    [[nodiscard]] std::expected<bool, Error> lastChangeAfter(int version, bool anyChild);
+    [[nodiscard]] std::expected<bool, Error> lastChangeAfter(int version, bool anyChild, bool anyParent) const;
 
     [[nodiscard]] virtual std::vector<QBrush> background(bool editMode) const;
 

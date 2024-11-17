@@ -50,7 +50,7 @@ bool FilterProxyModel::filterAcceptsRow(int const sourceRow, QModelIndex const &
     auto &node = source->fromIndex(source->index(sourceRow, 0, sourceParent));
 
     if (changedAfterVersion_ && onlyChanged_) {
-        if (auto lastChangeAfter = node.lastChangeAfter(*changedAfterVersion_, true); !lastChangeAfter)
+        if (auto lastChangeAfter = node.lastChangeAfter(*changedAfterVersion_, true, true); !lastChangeAfter)
             qWarning() << "lastChangeAfter error:" << lastChangeAfter.error();
         else if (!*lastChangeAfter)
             return false;
