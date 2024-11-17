@@ -50,7 +50,7 @@ class MainWindow: public QMainWindow {
     MainWindow &operator=(MainWindow const &other) = delete;
     MainWindow &operator=(MainWindow &&other) = delete;
 
-    MainWindow(Settings &settings, QTranslator &translator);
+    MainWindow(Settings &settings, QTranslator &translator, QString const &tagLibraryPath);
     [[nodiscard]] std::expected<void, QString> init();
 
     [[nodiscard]] std::expected<void, QString> setupGeneralActions();
@@ -67,7 +67,7 @@ class MainWindow: public QMainWindow {
     void loadStartupProject();
 
 public:
-    [[nodiscard]] static std::expected<std::unique_ptr<MainWindow>, QString> create(Settings &settings, QTranslator &translator);
+    [[nodiscard]] static std::expected<std::unique_ptr<MainWindow>, QString> create(Settings &settings, QTranslator &translator, QString const &tagLibraryPath);
     ~MainWindow();
 
 private:
@@ -93,6 +93,8 @@ private:
 
     Settings &settings;
     QTranslator &translator;
+
+    QString tagLibraryPath_;
 
     QStringList recentProjects;
     std::vector<std::unique_ptr<QAction>> recentProjectsActions;

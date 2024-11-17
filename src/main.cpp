@@ -28,7 +28,12 @@ int main(int argc, char * argv[]) {
     parser.addHelpOption();
     parser.addVersionOption();
 
+    QCommandLineOption tagLibraryPathOption("tag-library", QObject::tr("TagLibrary file to use"), QObject::tr("file"));
+    parser.addOption(tagLibraryPathOption);
+
     parser.process(app);
+
+    auto tagLibraryPath = parser.value(tagLibraryPathOption);
 
     Settings settings;
 
@@ -39,7 +44,7 @@ int main(int argc, char * argv[]) {
     }
 
     std::unique_ptr<MainWindow> mainWindow;
-    if (auto result = MainWindow::create(settings, translator); !result) {
+    if (auto result = MainWindow::create(settings, translator, tagLibraryPath); !result) {
         QMessageBox::critical(
                 nullptr,
                 QObject::tr("Cannot create main window"),

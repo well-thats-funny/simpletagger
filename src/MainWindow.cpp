@@ -37,12 +37,22 @@ namespace {
     constexpr qsizetype MAX_RECENT_PROJECTS = 10;
 }
 
-MainWindow::MainWindow(Settings &settings, QTranslator &translator):
+MainWindow::MainWindow(Settings &settings, QTranslator &translator, QString const &tagLibraryPath):
     ui{std::make_unique<Ui_MainWindow>()},
     settings{settings},
     translator{translator},
+    tagLibraryPath_{tagLibraryPath},
     fileTagsManager(settings.system.backupOnAnyChange),
-    directoryStatsManager(fileTagsManager) {}
+    directoryStatsManager(fileTagsManager) {
+    if (tagLibraryPath_.isEmpty()) {
+        QDir appData{QStandardPaths::writableLocation(QStandardPaths::StandardLocation::AppDataLocation)};
+        if (!appData.exists())
+            // this is the ugliest way of saying "create the directory" I've ever written...
+            QFileInfo(appData.path()).dir().mkpath(appData.dirName());
+
+        tagLibraryPath_ = appData.filePath("TagLibrary.cbor");
+    }
+}
 
 std::expected<void, QString> MainWindow::init() {
     ZoneScoped;
@@ -387,14 +397,7 @@ std::expected<void, QString> MainWindow::setupTagsDock() {
 std::expected<void, QString> MainWindow::setupTagLibraryDock() {
     ZoneScoped;
 
-    QDir appData{QStandardPaths::writableLocation(QStandardPaths::StandardLocation::AppDataLocation)};
-    if (!appData.exists())
-        // this is the ugliest way of saying "create the directory" I've ever written...
-        QFileInfo(appData.path()).dir().mkpath(appData.dirName());
-
-    auto tagLibraryPath = appData.filePath("TagLibrary.cbor");
-
-    if (auto result = TagLibrary::Library::create(tagLibraryPath); !result) {
+    if (auto result = TagLibrary::Library::create(tagLibraryPath_); !result) {
         return std::unexpected(result.error());
     } else {
         tagLibrary = &**result;
@@ -404,7 +407,7 @@ std::expected<void, QString> MainWindow::setupTagLibraryDock() {
     }
 
     {
-        QFile file(tagLibraryPath);
+        QFile file(tagLibraryPath_);
         if (file.exists()) {
             qDebug() << "Loading tag library from" << file.fileName();
             if (auto const result = tagLibrary->loadContent(file); !result) {
@@ -412,13 +415,13 @@ std::expected<void, QString> MainWindow::setupTagLibraryDock() {
                 QMessageBox::critical(
                         this,
                         tr("Could not load tags library"),
-                        tr("Loading from file \"%1\" failed: %2").arg(tagLibraryPath, result.error())
+                        tr("Loading from file \"%1\" failed: %2").arg(tagLibraryPath_, result.error())
                 );
             }
         }
     }
 
-    connectionSaveTagLibraryOnChange = connect(&*tagLibrary, &TagLibrary::Library::editModeChanged, this, [this, tagLibraryPath](bool const editMode){
+    connectionSaveTagLibraryOnChange = connect(&*tagLibrary, &TagLibrary::Library::editModeChanged, this, [this](bool const editMode){
         ZoneScoped;
 
         if (editMode)
@@ -427,9 +430,9 @@ std::expected<void, QString> MainWindow::setupTagLibraryDock() {
         std::optional<int> backupsCounter;
 
         if (this->settings.system.backupOnAnyChange)
-            backupsCounter = backupFile(tagLibraryPath);
+            backupsCounter = backupFile(tagLibraryPath_);
 
-        QSaveFile file(tagLibraryPath);
+        QSaveFile file(tagLibraryPath_);
         qDebug() << "Saving tag library to" << file.fileName();
         if (auto const result = [&]->std::expected<void, QString>{
                 if (auto const result = tagLibrary->saveContent(file); !result)
@@ -498,10 +501,10 @@ void MainWindow::loadStartupProject() {
     }
 }
 
-std::expected<std::unique_ptr<MainWindow>, QString> MainWindow::create(Settings &settings, QTranslator &translator) {
+std::expected<std::unique_ptr<MainWindow>, QString> MainWindow::create(Settings &settings, QTranslator &translator, QString const &tagLibraryPath) {
     ZoneScoped;
 
-    auto self = std::unique_ptr<MainWindow>(new MainWindow(settings, translator));
+    auto self = std::unique_ptr<MainWindow>(new MainWindow(settings, translator, tagLibraryPath));
     if (auto result = self->init(); !result)
         return std::unexpected(result.error());
 
