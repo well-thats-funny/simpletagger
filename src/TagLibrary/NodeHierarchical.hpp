@@ -37,9 +37,9 @@ public:
     [[nodiscard]] bool canRemove() const override;
 
     // children access
-    [[nodiscard]] std::expected<int, QString> rowOfChild(Node const &node) const override;
-    [[nodiscard]] std::expected<std::reference_wrapper<Node>, QString> childOfRow(int row) const override;
-    [[nodiscard]] std::expected<int, QString> childrenCount() const override;
+    [[nodiscard]] std::expected<int, QString> rowOfChild(Node const &node, bool replaceReplaced) const override;
+    [[nodiscard]] std::expected<std::reference_wrapper<Node>, QString> childOfRow(int row, bool replaceReplaced) const override;
+    [[nodiscard]] std::expected<int, QString> childrenCount(bool replaceReplaced) const override;
 
     // children modification
     [[nodiscard]] bool canInsertChild(NodeType childType) const override;
@@ -56,7 +56,7 @@ protected:
 
     friend class Model;
 
-    NodeSerializable const *parent_ = nullptr;
+    NodeSerializable const *const parent_ = nullptr;
     std::vector<std::unique_ptr<NodeSerializable>> children_;
 };
 }

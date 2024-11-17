@@ -39,25 +39,25 @@ void NodeLink::deinit() {
         linkSubtreeRoot_->deinit();
 }
 
-std::expected<int, QString> NodeLink::rowOfChild(Node const &node) const {
+std::expected<int, QString> NodeLink::rowOfChild(Node const &node, bool const replaceReplaced) const {
     ZoneScoped;
     gsl_Expects(linkSubtreeRoot_);
-    return linkSubtreeRoot_->rowOfChild(node);
+    return linkSubtreeRoot_->rowOfChild(node, replaceReplaced);
 }
 
-std::expected<std::reference_wrapper<Node>, QString> NodeLink::childOfRow(int const row) const {
+std::expected<std::reference_wrapper<Node>, QString> NodeLink::childOfRow(int const row, bool const replaceReplaced) const {
     ZoneScoped;
     gsl_Expects(linkSubtreeRoot_);
-    return linkSubtreeRoot_->childOfRow(row);
+    return linkSubtreeRoot_->childOfRow(row, replaceReplaced);
 }
 
-std::expected<int, QString> NodeLink::childrenCount() const {
+std::expected<int, QString> NodeLink::childrenCount(bool const replaceReplaced) const {
     ZoneScoped;
 
     if (!linkSubtreeRoot_)
         return 0;
     else
-        return linkSubtreeRoot_->childrenCount();
+        return linkSubtreeRoot_->childrenCount(replaceReplaced);
 }
 
 bool NodeLink::canBeDragged() const {
@@ -302,17 +302,17 @@ std::expected<void, QString> NodeLink::populateLinked() {
                 qCCritical(LoggingCategory) << "targetAboutToRemove -> unpopulateLinked error:" << result.error();
         });
 
-        auto childrenCount = subtreeRoot->childrenCount();
+        auto childrenCount = subtreeRoot->childrenCount(true);
         if (!childrenCount)
             return std::unexpected(childrenCount.error());
 
         if (*childrenCount > 0)
-            emit insertChildrenBegin(0, *childrenCount - 1);
+            emitInsertChildrenBegin(*childrenCount);
 
         linkSubtreeRoot_ = dynamicPtrCast<NodeLinkSubtree>(std::move(subtreeRoot));
 
         if (*childrenCount > 0)
-            emit insertChildrenEnd(0, *childrenCount - 1);
+            emitInsertChildrenEnd(*childrenCount);
     }
 
     gsl_Ensures(!linkTo_.isNull() == static_cast<bool>(linkSubtreeRoot_));
@@ -321,12 +321,12 @@ std::expected<void, QString> NodeLink::populateLinked() {
 
 std::expected<void, QString> NodeLink::unpopulateLinked() {
     if (linkSubtreeRoot_) {
-        auto childrenCount = linkSubtreeRoot_->childrenCount();
+        auto childrenCount = linkSubtreeRoot_->childrenCount(true);
         if (!childrenCount)
             return std::unexpected(childrenCount.error());
 
         if (*childrenCount > 0)
-            emit removeChildrenBegin(0, *childrenCount - 1);
+            emitRemoveChildrenBegin(*childrenCount);
 
         if (!linkSubtreeRoot_->deinitialized())
             linkSubtreeRoot_->deinit();
@@ -334,11 +334,27 @@ std::expected<void, QString> NodeLink::unpopulateLinked() {
         linkSubtreeRoot_.reset();
 
         if (*childrenCount > 0)
-            emit removeChildrenEnd(0, *childrenCount - 1);
+            emitRemoveChildrenEnd(*childrenCount);
     }
 
     gsl_Ensures(!linkSubtreeRoot_);
     return {};
+}
+
+void NodeLink::emitInsertChildrenBegin(int const count) {
+    emit insertChildrenBegin(0, count - 1);
+}
+
+void NodeLink::emitInsertChildrenEnd(int const count) {
+    emit insertChildrenEnd(0, count - 1);
+}
+
+void NodeLink::emitRemoveChildrenBegin(int const count) {
+    emit removeChildrenBegin(0, count - 1);
+}
+
+void NodeLink::emitRemoveChildrenEnd(int const count) {
+    emit removeChildrenEnd(0, count - 1);
 }
 
 std::expected<void, QString> NodeLink::repopulateLinked(RepopulationRequest const &repopulationRequest) {

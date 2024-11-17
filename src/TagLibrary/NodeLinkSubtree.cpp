@@ -91,7 +91,7 @@ std::expected<void, QString> NodeLinkSubtree::init() {
             emit removeChildrenEnd(first, last);
     });
 
-    auto count = target_.childrenCount();
+    auto count = target_.childrenCount(true);
     if (!count)
         return std::unexpected(count.error());
 
@@ -119,37 +119,97 @@ Node const *NodeLinkSubtree::parent() const {
     ZoneScoped;
 
     if (auto nlsParent = dynamic_cast<NodeLinkSubtree const *>(parent_))
-        if (nlsParent->subtreeRootOwner_)
-            return nlsParent->subtreeRootOwner_;
+        if (nlsParent->subtreeRootOwner_) {
+            if (nlsParent->subtreeRootOwner_->isReplaced() && !model().editMode())
+                return nlsParent->subtreeRootOwner_->parent();
+            else
+                return nlsParent->subtreeRootOwner_;
+        }
 
     return parent_;
 }
 
-std::expected<int, QString> NodeLinkSubtree::rowOfChild(Node const &node) const {
+std::expected<int, QString> NodeLinkSubtree::rowOfChild(Node const &node, bool const replaceReplaced) const {
     ZoneScoped;
 
-    auto it = std::ranges::find_if(
-            children_,
-            [&](auto const &child){ return &*child == &node; }
-    );
-    if (it == children_.end())
-        return std::unexpected(QObject::tr("Node %1 not found among the children of linked subtree node %2").arg(
-                node.path(PathFlag::IncludeEverything), path(PathFlag::IncludeEverything)
-        ));
-
-    return it - children_.begin();
+    // TODO: this is basically the same as in NodeHierarchical::rowOfChild, merge?
+    if (!replaceReplaced) {
+        auto it = std::ranges::find_if(
+                children_,
+                [&](auto const &child) { return &*child == &node; }
+        );
+        if (it == children_.end())
+            return std::unexpected(QObject::tr("Node %1 not found among the children of linked subtree node %2").arg(
+                    node.path(PathFlag::IncludeEverything), path(PathFlag::IncludeEverything)
+            ));
+        return it - children_.begin();
+    } else {
+        // TODO: very inefficient
+        for (int row = 0; row != childrenCount(true); ++row) {
+            if (auto child = childOfRow(row, true); !child)
+                return std::unexpected(child.error());
+            else if (&child->get() == &node)
+                return row;
+        }
+        return std::unexpected("rowOfChild: child not found");
+    }
 }
 
-std::expected<std::reference_wrapper<Node>, QString> NodeLinkSubtree::childOfRow(int const row) const {
+std::expected<std::reference_wrapper<Node>, QString> NodeLinkSubtree::childOfRow(int const row, bool const replaceReplaced) const {
+    // TODO: this is basically the same as in NodeHierarchical::childOfRow, merge?
     ZoneScoped;
-    auto &child = children_.at(row);
-    gsl_Ensures(child);
-    return *child;
+    gsl_Expects(row >= 0);
+
+    if (!replaceReplaced) {
+        gsl_Expects(row < gsl::narrow<int>(children_.size()));
+        return *children_.at(row);
+    } else {
+        int childRow = 0;
+
+        for (auto const &child: children_) {
+            if (!child->isReplaced()) {
+                if (childRow == row)
+                    return *child;
+
+                childRow++;
+            } else {
+                if (auto replacedCount = child->childrenCount(true); !replacedCount) {
+                    return std::unexpected(replacedCount.error());
+                } else {
+                    if (childRow + *replacedCount > row)
+                        return child->childOfRow(row - childRow, true);
+
+                    childRow += *replacedCount;
+                }
+            }
+        }
+
+        return std::unexpected(QString("childOfRow: row not found %1").arg(row));
+    }
 }
 
-std::expected<int, QString> NodeLinkSubtree::childrenCount() const {
+std::expected<int, QString> NodeLinkSubtree::childrenCount(bool const replaceReplaced) const {
+    // TODO: this is basically the same as in NodeHierarchical::childrenCount, merge?
     ZoneScoped;
-    return children_.size();
+    if (!replaceReplaced) {
+        return children_.size();
+    } else {
+        int count = 0;
+
+        for (auto const &child: children_) {
+            if (!child->isReplaced()) {
+                count++;
+            } else {
+                if (auto replacedCount = child->childrenCount(true); !replacedCount) {
+                    return std::unexpected(replacedCount.error());
+                } else {
+                    count += *replacedCount;
+                }
+            }
+        }
+
+        return count;
+    }
 }
 
 QString NodeLinkSubtree::name(bool const raw, bool const editMode) const {
@@ -285,7 +345,7 @@ std::vector<QBrush> NodeLinkSubtree::background(bool const editMode) const {
 [[nodiscard]] std::expected<std::unique_ptr<NodeLinkSubtree>, QString> NodeLinkSubtree::createChild(int const row) {
     ZoneScoped;
 
-    auto targetChildNode = target_.childOfRow(row);
+    auto targetChildNode = target_.childOfRow(row, true);
     if (!targetChildNode)
         return std::unexpected(targetChildNode.error());
 

@@ -36,7 +36,7 @@ Node const *NodeRoot::parent() const {
     return nullptr;
 }
 
-std::expected<int, QString> NodeRoot::rowOfChild(Node const &node) const {
+std::expected<int, QString> NodeRoot::rowOfChild(Node const &node, bool const) const {
     ZoneScoped;
 
     if (&node == dynamic_cast<Node *>(&*rootCollection_))
@@ -48,12 +48,12 @@ std::expected<int, QString> NodeRoot::rowOfChild(Node const &node) const {
         ));
 }
 
-std::expected<std::reference_wrapper<Node>, QString> NodeRoot::childOfRow(int const row) const {
+std::expected<std::reference_wrapper<Node>, QString> NodeRoot::childOfRow(int const row, bool const) const {
     gsl_Expects(row == 0);
     return *rootCollection_;
 }
 
-std::expected<int, QString> NodeRoot::childrenCount() const {
+std::expected<int, QString> NodeRoot::childrenCount(bool const) const {
     return rootCollection_ ? 1 : 0;
 }
 

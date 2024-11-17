@@ -41,37 +41,112 @@ Node const *NodeHierarchical::parent() const {
 
 bool NodeHierarchical::canRemove() const {
     ZoneScoped;
-    auto row = parent()->rowOfChild(*this);
+    auto row = parent()->rowOfChild(*this, false);
     gsl_Expects(row);
     return parent()->canRemoveChildren(*row, *row);
 }
 
-std::expected<int, QString> NodeHierarchical::rowOfChild(Node const &node) const {
+std::expected<int, QString> NodeHierarchical::rowOfChild(Node const &node, bool const replaceReplaced) const {
     ZoneScoped;
 
-    auto it = std::ranges::find_if(
-            children_,
-            [&](auto const &child){ return &*child == &node; }
-    );
-    if (it == children_.end())
-        return std::unexpected(QObject::tr("Node %1 (%2) not found among the children of node %3 (%4)").arg(
-                node.uuid().toString(QUuid::WithoutBraces), node.name(true),
-                uuid().toString(QUuid::WithoutBraces), name(true)
-        ));
+    if (!replaceReplaced) {
+        auto it = std::ranges::find_if(
+                children_,
+                [&](auto const &child) { return &*child == &node; }
+        );
+        if (it == children_.end())
+            return std::unexpected(QObject::tr("Node %1 (%2) not found among the children of node %3 (%4)").arg(
+                    node.uuid().toString(QUuid::WithoutBraces), node.name(true),
+                    uuid().toString(QUuid::WithoutBraces), name(true)
+            ));
+        return it - children_.begin();
+    } else {
+        int row = 0;
 
-    return it - children_.begin();
+        for (auto const &child: children_) {
+            // NOTE: This check purposedly takes place before the child->isReplaced() check.
+            // This is to allow passing a replaced node as a "node" parameter. In this case
+            // the function returns the row where the first replacement would be displayed.
+            // This is because NodeInheritance calls this function to find out where its
+            // replacement nodes should be placed.
+            if (&*child == &node)
+                return row;
+
+            if (!child->isReplaced()) {
+                ++row;
+            } else {
+                if (auto replacedCount = child->childrenCount(true); !replacedCount)
+                    return std::unexpected(replacedCount.error());
+                else {
+                    for (int replacedRow = 0; replacedRow != *replacedCount; ++replacedRow) {
+                        if (auto replacedChild = child->childOfRow(replacedRow, true); !replacedChild) {
+                            return std::unexpected(replacedChild.error());
+                        } else {
+                            if (&replacedChild->get() == &node)
+                                return row;
+                        }
+                        ++row;
+                    }
+                }
+            }
+        }
+        return std::unexpected("rowOfChild: child not found");
+    }
 }
 
-std::expected<std::reference_wrapper<Node>, QString> NodeHierarchical::childOfRow(int const row) const {
+std::expected<std::reference_wrapper<Node>, QString> NodeHierarchical::childOfRow(int const row, bool const replaceReplaced) const {
     ZoneScoped;
+    gsl_Expects(row >= 0);
 
-    assert(row >= 0);
-    assert(row < gsl::narrow<int>(children_.size()));
-    return *children_.at(row);
+    if (!replaceReplaced) {
+        gsl_Expects(row < gsl::narrow<int>(children_.size()));
+        return *children_.at(row);
+    } else {
+        int childRow = 0;
+
+        for (auto const &child: children_) {
+            if (!child->isReplaced()) {
+                if (childRow == row)
+                    return *child;
+
+                childRow++;
+            } else {
+                if (auto replacedCount = child->childrenCount(true); !replacedCount) {
+                    return std::unexpected(replacedCount.error());
+                } else {
+                    if (childRow + *replacedCount > row)
+                        return child->childOfRow(row - childRow, true);
+
+                    childRow += *replacedCount;
+                }
+            }
+        }
+
+        return std::unexpected(QString("childOfRow: row not found %1").arg(row));
+    }
 }
 
-std::expected<int, QString> NodeHierarchical::childrenCount() const {
-    return children_.size();
+std::expected<int, QString> NodeHierarchical::childrenCount(bool const replaceReplaced) const {
+    ZoneScoped;
+    if (!replaceReplaced) {
+        return children_.size();
+    } else {
+        int count = 0;
+
+        for (auto const &child: children_) {
+            if (!child->isReplaced()) {
+                count++;
+            } else {
+                if (auto replacedCount = child->childrenCount(true); !replacedCount) {
+                    return std::unexpected(replacedCount.error());
+                } else {
+                    count += *replacedCount;
+                }
+            }
+        }
+
+        return count;
+    }
 }
 
 bool NodeHierarchical::canInsertChild(NodeType const) const {
@@ -144,9 +219,9 @@ std::expected<std::optional<QCborArray>, QString> NodeHierarchical::saveChildren
 
     QCborArray children;
 
-    for (int i = 0; i != childrenCount(); ++i) {
+    for (int i = 0; i != childrenCount(false); ++i) {
         // only save stored children
-        if (auto child = childOfRow(i); !child) {
+        if (auto child = childOfRow(i, false); !child) {
             return std::unexpected(child.error());
         } else if (auto storedChild = dynamic_cast<NodeSerializable *>(&child->get())) {
             if (auto childData = storedChild->save())

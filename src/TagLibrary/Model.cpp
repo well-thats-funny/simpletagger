@@ -40,10 +40,12 @@ QModelIndex Model::toIndex(Node const &node) const {
     if (&node == &*root) {
         return {};
     } else {
-        if (auto row = node.parent()->rowOfChild(node)) {
+        auto parent = node.parent();
+        if (auto row = parent->rowOfChild(node, !editMode_)) {
             return createIndex(*row, 0, &node);
         } else {
-            qCCritical(LoggingCategory) << "Could not get row of child:" << row.error();
+            reportError(QString("Model::toIndex: rowOfChild failed (parent %1, child %2)")
+                .arg(parent->name(true, false)).arg(node.name(true, false)), row.error(), false);
             assert(false);
             return {};
         }
@@ -83,8 +85,8 @@ std::expected<std::reference_wrapper<Node>, QString> Model::fromUuid(const QUuid
         if (parent.uuid() == uuid)
             return &parent;
 
-        for (int i = 0; i != parent.childrenCount(); ++i)
-            if (auto child = parent.childOfRow(i); !child)
+        for (int i = 0; i != parent.childrenCount(false); ++i)
+            if (auto child = parent.childOfRow(i, false); !child)
                 return std::unexpected(child.error());
             else if (auto found = self(child->get()); !found)
                 return std::unexpected(found.error());
@@ -108,7 +110,7 @@ QModelIndex Model::index(int const row, int const column, QModelIndex const &par
     QModelIndex result;
 
     auto &parentNode = fromIndex(parent);
-    if (auto child = parentNode.childOfRow(row); !child) {
+    if (auto child = parentNode.childOfRow(row, !editMode_); !child) {
         qCWarning(LoggingCategory) << "childOfRow" << child.error();
         return QModelIndex();
     } else {
@@ -137,7 +139,7 @@ int Model::rowCount(QModelIndex const &parent) const {
     gsl_Expects(!parent.isValid() || parent.model() == this);
 
     auto &node = fromIndex(parent);
-    if (auto size = node.childrenCount(); !size) {
+    if (auto size = node.childrenCount(!editMode_); !size) {
         qCDebug(LoggingCategory) << "rowCount(" << node.name() << ") -> unexpected: " << size.error();
         return 0;
     } else {
@@ -381,7 +383,7 @@ std::expected<QModelIndex, QString> Model::insertNode(NodeType type, QModelIndex
     if (!childNode)
         return std::unexpected(childNode.error());
 
-    auto row = parentNodeStored->childrenCount();
+    auto row = parentNodeStored->childrenCount(false);
     if (!row)
         return std::unexpected(row.error());
 
@@ -572,7 +574,7 @@ bool Model::dropMimeData(
     }
 
     if (row == -1) {
-        if (auto result = parentNodeStored->childrenCount(); !result) {
+        if (auto result = parentNodeStored->childrenCount(false); !result) {
             qCCritical(LoggingCategory) << ":" << result.error();
             return false;
         } else {
@@ -686,8 +688,11 @@ std::expected<void, QString> Model::load(QCborValue const &value) {
 void Model::setEditMode(bool const editMode) {
     ZoneScoped;
     if (editMode_ != editMode) {
+        emit layoutAboutToBeChanged();
+
         editMode_ = editMode;
-        emit dataChanged(QModelIndex(), QModelIndex()); // force redraw
+
+        emit layoutChanged();
     }
 }
 
@@ -723,12 +728,12 @@ std::expected<void, QString> Model::setTagsActive(QStringList const &tags) {
                     return std::unexpected(result.error());
             }
 
-            auto count = node.childrenCount();
+            auto count = node.childrenCount(false);
             if (!count)
                 return std::unexpected(count.error());
 
             for (int i = 0; i != *count; ++i) {
-                auto childNode = node.childOfRow(i);
+                auto childNode = node.childOfRow(i, false);
                 if (!childNode)
                     return std::unexpected(childNode.error());
 
@@ -779,12 +784,12 @@ std::expected<QModelIndexList, QString> Model::setHighlightedTags(QStringList co
         }
 
         // TODO: this iteration stuff is repeated in many places. Could become a method of Node ?
-        auto count = node.childrenCount();
+        auto count = node.childrenCount(true);
         if (!count)
             return std::unexpected(count.error());
 
         for (int i = 0; i != *count; ++i) {
-            auto childNode = node.childOfRow(i);
+            auto childNode = node.childOfRow(i, true);
             if (!childNode)
                 return std::unexpected(childNode.error());
 
@@ -814,12 +819,12 @@ std::expected<void, Error> Model::invalidateTagCaches() const {
         node.invalidateTagCache();
 
         // TODO: this iteration stuff is repeated in many places. Could become a method of Node ?
-        auto count = node.childrenCount();
+        auto count = node.childrenCount(true);
         if (!count)
             return std::unexpected(count.error());
 
         for (int i = 0; i != *count; ++i) {
-            auto childNode = node.childOfRow(i);
+            auto childNode = node.childOfRow(i, true);
             if (!childNode)
                 return std::unexpected(childNode.error());
 
@@ -854,12 +859,12 @@ QStringList Model::allTags() const {
             );
 
             // TODO: this iteration stuff is repeated in many places. Could become a method of Node ?
-            auto count = node.childrenCount();
+            auto count = node.childrenCount(true);
             if (!count)
                 return std::unexpected(count.error());
 
             for (int i = 0; i != *count; ++i) {
-                auto childNode = node.childOfRow(i);
+                auto childNode = node.childOfRow(i, true);
                 if (!childNode)
                     return std::unexpected(childNode.error());
 

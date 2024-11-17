@@ -237,7 +237,7 @@ bool Node::isVirtual() const {
 }
 
 bool Node::isReplaced() const {
-    return true;
+    return false;
 }
 
 bool Node::isHidden() const {
@@ -285,12 +285,12 @@ std::expected<bool, Error> Node::lastChangeAfter(int const version, bool const a
 
         // nope, we were not changed, but perhaps out child was? Go check
         // TODO: this iteration stuff is repeated in many places. Could become a method of Node ?
-        auto count = childrenCount();
+        auto count = childrenCount(true);
         if (!count)
             return std::unexpected(count.error());
 
         for (int i = 0; i != *count; ++i) {
-            if (auto childNode = childOfRow(i); !childNode)
+            if (auto childNode = childOfRow(i, true); !childNode)
                 return std::unexpected(childNode.error());
             else if (auto result = childNode->get().lastChangeAfter(version, true, false); !result)
                 return result;
@@ -321,12 +321,12 @@ std::vector<QBrush> Node::background(bool const editMode) const {
                 result.anyDescendantHighlighted = true;
         }
 
-        auto count = node.childrenCount();
+        auto count = node.childrenCount(true);
         if (!count)
             return std::unexpected(count.error());
 
         for (int i = 0; i != *count; ++i) {
-            auto child = node.childOfRow(i);
+            auto child = node.childOfRow(i, true);
             if (!child)
                 return std::unexpected(child.error());
 
@@ -396,12 +396,12 @@ std::expected<QString, QString> Node::tooltip(bool const editMode) const {
                     | std::views::join_with(QString(", "))
                     | std::ranges::to<QString>());
 
-            auto count = node.childrenCount();
+            auto count = node.childrenCount(true);
             if (!count)
                 return std::unexpected(count.error());
 
             for (int i = 0; i != *count; ++i) {
-                auto child = node.childOfRow(i);
+                auto child = node.childOfRow(i, true);
                 if (!child)
                     return std::unexpected(child.error());
 
@@ -474,15 +474,19 @@ std::expected<void, QString> Node::repopulateLinkedRecursive(RepopulationRequest
     if (auto result = repopulateLinked(repopulationRequest); !result)
         return std::unexpected(result.error());
 
-    auto count = childrenCount();
-    if (!count)
-        return std::unexpected(count.error());
+    // both variants, to be sure we reached all children
+    // TODO: quick, dirty and inefficient
+    for (auto const replaceReplaced: {true, false}) {
+        auto count = childrenCount(replaceReplaced);
+        if (!count)
+            return std::unexpected(count.error());
 
-    for (int i = 0; i != *count; ++i) {
-        if (auto childNode = childOfRow(i); !childNode)
-            return std::unexpected(childNode.error());
-        else if (auto result = childNode->get().repopulateLinkedRecursive(repopulationRequest); !result)
-            return std::unexpected(result.error());
+        for (int i = 0; i != *count; ++i) {
+            if (auto childNode = childOfRow(i, replaceReplaced); !childNode)
+                return std::unexpected(childNode.error());
+            else if (auto result = childNode->get().repopulateLinkedRecursive(repopulationRequest); !result)
+                return std::unexpected(result.error());
+        }
     }
 
     return {};
@@ -521,12 +525,12 @@ std::expected<void, QStringList> Node::verifyRecursive(VerifyContext &context) c
         unexpected.append(result.error());
 
     // TODO: this iteration stuff is repeated in many places. Could become a method of Node ?
-    auto count = childrenCount();
+    auto count = childrenCount(true);
     if (!count)
         return std::unexpected(QStringList{count.error()}); // cannot continue
 
     for (int i = 0; i != *count; ++i) {
-        if (auto childNode = childOfRow(i); !childNode)
+        if (auto childNode = childOfRow(i, true); !childNode)
             unexpected.append(childNode.error());
         else if (auto result = childNode->get().verify(context); !result)
             unexpected.append(result.error());

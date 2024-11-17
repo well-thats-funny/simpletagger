@@ -17,47 +17,12 @@
 #include "NodeInheritance.hpp"
 
 #include "Model.hpp"
+#include "NodeLinkSubtree.hpp"
 
 namespace TagLibrary {
-NodeInheritance::NodeInheritance(TagLibrary::Model &model, TagLibrary::NodeSerializable const *const parent): NodeHierarchical(model, parent) {}
+NodeInheritance::NodeInheritance(TagLibrary::Model &model, TagLibrary::NodeSerializable const *const parent): NodeLink(model, parent) {}
 
 NodeInheritance::~NodeInheritance() = default;
-
-QString NodeInheritance::name(bool const raw, bool const editMode) const {
-    ZoneScoped;
-
-    // TODO: this is similar to NodeLink::name, merge to a common function?
-    if (raw) {
-        return name_;
-    } else if (editMode) {
-        QString targetName;
-        if (linkTo_.isNull())
-            targetName = QObject::tr("<no linked element>");
-        else if (auto targetNode = target(); !targetNode)
-            targetName = QObject::tr("<invalid target> (%1; %2)").arg(linkTo_.toString(QUuid::WithoutBraces), targetNode.error());
-        else
-            targetName = targetNode->get().name();
-
-        return QString("%1 -> %2").arg(name_, targetName);
-    } else if (!name_.isEmpty()) {
-        return name_;
-/*    } else if (linkSubtreeRoot_) {
-        return linkSubtreeRoot_->name();*/
-    } else {
-        return {};
-    }
-}
-
-bool NodeInheritance::canSetName() const {
-    return true;
-}
-
-bool NodeInheritance::setName(QString const &name) {
-    ZoneScoped;
-    name_ = name;
-    emit persistentDataChanged();
-    return true;
-}
 
 IconIdentifier NodeInheritance::genericIcon() {
     ZoneScoped;
@@ -66,52 +31,10 @@ IconIdentifier NodeInheritance::genericIcon() {
 
 std::vector<IconIdentifier> NodeInheritance::icons() const {
     ZoneScoped;
-//    if (!linkSubtreeRoot_)
+    if (!linkSubtreeRoot_)
         return {IconIdentifier(":/icons/bx-up-arrow-broken.svg")};
-//    else
-//        return linkSubtreeRoot_->icons();
-}
-
-std::optional<QUuid> NodeInheritance::linkTo() const {
-    return linkTo_;
-}
-
-bool NodeInheritance::canLinkTo() const {
-    return true;
-}
-
-std::expected<void, QString> NodeInheritance::setLinkTo(QUuid const &uuid) {
-    ZoneScoped;
-
-    if (uuid != linkTo_) {
-/*        if (auto result = unpopulateLinked(); !result)
-            return std::unexpected(result.error());*/
-
-        linkTo_ = uuid;
-
-/*        if (auto result = populateLinked(); !result)
-            return std::unexpected(result.error());*/
-    }
-
-    emit persistentDataChanged();
-    return {};
-}
-
-QString NodeInheritance::comment() const {
-    return comment_;
-}
-
-bool NodeInheritance::canSetComment() const {
-    return true;
-}
-
-std::expected<void, QString> NodeInheritance::setComment(QString const &comment) {
-    ZoneScoped;
-    if (comment != comment_) {
-        comment_ = comment;
-        emit persistentDataChanged();
-    }
-    return {};
+    else
+        return linkSubtreeRoot_->icons();
 }
 
 NodeType NodeInheritance::type() const {
@@ -122,67 +45,59 @@ bool NodeInheritance::isReplaced() const {
     return true;
 }
 
-/*std::expected<int, Error> NodeInheritance::replacedCount() const {
-    ZoneScoped;
-    if (auto t = target(); !t)
-        return std::unexpected(t.error());
-    else
-        return t->get().childrenCount();
-}
-
-std::expected<std::reference_wrapper<Node>, Error> NodeInheritance::replacedNode(int const row) const {
-    ZoneScoped;
-    if (auto t = target(); !t)
-        return std::unexpected(t.error());
-    else
-        return t->get().childOfRow(row);
-}*/
-
-std::expected<std::reference_wrapper<Node>, QString> NodeInheritance::target() const {
-    ZoneScoped;
-    return model().fromUuid(linkTo_);
-}
-
-std::expected<void, QString> NodeInheritance::saveNodeData(QCborMap &map) const {
-    ZoneScoped;
-
-    if (auto result = NodeHierarchical::saveNodeData(map); !result)
-        return std::unexpected(result.error());
-
-    map[std::to_underlying(Format::NodeKey::Name)] = name_;
-    map[std::to_underlying(Format::NodeKey::LinkTo)] = linkTo_.toRfc4122();
-
-    if (!comment_.isEmpty())
-        map[std::to_underlying(Format::NodeKey::Comment)] = comment_;
-
-    return {};
-}
-
-std::expected<void, QString> NodeInheritance::loadNodeData(QCborMap &map) {
-    ZoneScoped;
-
-    if (auto result = NodeHierarchical::loadNodeData(map); !result)
-        return std::unexpected(result.error());
-
-    auto name = map.take(std::to_underlying(Format::NodeKey::Name));
-    if (!name.isString())
-        return std::unexpected(QObject::tr("Name element is not a string but %1").arg(cborTypeToString(name.type())));
-    name_ = name.toString();
-
-    auto linkTo = map.take(std::to_underlying(Format::NodeKey::LinkTo));
-    if (!linkTo.isByteArray())
-        return std::unexpected(QObject::tr("Link target element is not a byte array but %1").arg(cborTypeToString(linkTo.type())));
-    linkTo_ = QUuid::fromRfc4122(linkTo.toByteArray());
-
-    auto comment = map.take(std::to_underlying(Format::NodeKey::Comment));
-    if (!comment.isUndefined()) {
-        if (!comment.isString())
-            return std::unexpected(
-                    QObject::tr("Comment element is not a string but %1").arg(cborTypeToString(comment.type())));
+void NodeInheritance::emitInsertChildrenBegin(int const count) {
+    if (model().editMode()) {
+        // if we're in edit mode, we behave like any link
+        return NodeLink::emitInsertChildrenBegin(count);
+    } else {
+        // otherwise, we're invisible and our parent takes over our children
+        if (auto first = parent_->rowOfChild(*this, true); !first)
+            reportError("emitInsertChildrenBegin -> rowOfChild failed", first.error(), false);
         else
-            comment_ = comment.toString();
+            // TODO: get rid of const_cast
+            emit const_cast<NodeSerializable *>(parent_)->insertChildrenBegin(*first, *first + count - 1);
     }
+}
 
-    return {};
+void NodeInheritance::emitInsertChildrenEnd(int const count) {
+    if (model().editMode()) {
+        // if we're in edit mode, we behave like any link
+        return NodeLink::emitInsertChildrenEnd(count);
+    } else {
+        // otherwise, we're invisible and our parent takes over our children
+        if (auto first = parent_->rowOfChild(*this, true); !first)
+            reportError("emitInsertChildrenEnd -> rowOfChild failed", first.error(), false);
+        else
+            // TODO: get rid of const_cast
+            emit const_cast<NodeSerializable *>(parent_)->insertChildrenEnd(*first, *first + count - 1);
+    }
+}
+
+void NodeInheritance::emitRemoveChildrenBegin(int const count) {
+    if (model().editMode()) {
+        // if we're in edit mode, we behave like any link
+        return NodeLink::emitRemoveChildrenBegin(count);
+    } else {
+        // otherwise, we're invisible and our parent takes over our children
+        if (auto first = parent_->rowOfChild(*this, true); !first)
+            reportError("emitRemoveChildrenBegin -> rowOfChild failed", first.error(), false);
+        else
+            // TODO: get rid of const_cast
+            emit const_cast<NodeSerializable *>(parent_)->removeChildrenBegin(*first, *first + count - 1);
+    }
+}
+
+void NodeInheritance::emitRemoveChildrenEnd(int const count) {
+    if (model().editMode()) {
+        // if we're in edit mode, we behave like any link
+        return NodeLink::emitRemoveChildrenEnd(count);
+    } else {
+        // otherwise, we're invisible and our parent takes over our children
+        if (auto first = parent_->rowOfChild(*this, true); !first)
+            reportError("emitRemoveChildrenEnd -> rowOfChild failed", first.error(), false);
+        else
+            // TODO: get rid of const_cast
+            emit const_cast<NodeSerializable *>(parent_)->removeChildrenEnd(*first, *first + count - 1);
+    }
 }
 }

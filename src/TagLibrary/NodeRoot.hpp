@@ -30,9 +30,9 @@ public:
     [[nodiscard]] Node const *parent() const override;
 
     // children access
-    [[nodiscard]] std::expected<int, QString> rowOfChild(Node const &node) const override;
-    [[nodiscard]] std::expected<std::reference_wrapper<Node>, QString> childOfRow(int row) const override;
-    [[nodiscard]] std::expected<int, QString> childrenCount() const override;
+    [[nodiscard]] std::expected<int, QString> rowOfChild(Node const &node, bool replaceReplaced) const override;
+    [[nodiscard]] std::expected<std::reference_wrapper<Node>, QString> childOfRow(int row, bool replaceReplaced) const override;
+    [[nodiscard]] std::expected<int, QString> childrenCount(bool replaceReplaced) const override;
 
 
     [[nodiscard]] bool canInsertChild(NodeType childType) const override;

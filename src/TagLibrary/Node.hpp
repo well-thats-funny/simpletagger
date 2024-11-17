@@ -53,9 +53,9 @@ public:
     [[nodiscard]] virtual bool canRemove() const;
 
     // children access
-    [[nodiscard]] virtual std::expected<int, QString> rowOfChild(Node const &node) const = 0;
-    [[nodiscard]] virtual std::expected<std::reference_wrapper<Node>, QString> childOfRow(int row) const = 0;
-    [[nodiscard]] virtual std::expected<int, QString> childrenCount() const = 0;
+    [[nodiscard]] virtual std::expected<int, QString> rowOfChild(Node const &node, bool replaceReplaced) const = 0;
+    [[nodiscard]] virtual std::expected<std::reference_wrapper<Node>, QString> childOfRow(int row, bool replaceReplaced) const = 0;
+    [[nodiscard]] virtual std::expected<int, QString> childrenCount(bool replaceReplaced) const = 0;
 
     // children modification
     [[nodiscard]] virtual bool canInsertChild(NodeType childType) const;

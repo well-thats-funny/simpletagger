@@ -93,8 +93,8 @@ QString NodeSerializable::generateUnusedChildName(QString const &prefix) const {
     for (int i = 1;; ++i) {
         bool found = false;
 
-        for (int j = 0; j != childrenCount(); ++j)
-            if (auto child = childOfRow(j); !child) {
+        for (int j = 0; j != childrenCount(false); ++j)
+            if (auto child = childOfRow(j, false); !child) {
                 qCCritical(LoggingCategory) << child.error();
             } else if (child->get().name(true) == result) {
                 found = true;

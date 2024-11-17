@@ -15,45 +15,27 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 #pragma once
-#include "NodeHierarchical.hpp"
+#include "NodeLink.hpp"
 
 namespace TagLibrary {
-class NodeInheritance : public NodeHierarchical {
+class NodeLinkSubtree;
+
+class NodeInheritance : public NodeLink {
 public:
     NodeInheritance(Model &model, NodeSerializable const *parent);
     ~NodeInheritance() override;
 
-//    void deinit() override;
-
-    [[nodiscard]] QString name(bool raw = false, bool editMode = false) const override;
-    [[nodiscard]] bool canSetName() const override;
-    [[nodiscard]] bool setName(QString const &name) override;
-
     [[nodiscard]] static IconIdentifier genericIcon();
     [[nodiscard]] std::vector<IconIdentifier> icons() const override;
-
-    [[nodiscard]] std::optional<QUuid> linkTo() const override;
-    [[nodiscard]] bool canLinkTo() const override;
-    [[nodiscard]] std::expected<void, QString> setLinkTo(QUuid const &uuid) override;
-
-    [[nodiscard]] QString comment() const override;
-    [[nodiscard]] bool canSetComment() const override;
-    [[nodiscard]] std::expected<void, QString> setComment(QString const &comment) override;
 
     [[nodiscard]] NodeType type() const override;
 
     [[nodiscard]] bool isReplaced() const override;
-/*    [[nodiscard]] std::expected<int, Error> replacedCount() const override;
-    std::expected<std::reference_wrapper<Node>, Error> replacedNode(int row) const override;*/
-
-    [[nodiscard]] std::expected<std::reference_wrapper<Node>, QString> target() const;
 
 protected:
-    [[nodiscard]] std::expected<void, QString> saveNodeData(QCborMap &map) const override;
-    [[nodiscard]] std::expected<void, QString> loadNodeData(QCborMap &map) override;
-
-    QString name_;
-    QUuid linkTo_;
-    QString comment_;
+    void emitInsertChildrenBegin(int count) override;
+    void emitInsertChildrenEnd(int count) override;
+    void emitRemoveChildrenBegin(int count) override;
+    void emitRemoveChildrenEnd(int count) override;
 };
 }

@@ -28,9 +28,9 @@ public:
     void deinit() override;
 
     // children access
-    [[nodiscard]] std::expected<int, QString> rowOfChild(const Node &node) const override;
-    [[nodiscard]] std::expected<std::reference_wrapper<Node>, QString> childOfRow(int row) const override;
-    [[nodiscard]] std::expected<int, QString> childrenCount() const override;
+    [[nodiscard]] std::expected<int, QString> rowOfChild(const Node &node, bool replaceReplaced) const override;
+    [[nodiscard]] std::expected<std::reference_wrapper<Node>, QString> childOfRow(int row, bool replaceReplaced) const override;
+    [[nodiscard]] std::expected<int, QString> childrenCount(bool replaceReplaced) const override;
 
     // children modification
     [[nodiscard]] bool canBeDragged() const override;
@@ -73,6 +73,11 @@ protected:
     [[nodiscard]] std::expected<void, QString> populateLinked();
     [[nodiscard]] std::expected<void, QString> unpopulateLinked();
 
+    virtual void emitInsertChildrenBegin(int count);
+    virtual void emitInsertChildrenEnd(int count);
+    virtual void emitRemoveChildrenBegin(int count);
+    virtual void emitRemoveChildrenEnd(int count);
+
 public:
     [[nodiscard]] std::expected<void, QString> repopulateLinked(RepopulationRequest const &repopulationRequest) override;
 
@@ -81,7 +86,9 @@ private:
     QUuid linkTo_;
     QString comment_;
     bool active_ = false;
+protected:
     std::unique_ptr<NodeLinkSubtree> linkSubtreeRoot_;
+private:
     QMetaObject::Connection subtreeRootAboutToRemoveConnection;
 };
 }
