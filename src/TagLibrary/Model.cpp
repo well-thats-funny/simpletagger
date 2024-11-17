@@ -268,7 +268,7 @@ QVariant Model::data(const QModelIndex &index, int role) const {
             }
             break;
         }
-        case Qt::ItemDataRole::DecorationRole: {
+        case std::to_underlying(CustomItemDataRole::IconsRole): {
             switch (static_cast<Column>(index.column())) {
                 case Column::Name:
                     result = QVariant::fromValue(node->icons());

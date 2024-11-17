@@ -17,6 +17,7 @@
 #include "TreeView.hpp"
 
 #include "Logging.hpp"
+#include "../CustomItemDataRole.hpp"
 #include "../IconIdentifier.hpp"
 
 namespace TagLibrary {
@@ -33,7 +34,11 @@ void TreeViewDelegate::initStyleOption(QStyleOptionViewItem *option, const QMode
 
     if (option->icon.isNull()) {
         // perhaps we want to draw a vector of icons?
-        if (auto decoration = index.data(Qt::ItemDataRole::DecorationRole); decoration.canConvert<std::vector<IconIdentifier>>()) {
+        if (auto decoration = index.data(std::to_underlying(CustomItemDataRole::IconsRole));
+                decoration.isValid() && !decoration.isNull()
+                && decoration.canConvert<std::vector<IconIdentifier>>()) {
+            option->features |= QStyleOptionViewItem::ViewItemFeature::HasDecoration;
+
             auto icons = decoration.value<std::vector<IconIdentifier>>();
 
             // TODO: in case there's multiple same consecutive icons, we can replace it by a single icon with
