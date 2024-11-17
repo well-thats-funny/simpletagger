@@ -18,7 +18,7 @@
 #include "NodeHierarchical.hpp"
 
 namespace TagLibrary {
-class NodeLinkSubtree;
+class NodeShadow;
 
 class NodeLink: public NodeHierarchical {
 public:
@@ -88,7 +88,7 @@ private:
     QString comment_;
     bool active_ = false;
 protected:
-    std::unique_ptr<NodeLinkSubtree> linkSubtreeRoot_;
+    std::unique_ptr<NodeShadow> linkSubtreeRoot_;
 private:
     QMetaObject::Connection subtreeRootAboutToRemoveConnection;
 };

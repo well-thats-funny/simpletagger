@@ -18,7 +18,7 @@
 #include "NodeLink.hpp"
 
 namespace TagLibrary {
-class NodeLinkSubtree;
+class NodeShadow;
 
 class NodeInheritance : public NodeLink {
 public:

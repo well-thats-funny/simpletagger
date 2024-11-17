@@ -18,7 +18,7 @@
 
 #include "Logging.hpp"
 #include "Model.hpp"
-#include "NodeLinkSubtree.hpp"
+#include "NodeShadow.hpp"
 
 #include "../Utility.hpp"
 
@@ -293,11 +293,11 @@ std::expected<void, QString> NodeLink::populateLinked() {
         if (!target)
             return std::unexpected(target.error());
 
-        auto subtreeRoot = std::make_unique<NodeLinkSubtree>(model(), this, target->get(), this, linkingIcon());
+        auto subtreeRoot = std::make_unique<NodeShadow>(model(), this, target->get(), this, linkingIcon());
         if (auto result = subtreeRoot->init(); !result)
             return std::unexpected(result.error());
 
-        connect(&*subtreeRoot, &NodeLinkSubtree::targetAboutToRemove, this, [this]{
+        connect(&*subtreeRoot, &NodeShadow::targetAboutToRemove, this, [this]{
             if (auto result = unpopulateLinked(); !result)
                 qCCritical(LoggingCategory) << "targetAboutToRemove -> unpopulateLinked error:" << result.error();
         });
@@ -309,7 +309,7 @@ std::expected<void, QString> NodeLink::populateLinked() {
         if (*childrenCount > 0)
             emitInsertChildrenBegin(*childrenCount);
 
-        linkSubtreeRoot_ = dynamicPtrCast<NodeLinkSubtree>(std::move(subtreeRoot));
+        linkSubtreeRoot_ = dynamicPtrCast<NodeShadow>(std::move(subtreeRoot));
 
         if (*childrenCount > 0)
             emitInsertChildrenEnd(*childrenCount);

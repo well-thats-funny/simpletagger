@@ -523,7 +523,7 @@
             <translation>Element UUID nie jest tablicą bajtów, lecz %1</translation>
         </message>
         <message>
-            <location filename="../TagLibrary/NodeLinkSubtree.cpp" line="106"/>
+            <location filename="../TagLibrary/NodeShadow.cpp" line="106"/>
             <source>Node %1 not found among the children of linked subtree node %2</source>
             <translation>Węzeł %1 nie znaleziony wśród dzieci dowiązanego węzła poddrzewa %2</translation>
         </message>

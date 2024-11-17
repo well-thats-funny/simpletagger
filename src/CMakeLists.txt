@@ -96,8 +96,8 @@ add_executable(simpletagger-cxx
         TagLibrary/NodeHierarchical.hpp
         TagLibrary/NodeLink.cpp
         TagLibrary/NodeLink.hpp
-        TagLibrary/NodeLinkSubtree.cpp
-        TagLibrary/NodeLinkSubtree.hpp
+        TagLibrary/NodeShadow.cpp
+        TagLibrary/NodeShadow.hpp
         TagLibrary/NodeObject.cpp
         TagLibrary/NodeObject.hpp
         TagLibrary/NodeRoot.cpp

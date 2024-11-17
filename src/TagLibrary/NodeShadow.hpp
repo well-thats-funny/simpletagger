@@ -20,12 +20,12 @@
 namespace TagLibrary {
 class Model;
 
-class NodeLinkSubtree: public Node {
+class NodeShadow: public Node {
     Q_OBJECT
 
 public:
-    NodeLinkSubtree(Model &model, Node const *parent, Node const &target, Node *subtreeRootOwner, IconIdentifier const &linkingIcon);
-    ~NodeLinkSubtree();
+    NodeShadow(Model &model, Node const *parent, Node const &target, Node *subtreeRootOwner, IconIdentifier const &linkingIcon);
+    ~NodeShadow();
 
     [[nodiscard]] std::expected<void, QString> init() override;
     void deinit() override;
@@ -72,12 +72,12 @@ signals:
     void targetAboutToRemove();
 
 private:
-    [[nodiscard]] std::expected<std::unique_ptr<NodeLinkSubtree>, QString> createChild(int row);
+    [[nodiscard]] std::expected<std::unique_ptr<NodeShadow>, QString> createChild(int row);
 
     Node const *parent_ = nullptr;
     Node const & target_;
     Node *subtreeRootOwner_ = nullptr;
-    std::vector<std::unique_ptr<NodeLinkSubtree>> children_;
+    std::vector<std::unique_ptr<NodeShadow>> children_;
     mutable std::optional<std::vector<IconIdentifier>> icons_;
     bool active_ = false;
     bool highlighted_ = false;

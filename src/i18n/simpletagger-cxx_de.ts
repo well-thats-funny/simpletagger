@@ -523,7 +523,7 @@
             <translation>UUID-Element ist kein Byte-Array, sondern %1</translation>
         </message>
         <message>
-            <location filename="../TagLibrary/NodeLinkSubtree.cpp" line="106"/>
+            <location filename="../TagLibrary/NodeShadow.cpp" line="106"/>
             <source>Node %1 not found among the children of linked subtree node %2</source>
             <translation>Knoten %1 nicht gefunden unter den Kindern vom gelinkten Unterbaum-Knoten %2</translation>
         </message>

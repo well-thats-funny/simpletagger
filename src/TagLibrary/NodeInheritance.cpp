@@ -17,7 +17,7 @@
 #include "NodeInheritance.hpp"
 
 #include "Model.hpp"
-#include "NodeLinkSubtree.hpp"
+#include "NodeShadow.hpp"
 
 namespace TagLibrary {
 NodeInheritance::NodeInheritance(TagLibrary::Model &model, TagLibrary::NodeSerializable const *const parent): NodeLink(model, parent) {}

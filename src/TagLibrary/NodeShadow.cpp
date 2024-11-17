@@ -14,20 +14,20 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
-#include "NodeLinkSubtree.hpp"
+#include "NodeShadow.hpp"
 
 #include "Logging.hpp"
 #include "Model.hpp"
 #include "../Utility.hpp"
 
 namespace TagLibrary {
-NodeLinkSubtree::NodeLinkSubtree(Model &model, Node const *parent, Node const &target, Node *subtreeRootOwner, IconIdentifier const &linkingIcon):
+NodeShadow::NodeShadow(Model &model, Node const *parent, Node const &target, Node *subtreeRootOwner, IconIdentifier const &linkingIcon):
     Node(model), parent_(parent), target_(target), subtreeRootOwner_(subtreeRootOwner), linkingIcon_(linkingIcon) {
 }
 
-NodeLinkSubtree::~NodeLinkSubtree() = default;
+NodeShadow::~NodeShadow() = default;
 
-std::expected<void, QString> NodeLinkSubtree::init() {
+std::expected<void, QString> NodeShadow::init() {
     ZoneScoped;
 
     connect(&target_, &Node::dataChanged, this, [this]{
@@ -63,7 +63,7 @@ std::expected<void, QString> NodeLinkSubtree::init() {
             if (auto child = createChild(row); !child)
                 qCCritical(LoggingCategory) << "Could not create a children in a linking subtree; subtree will get rendered inconsitently:" << child.error();
             else
-                children_.emplace(children_.begin() + row, dynamicPtrCast<NodeLinkSubtree>(std::move(*child)));
+                children_.emplace(children_.begin() + row, dynamicPtrCast<NodeShadow>(std::move(*child)));
         }
 
         if (subtreeRootOwner_)
@@ -100,13 +100,13 @@ std::expected<void, QString> NodeLinkSubtree::init() {
         if (auto result = createChild(i); !result)
             return std::unexpected(result.error());
         else
-            children_.emplace_back(dynamicPtrCast<NodeLinkSubtree>(std::move(*result)));
+            children_.emplace_back(dynamicPtrCast<NodeShadow>(std::move(*result)));
     }
 
     return {};
 };
 
-void NodeLinkSubtree::deinit() {
+void NodeShadow::deinit() {
     ZoneScoped;
 
     Node::deinit();
@@ -115,10 +115,10 @@ void NodeLinkSubtree::deinit() {
         child->deinit();
 }
 
-Node const *NodeLinkSubtree::parent() const {
+Node const *NodeShadow::parent() const {
     ZoneScoped;
 
-    if (auto nlsParent = dynamic_cast<NodeLinkSubtree const *>(parent_))
+    if (auto nlsParent = dynamic_cast<NodeShadow const *>(parent_))
         if (nlsParent->subtreeRootOwner_) {
             if (nlsParent->subtreeRootOwner_->isReplaced() && !model().editMode())
                 return nlsParent->subtreeRootOwner_->parent();
@@ -129,7 +129,7 @@ Node const *NodeLinkSubtree::parent() const {
     return parent_;
 }
 
-std::expected<int, QString> NodeLinkSubtree::rowOfChild(Node const &node, bool const replaceReplaced) const {
+std::expected<int, QString> NodeShadow::rowOfChild(Node const &node, bool const replaceReplaced) const {
     ZoneScoped;
 
     // TODO: this is basically the same as in NodeHierarchical::rowOfChild, merge?
@@ -155,7 +155,7 @@ std::expected<int, QString> NodeLinkSubtree::rowOfChild(Node const &node, bool c
     }
 }
 
-std::expected<std::reference_wrapper<Node>, QString> NodeLinkSubtree::childOfRow(int const row, bool const replaceReplaced) const {
+std::expected<std::reference_wrapper<Node>, QString> NodeShadow::childOfRow(int const row, bool const replaceReplaced) const {
     // TODO: this is basically the same as in NodeHierarchical::childOfRow, merge?
     ZoneScoped;
     gsl_Expects(row >= 0);
@@ -188,7 +188,7 @@ std::expected<std::reference_wrapper<Node>, QString> NodeLinkSubtree::childOfRow
     }
 }
 
-std::expected<int, QString> NodeLinkSubtree::childrenCount(bool const replaceReplaced) const {
+std::expected<int, QString> NodeShadow::childrenCount(bool const replaceReplaced) const {
     // TODO: this is basically the same as in NodeHierarchical::childrenCount, merge?
     ZoneScoped;
     if (!replaceReplaced) {
@@ -212,12 +212,12 @@ std::expected<int, QString> NodeLinkSubtree::childrenCount(bool const replaceRep
     }
 }
 
-QString NodeLinkSubtree::name(bool const raw, bool const editMode) const {
+QString NodeShadow::name(bool const raw, bool const editMode) const {
     ZoneScoped;
     return target_.name(raw, editMode);
 }
 
-std::vector<IconIdentifier> NodeLinkSubtree::icons() const {
+std::vector<IconIdentifier> NodeShadow::icons() const {
     ZoneScoped;
 
     if (!icons_) {
@@ -230,21 +230,21 @@ std::vector<IconIdentifier> NodeLinkSubtree::icons() const {
     return *icons_;
 }
 
-std::optional<QUuid> NodeLinkSubtree::linkTo() const {
+std::optional<QUuid> NodeShadow::linkTo() const {
     ZoneScoped;
     return target_.linkTo();
 }
 
-bool NodeLinkSubtree::isLinkingNode() const {
+bool NodeShadow::isLinkingNode() const {
     return true;
 }
 
-QUuid NodeLinkSubtree::uuid() const {
+QUuid NodeShadow::uuid() const {
     ZoneScoped;
     return target_.uuid();
 }
 
-std::vector<Node::Tag> NodeLinkSubtree::generateTags(TagFlags const flags) const {
+std::vector<Node::Tag> NodeShadow::generateTags(TagFlags const flags) const {
     ZoneScoped;
 
     std::vector<Tag> result;
@@ -265,7 +265,7 @@ std::vector<Node::Tag> NodeLinkSubtree::generateTags(TagFlags const flags) const
     return result;
 }
 
-QStringList NodeLinkSubtree::resolveChildTag(QString const &tag) const {
+QStringList NodeShadow::resolveChildTag(QString const &tag) const {
     ZoneScoped;
     if (subtreeRootOwner_)
         return subtreeRootOwner_->resolveChildTag(tag);
@@ -273,20 +273,20 @@ QStringList NodeLinkSubtree::resolveChildTag(QString const &tag) const {
         return parent()->resolveChildTag(tag);
 }
 
-QString NodeLinkSubtree::comment() const {
+QString NodeShadow::comment() const {
     ZoneScoped;
     return target_.comment();
 }
 
-std::optional<bool> NodeLinkSubtree::active() const {
+std::optional<bool> NodeShadow::active() const {
     return active_;
 }
 
-bool NodeLinkSubtree::canSetActive() const {
+bool NodeShadow::canSetActive() const {
     return !tags().empty();
 }
 
-std::expected<void, QString> NodeLinkSubtree::setActive(bool const active) {
+std::expected<void, QString> NodeShadow::setActive(bool const active) {
     ZoneScoped;
 
     active_ = active;
@@ -302,15 +302,15 @@ std::expected<void, QString> NodeLinkSubtree::setActive(bool const active) {
     return {};
 }
 
-std::optional<bool> NodeLinkSubtree::highlighted() const {
+std::optional<bool> NodeShadow::highlighted() const {
     return highlighted_;
 }
 
-bool NodeLinkSubtree::canSetHighlighted() const {
+bool NodeShadow::canSetHighlighted() const {
     return true;
 }
 
-std::expected<void, QString> NodeLinkSubtree::setHighlighted(bool const highlighted) {
+std::expected<void, QString> NodeShadow::setHighlighted(bool const highlighted) {
     ZoneScoped;
     if (highlighted != highlighted_) {
         highlighted_ = highlighted;
@@ -319,26 +319,26 @@ std::expected<void, QString> NodeLinkSubtree::setHighlighted(bool const highligh
     return {};
 }
 
-NodeType NodeLinkSubtree::type() const {
+NodeType NodeShadow::type() const {
     ZoneScoped;
     return target_.type();
 }
 
-bool NodeLinkSubtree::isVirtual() const {
+bool NodeShadow::isVirtual() const {
     return true;
 }
 
-bool NodeLinkSubtree::isHidden() const {
+bool NodeShadow::isHidden() const {
     ZoneScoped;
     return target_.isHidden();
 }
 
-std::optional<int> NodeLinkSubtree::lastChangeVersion() const {
+std::optional<int> NodeShadow::lastChangeVersion() const {
     ZoneScoped;
     return target_.lastChangeVersion();
 }
 
-std::vector<QBrush> NodeLinkSubtree::background(bool const editMode) const {
+std::vector<QBrush> NodeShadow::background(bool const editMode) const {
     ZoneScoped;
     auto result = Node::background(editMode);
     std::ranges::move(target_.background(false), std::back_inserter(result));
@@ -347,14 +347,14 @@ std::vector<QBrush> NodeLinkSubtree::background(bool const editMode) const {
     return result;
 }
 
-[[nodiscard]] std::expected<std::unique_ptr<NodeLinkSubtree>, QString> NodeLinkSubtree::createChild(int const row) {
+[[nodiscard]] std::expected<std::unique_ptr<NodeShadow>, QString> NodeShadow::createChild(int const row) {
     ZoneScoped;
 
     auto targetChildNode = target_.childOfRow(row, true);
     if (!targetChildNode)
         return std::unexpected(targetChildNode.error());
 
-    auto linkChild = std::make_unique<NodeLinkSubtree>(model(), this, targetChildNode->get(), nullptr, linkingIcon_);
+    auto linkChild = std::make_unique<NodeShadow>(model(), this, targetChildNode->get(), nullptr, linkingIcon_);
     if (auto result = linkChild->init(); !result)
         return std::unexpected(result.error());
 
