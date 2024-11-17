@@ -780,8 +780,20 @@ std::expected<void, QString> Model::setTagsActive(QStringList const &tags) {
     }
 
     // potentially many tags might be modified in this function, that's why we block signals for the time of
-    // visit and only fire global dataChanged here
-    emit dataChanged(QModelIndex(), QModelIndex());
+    // visit and only fire dataChanged here
+    // TODO: this iteration stuff is repeated in many places. Could become a method of Node ?
+    auto count = root->childrenCount(false);
+    if (!count)
+        return std::unexpected(count.error());
+
+    for (int i = 0; i != *count; ++i) {
+        auto childNode = root->childOfRow(i, false);
+        if (!childNode)
+            return std::unexpected(childNode.error());
+
+        emit dataChanged(toIndex(*childNode), toIndex(*childNode));
+    }
+
     return result;
 }
 
