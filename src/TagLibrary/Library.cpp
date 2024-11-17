@@ -36,6 +36,9 @@ Library::Library(QString const &libraryPath, Qt::WindowFlags const flags):
         libraryModel_(std::make_unique<Model>()),
         filterModel_(std::make_unique<FilterProxyModel>()),
         model_(std::make_unique<SelectionHelperProxyModel>()),
+#ifndef NDEBUG
+        libraryModelTester_(std::make_unique<QAbstractItemModelTester>(&*libraryModel_, QAbstractItemModelTester::FailureReportingMode::Fatal)),
+#endif
         libraryPath_(libraryPath) {}
 
 std::expected<void, QString> Library::init() {

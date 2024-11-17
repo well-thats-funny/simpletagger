@@ -144,7 +144,10 @@ target_compile_options(simpletagger-cxx PRIVATE -Wall -Wextra -Werror)
 target_compile_definitions(simpletagger-cxx PRIVATE gsl_CONFIG_CONTRACT_VIOLATION_ASSERTS)
 
 target_include_directories(simpletagger-cxx PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
-target_link_libraries(simpletagger-cxx PRIVATE gsl::gsl-lite-v1 Qt6::Widgets TracyClient ads::qt6advanceddocking)
+target_link_libraries(simpletagger-cxx PRIVATE
+        gsl::gsl-lite-v1 Qt6::Widgets TracyClient ads::qt6advanceddocking
+        debug Qt6::Test
+)
 target_precompile_headers(simpletagger-cxx PRIVATE
         <expected>
         <experimental/scope>

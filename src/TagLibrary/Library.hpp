@@ -16,6 +16,10 @@
 */
 #pragma once
 
+#ifndef NDEBUG
+#include <QAbstractItemModelTester>
+#endif
+
 class Ui_Library;
 
 namespace TagLibrary {
@@ -77,8 +81,11 @@ private:
     std::unique_ptr<Ui_Library> ui;
     std::unique_ptr<Model> libraryModel_;
     std::unique_ptr<FilterProxyModel> filterModel_;
-
     std::unique_ptr<SelectionHelperProxyModel> model_;
+#ifndef NDEBUG
+    std::unique_ptr<QAbstractItemModelTester> libraryModelTester_;
+#endif
+
     QString const libraryPath_; // informational only, as MainWindow is atm responsible for reading/writing the lib file
     QUuid libraryUuid_ = QUuid::createUuid();
     int currentLibraryVersion_ = 1;
