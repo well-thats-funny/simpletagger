@@ -22,14 +22,14 @@ class NodeShadow;
 
 class NodeLink: public NodeHierarchical {
 public:
-    NodeLink(Model &model, NodeSerializable const *parent);
+    NodeLink(Model &model, std::shared_ptr<NodeSerializable> const &parent);
     ~NodeLink() override;
 
     void deinit() override;
 
     // children access
     [[nodiscard]] std::expected<int, QString> rowOfChild(const Node &node, bool replaceReplaced) const override;
-    [[nodiscard]] std::expected<std::reference_wrapper<Node>, QString> childOfRow(int row, bool replaceReplaced) const override;
+    [[nodiscard]] std::expected<std::shared_ptr<Node>, QString> childOfRow(int row, bool replaceReplaced) const override;
     [[nodiscard]] std::expected<int, QString> childrenCount(bool replaceReplaced) const override;
 
     // children modification
@@ -63,7 +63,7 @@ public:
 
     [[nodiscard]] NodeType type() const override;
 
-    [[nodiscard]] std::expected<std::reference_wrapper<Node>, QString> target() const;
+    [[nodiscard]] std::expected<std::shared_ptr<Node>, QString> target() const;
 
 protected:
     [[nodiscard]] std::expected<void, QString> saveNodeData(QCborMap &map) const override;
@@ -89,8 +89,6 @@ private:
     QString comment_;
     bool active_ = false;
 protected:
-    std::unique_ptr<NodeShadow> linkSubtreeRoot_;
-private:
-    QMetaObject::Connection subtreeRootAboutToRemoveConnection;
+    std::shared_ptr<NodeShadow> shadowRoot_;
 };
 }

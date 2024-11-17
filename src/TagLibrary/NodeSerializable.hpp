@@ -20,7 +20,8 @@
 namespace TagLibrary {
 class NodeSerializable: public Node {
 public:
-    [[nodiscard]] static std::expected<std::unique_ptr<NodeSerializable>, QString> createNode(NodeType type, Model &model, NodeSerializable const *parent);
+    [[nodiscard]] static std::expected<std::shared_ptr<NodeSerializable>, QString>
+    createNode(NodeType type, Model &model, std::shared_ptr<NodeSerializable> const &parent);
     [[nodiscard]] static IconIdentifier genericIcon(NodeType type);
 
     explicit NodeSerializable(Model &model);
@@ -43,7 +44,8 @@ public:
 
     // persistence
     [[nodiscard]] std::expected<QCborValue, QString> save() const;
-    [[nodiscard]] static std::expected<std::unique_ptr<NodeSerializable>, QString> load(QCborValue const &value, Model &model, NodeSerializable const *parent);
+    [[nodiscard]] static std::expected<std::shared_ptr<NodeSerializable>, QString>
+    load(QCborValue const &value, Model &model, std::shared_ptr<NodeSerializable> const &parent);
 
 protected:
     [[nodiscard]] virtual std::expected<void, QString> saveNodeData(QCborMap &map) const;

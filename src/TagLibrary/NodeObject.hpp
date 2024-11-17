@@ -20,7 +20,7 @@
 namespace TagLibrary {
 class NodeObject: public NodeHierarchical {
 public:
-    NodeObject(Model &model, NodeSerializable const *parent);
+    NodeObject(Model &model, std::shared_ptr<NodeSerializable> const &parent);
     ~NodeObject() override;
 
     [[nodiscard]] bool canInsertChild(NodeType type) const override;

@@ -32,7 +32,7 @@ void NodeRoot::deinit() {
         rootCollection_->deinit();
 }
 
-Node const *NodeRoot::parent() const {
+std::shared_ptr<Node> NodeRoot::parent() const {
     return nullptr;
 }
 
@@ -48,9 +48,9 @@ std::expected<int, QString> NodeRoot::rowOfChild(Node const &node, bool const) c
         ));
 }
 
-std::expected<std::reference_wrapper<Node>, QString> NodeRoot::childOfRow(int const row, bool const) const {
+std::expected<std::shared_ptr<Node>, QString> NodeRoot::childOfRow(int const row, bool const) const {
     gsl_Expects(row == 0);
-    return *rootCollection_;
+    return rootCollection_;
 }
 
 std::expected<int, QString> NodeRoot::childrenCount(bool const) const {
@@ -61,14 +61,14 @@ bool NodeRoot::canInsertChild(NodeType const childType) const {
     return !rootCollection_ && childType == NodeType::Collection;
 }
 
-std::expected<Node *, QString> NodeRoot::insertChild(int const row, std::unique_ptr<Node> &&node) {
+std::expected<std::shared_ptr<Node>, QString> NodeRoot::insertChild(int const row, std::shared_ptr<Node> &&node) {
     ZoneScoped;
 
     gsl_Expects(row == 0);
     gsl_Ensures(node);
     gsl_Expects(!rootCollection_);
 
-    auto ptr = dynamicPtrCast<NodeCollection>(std::move(node));
+    auto ptr = std::dynamic_pointer_cast<NodeCollection>(std::move(node));
     gsl_Expects(ptr);
 
     emit insertChildrenBegin(row, row);
@@ -77,7 +77,7 @@ std::expected<Node *, QString> NodeRoot::insertChild(int const row, std::unique_
 
     gsl_Ensures(!node);
     gsl_Ensures(rootCollection_);
-    return &*rootCollection_;
+    return rootCollection_;
 }
 
 NodeType NodeRoot::type() const {
@@ -141,10 +141,10 @@ std::expected<void, QString> NodeRoot::loadNodeData(QCborMap &map) {
         rootCollection_.reset();
     } else {
         for (auto const &child: childrenArray) {
-            if (auto childNode = NodeHierarchical::load(child, model(), this); !childNode)
+            if (auto childNode = NodeHierarchical::load(child, model(), std::dynamic_pointer_cast<NodeRoot>(shared_from_this())); !childNode)
                 return std::unexpected(childNode.error());
             else
-                if (auto childCollection = dynamicPtrCast<NodeCollection>(std::move(*childNode)); !childCollection)
+                if (auto childCollection = std::dynamic_pointer_cast<NodeCollection>(std::move(*childNode)); !childCollection)
                     return std::unexpected(QObject::tr("Root collection should be NodeCollection, not %1").arg(typeid(*childNode).name()));
                 else
                     rootCollection_ = std::move(childCollection);

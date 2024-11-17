@@ -176,14 +176,14 @@ std::expected<void, QString> Library::init() {
         }
 
         if (QMessageBox::question(
-                this, tr("Link"), tr("Unlink <b>%1</b> from <b>%2</b>?").arg(linkNode->name(true), targetNode->get().name(true))
+                this, tr("Link"), tr("Unlink <b>%1</b> from <b>%2</b>?").arg(linkNode->name(true), (*targetNode)->name(true))
         ) == QMessageBox::StandardButton::Yes) {
             if (auto result = linkNode->setLinkTo(QUuid()); !result) {
                 QMessageBox::critical(
                         this, tr("Linking failed"),
                         tr("Could not unlink <b>%1</b> (%2) from <b>%3</b> (%4)<br><br>%4").arg(
                                 linkNode->name(true), linkNode->uuid().toString(QUuid::WithoutBraces),
-                                targetNode->get().name(true), targetNode->get().uuid().toString(QUuid::WithoutBraces),
+                                (*targetNode)->name(true), (*targetNode)->uuid().toString(QUuid::WithoutBraces),
                                 result.error()
                         )
                 );
@@ -447,14 +447,14 @@ std::expected<void, QString> Library::init() {
                 auto targetNode = libraryModel_->fromUuid(*link);
 
                 if (targetNode)
-                    target = targetNode->get().name();
+                    target = (*targetNode)->name();
                 else
                     target = tr("invalid (%1)").arg(targetNode.error());
 
                 description += tr("<b>Link target:</b> %1 (%2)<br>").arg(target, link->toString(QUuid::WithoutBraces));
 
                 if (targetNode)
-                    description += tr("<b>Target path:</b> %1<br>").arg(targetNode->get().path());
+                    description += tr("<b>Target path:</b> %1<br>").arg((*targetNode)->path());
             }
 
             QString activeStr;

@@ -28,18 +28,24 @@ class NodeShadow: public Node {
 #endif
 
 public:
-    NodeShadow(Model &model, Node const *parent, Node *target, Node *subtreeRootOwner, IconIdentifier const &linkingIcon);
+    NodeShadow(
+            Model &model,
+            std::shared_ptr<Node> const &parent,
+            std::shared_ptr<Node> const &target,
+            std::shared_ptr<Node> const &owner,
+            IconIdentifier const &linkingIcon
+    );
     ~NodeShadow();
 
     [[nodiscard]] std::expected<void, QString> init() override;
     void deinit() override;
 
     // parent access
-    [[nodiscard]] Node const *parent() const override;
+    [[nodiscard]] std::shared_ptr<Node> parent() const override;
 
     // children access
     [[nodiscard]] std::expected<int, QString> rowOfChild(Node const &node, bool replaceReplaced) const override;
-    [[nodiscard]] std::expected<std::reference_wrapper<Node>, QString> childOfRow(int row, bool replaceReplaced) const override;
+    [[nodiscard]] std::expected<std::shared_ptr<Node>, QString> childOfRow(int row, bool replaceReplaced) const override;
     [[nodiscard]] std::expected<int, QString> childrenCount(bool replaceReplaced) const override;
 
     // fields
@@ -81,12 +87,13 @@ signals:
     void targetAboutToRemove();
 
 private:
-    [[nodiscard]] std::expected<std::unique_ptr<NodeShadow>, QString> createChild(int row);
+    [[nodiscard]] std::expected<std::shared_ptr<NodeShadow>, QString> createChild(int row);
+    [[nodiscard]] std::shared_ptr<Node> target() const;
 
-    Node const *parent_ = nullptr;
-    Node *target_ = nullptr;
-    Node *subtreeRootOwner_ = nullptr;
-    std::vector<std::unique_ptr<NodeShadow>> children_;
+    std::weak_ptr<Node> const parent_;
+    std::weak_ptr<Node> const target_;
+    std::weak_ptr<Node> const owner_;
+    std::vector<std::shared_ptr<NodeShadow>> children_;
     mutable std::optional<std::vector<IconIdentifier>> icons_;
     bool active_ = false;
     bool highlighted_ = false;

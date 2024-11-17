@@ -21,40 +21,33 @@
 #include "../Utility.hpp"
 
 namespace TagLibrary {
-NodeShadow::NodeShadow(Model &model, Node const *parent, Node *target, Node *subtreeRootOwner, IconIdentifier const &linkingIcon):
-    Node(model), parent_(parent), target_(target), subtreeRootOwner_(subtreeRootOwner), linkingIcon_(linkingIcon) {
-#ifndef NDEBUG
-    target_->shadowNodes_.emplace_back(this);
-#endif
-}
+NodeShadow::NodeShadow(
+        Model &model,
+        std::shared_ptr<Node> const &parent,
+        std::shared_ptr<Node> const &target,
+        std::shared_ptr<Node> const &owner,
+        IconIdentifier const &linkingIcon
+):
+    Node(model), parent_(parent), target_(target), owner_(owner), linkingIcon_(linkingIcon) {}
 
-NodeShadow::~NodeShadow() {
-#ifndef NDEBUG
-    assert(target_ || aboutToUnpopulate_);
-    if (target_) {
-        auto it = std::ranges::find(target_->shadowNodes_, this);
-        assert(it != std::ranges::end(target_->shadowNodes_) && "shadow node not tracked in its target node");
-        target_->shadowNodes_.erase(it);
-        assert(std::ranges::find(target_->shadowNodes_, this) == std::ranges::end(target_->shadowNodes_) &&
-               "shadow node tracked more than once in its target node");
-    }
-#endif
-}
+NodeShadow::~NodeShadow() = default;
 
 std::expected<void, QString> NodeShadow::init() {
     ZoneScoped;
-    gsl_Expects(target_);
 
-    connect(target_, &Node::dataChanged, this, [this]{
+    auto target = target_.lock();
+    assert(target);
+
+    connect(&*target, &Node::dataChanged, this, [this]{
         ZoneScoped;
         icons_.reset();
-        if (subtreeRootOwner_)
-            emit subtreeRootOwner_->dataChanged();
+        if (auto owner = owner_.lock())
+            emit owner->dataChanged();
         else
             emit dataChanged();
     });
 
-    connect(target_, &Node::aboutToRemove, this, [this]{
+    connect(&*target, &Node::aboutToRemove, this, [this]{
         ZoneScoped;
         // NOTE: in contrast to other signals, which forward do subtreeRootOwner (if set), this signal does not.
         //       the reason is, in contrast to other operations, removal of the link's target shouldn't lead to
@@ -62,14 +55,14 @@ std::expected<void, QString> NodeShadow::init() {
         emit targetAboutToRemove();
     });
 
-    connect(target_, &Node::insertChildrenEnd, this, [this](int const first, int const last){
+    connect(&*target, &Node::insertChildrenEnd, this, [this](int const first, int const last){
         ZoneScoped;
 
         // we can only do our insertions after the target has completed its
-        if (subtreeRootOwner_)
-                emit subtreeRootOwner_->insertChildrenBegin(first, last);
+        if (auto owner = owner_.lock())
+            emit owner->insertChildrenBegin(first, last);
         else
-                emit insertChildrenBegin(first, last);
+            emit insertChildrenBegin(first, last);
         // TODO[C++23]
         /*auto &&rg = std::views::repeat(nullptr)
                 | std::views::take(last - first + 1);
@@ -78,21 +71,21 @@ std::expected<void, QString> NodeShadow::init() {
             if (auto child = createChild(row); !child)
                 qCCritical(LoggingCategory) << "Could not create a children in a linking subtree; subtree will get rendered inconsitently:" << child.error();
             else
-                children_.emplace(children_.begin() + row, dynamicPtrCast<NodeShadow>(std::move(*child)));
+                children_.emplace(children_.begin() + row, std::move(*child));
         }
 
-        if (subtreeRootOwner_)
-            emit subtreeRootOwner_->insertChildrenEnd(first, last);
+        if (auto owner = owner_.lock())
+            emit owner->insertChildrenEnd(first, last);
         else
             emit insertChildrenEnd(first, last);
     });
 
-    connect(target_, &Node::removeChildrenBegin, this, [this](int const first, int const last) {
+    connect(&*target, &Node::removeChildrenBegin, this, [this](int const first, int const last) {
         ZoneScoped;
 
         // we must do our removals before the target has completed its
-        if (subtreeRootOwner_)
-            emit subtreeRootOwner_->removeChildrenBegin(first, last);
+        if (auto owner = owner_.lock())
+            emit owner->removeChildrenBegin(first, last);
         else
             emit removeChildrenBegin(first, last);
 
@@ -100,13 +93,13 @@ std::expected<void, QString> NodeShadow::init() {
             children_[i]->deinit();
         children_.erase(children_.begin() + first, children_.begin() + last + 1);
 
-        if (subtreeRootOwner_)
-            emit subtreeRootOwner_->removeChildrenEnd(first, last);
+        if (auto owner = owner_.lock())
+            emit owner->removeChildrenEnd(first, last);
         else
             emit removeChildrenEnd(first, last);
     });
 
-    auto count = target_->childrenCount(true);
+    auto count = target->childrenCount(true);
     if (!count)
         return std::unexpected(count.error());
 
@@ -115,7 +108,7 @@ std::expected<void, QString> NodeShadow::init() {
         if (auto result = createChild(i); !result)
             return std::unexpected(result.error());
         else
-            children_.emplace_back(dynamicPtrCast<NodeShadow>(std::move(*result)));
+            children_.emplace_back(std::move(*result));
     }
 
     return {};
@@ -130,18 +123,22 @@ void NodeShadow::deinit() {
         child->deinit();
 }
 
-Node const *NodeShadow::parent() const {
+std::shared_ptr<Node> NodeShadow::parent() const {
     ZoneScoped;
 
-    if (auto nlsParent = dynamic_cast<NodeShadow const *>(parent_))
-        if (nlsParent->subtreeRootOwner_) {
-            if (nlsParent->subtreeRootOwner_->isReplaced() && !model().editMode())
-                return nlsParent->subtreeRootOwner_->parent();
-            else
-                return nlsParent->subtreeRootOwner_;
-        }
+    auto parent = parent_.lock();
+    assert(parent);
 
-    return parent_;
+    if (auto shadowParent = std::dynamic_pointer_cast<NodeShadow const>(parent)) {
+        if (auto owner = shadowParent->owner_.lock()) {
+            if (owner->isReplaced() && !model().editMode())
+                return owner->parent();
+            else
+                return owner;
+        }
+    }
+
+    return parent;
 }
 
 std::expected<int, QString> NodeShadow::rowOfChild(Node const &node, bool const replaceReplaced) const {
@@ -180,7 +177,7 @@ std::expected<int, QString> NodeShadow::rowOfChild(Node const &node, bool const 
                         if (auto replacedChild = child->childOfRow(replacedRow, true); !replacedChild) {
                             return std::unexpected(replacedChild.error());
                         } else {
-                            if (&replacedChild->get() == &node)
+                            if (&**replacedChild == &node)
                                 return row;
                         }
                         ++row;
@@ -192,21 +189,21 @@ std::expected<int, QString> NodeShadow::rowOfChild(Node const &node, bool const 
     }
 }
 
-std::expected<std::reference_wrapper<Node>, QString> NodeShadow::childOfRow(int const row, bool const replaceReplaced) const {
+std::expected<std::shared_ptr<Node>, QString> NodeShadow::childOfRow(int const row, bool const replaceReplaced) const {
     // TODO: this is basically the same as in NodeHierarchical::childOfRow, merge?
     ZoneScoped;
     gsl_Expects(row >= 0);
 
     if (!replaceReplaced) {
         gsl_Expects(row < gsl::narrow<int>(children_.size()));
-        return *children_.at(row);
+        return children_.at(row);
     } else {
         int childRow = 0;
 
         for (auto const &child: children_) {
             if (!child->isReplaced()) {
                 if (childRow == row)
-                    return *child;
+                    return child;
 
                 childRow++;
             } else {
@@ -251,18 +248,16 @@ std::expected<int, QString> NodeShadow::childrenCount(bool const replaceReplaced
 
 QString NodeShadow::name(bool const raw, bool const editMode) const {
     ZoneScoped;
-    gsl_Expects(target_);
-    return target_->name(raw, editMode);
+    return target()->name(raw, editMode);
 }
 
 std::vector<IconIdentifier> NodeShadow::icons() const {
     ZoneScoped;
-    gsl_Expects(target_);
 
     if (!icons_) {
         icons_.emplace({linkingIcon_});
 
-        auto targetIcons = target_->icons();
+        auto targetIcons = target()->icons();
         icons_->reserve(icons_->size() + targetIcons.size());
         std::ranges::move(targetIcons, std::back_inserter(*icons_));
     }
@@ -271,8 +266,7 @@ std::vector<IconIdentifier> NodeShadow::icons() const {
 
 std::optional<QUuid> NodeShadow::linkTo() const {
     ZoneScoped;
-    gsl_Expects(target_);
-    return target_->linkTo();
+    return target()->linkTo();
 }
 
 bool NodeShadow::isLinkingNode() const {
@@ -281,17 +275,15 @@ bool NodeShadow::isLinkingNode() const {
 
 QUuid NodeShadow::uuid() const {
     ZoneScoped;
-    gsl_Expects(target_);
-    return target_->uuid();
+    return target()->uuid();
 }
 
 std::vector<Node::Tag> NodeShadow::generateTags(TagFlags const flags) const {
     ZoneScoped;
-    gsl_Expects(target_);
 
     std::vector<Tag> result;
 
-    auto tags = target_->tags(flags);
+    auto tags = target()->tags(flags);
 
     if (!(flags & TagFlag::IncludeResolved)) {
         std::ranges::move(tags, std::back_inserter(result));
@@ -309,16 +301,15 @@ std::vector<Node::Tag> NodeShadow::generateTags(TagFlags const flags) const {
 
 QStringList NodeShadow::resolveChildTag(QString const &tag) const {
     ZoneScoped;
-    if (subtreeRootOwner_)
-        return subtreeRootOwner_->resolveChildTag(tag);
+    if (auto owner = owner_.lock())
+        return owner->resolveChildTag(tag);
     else
         return parent()->resolveChildTag(tag);
 }
 
 QString NodeShadow::comment() const {
     ZoneScoped;
-    gsl_Expects(target_);
-    return target_->comment();
+    return target()->comment();
 }
 
 std::optional<bool> NodeShadow::active() const {
@@ -334,9 +325,9 @@ std::expected<void, QString> NodeShadow::setActive(bool const active) {
 
     active_ = active;
 
-    if (subtreeRootOwner_) {
-        emit subtreeRootOwner_->activeChanged(active);
-        emit subtreeRootOwner_->dataChanged();
+    if (auto owner = owner_.lock()) {
+        emit owner->activeChanged(active);
+        emit owner->dataChanged();
     } else {
         emit activeChanged(active);
         emit dataChanged();
@@ -364,8 +355,7 @@ std::expected<void, QString> NodeShadow::setHighlighted(bool const highlighted) 
 
 NodeType NodeShadow::type() const {
     ZoneScoped;
-    gsl_Expects(target_);
-    return target_->type();
+    return target()->type();
 }
 
 bool NodeShadow::isVirtual() const {
@@ -374,21 +364,18 @@ bool NodeShadow::isVirtual() const {
 
 bool NodeShadow::isHidden() const {
     ZoneScoped;
-    gsl_Expects(target_);
-    return target_->isHidden();
+    return target()->isHidden();
 }
 
 std::optional<int> NodeShadow::lastChangeVersion() const {
     ZoneScoped;
-    gsl_Expects(target_);
-    return target_->lastChangeVersion();
+    return target()->lastChangeVersion();
 }
 
 std::vector<QBrush> NodeShadow::background(bool const editMode) const {
     ZoneScoped;
-    gsl_Expects(target_);
     auto result = Node::background(editMode);
-    std::ranges::move(target_->background(false), std::back_inserter(result));
+    std::ranges::move(target()->background(false), std::back_inserter(result));
     if (editMode)
         result.emplace_back(QBrush(QColor(0, 0, 0, 32), Qt::BrushStyle::SolidPattern));
     return result;
@@ -418,18 +405,25 @@ std::expected<void, QString> NodeShadow::repopulateShadows(RepopulationRequest c
     return {};
 }
 
-[[nodiscard]] std::expected<std::unique_ptr<NodeShadow>, QString> NodeShadow::createChild(int const row) {
+std::expected<std::shared_ptr<NodeShadow>, QString> NodeShadow::createChild(int const row) {
     ZoneScoped;
-    gsl_Expects(target_);
 
-    auto targetChildNode = target_->childOfRow(row, true);
+    auto targetChildNode = target()->childOfRow(row, true);
     if (!targetChildNode)
         return std::unexpected(targetChildNode.error());
 
-    auto linkChild = std::make_unique<NodeShadow>(model(), this, &targetChildNode->get(), nullptr, linkingIcon_);
+    auto linkChild = std::make_shared<NodeShadow>(
+            model(), shared_from_this(), *targetChildNode, nullptr, linkingIcon_
+    );
     if (auto result = linkChild->init(); !result)
         return std::unexpected(result.error());
 
     return linkChild;
+}
+
+std::shared_ptr<Node> NodeShadow::target() const {
+    auto target = target_.lock();
+    assert(target);
+    return target;
 }
 }

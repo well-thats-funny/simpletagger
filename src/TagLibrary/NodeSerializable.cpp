@@ -26,27 +26,27 @@
 #include "../Utility.hpp"
 
 namespace TagLibrary {
-std::expected<std::unique_ptr<NodeSerializable>, QString>
-NodeSerializable::createNode(NodeType const type, Model &model, NodeSerializable const *const parent) {
+std::expected<std::shared_ptr<NodeSerializable>, QString>
+NodeSerializable::createNode(NodeType const type, Model &model, std::shared_ptr<NodeSerializable> const &parent) {
     ZoneScoped;
 
-    std::unique_ptr<NodeSerializable> childNode;
+    std::shared_ptr<NodeSerializable> childNode;
     switch (type) {
         case NodeType::Root:
             gsl_Expects(!parent);
-            childNode = std::make_unique<NodeRoot>(model);
+            childNode = std::make_shared<NodeRoot>(model);
             break;
         case NodeType::Collection:
-            childNode = std::make_unique<NodeCollection>(model, parent);
+            childNode = std::make_shared<NodeCollection>(model, parent);
             break;
         case NodeType::Object:
-            childNode = std::make_unique<NodeObject>(model, parent);
+            childNode = std::make_shared<NodeObject>(model, parent);
             break;
         case NodeType::Link:
-            childNode = std::make_unique<NodeLink>(model, parent);
+            childNode = std::make_shared<NodeLink>(model, parent);
             break;
         case NodeType::Inheritance:
-            childNode = std::make_unique<NodeInheritance>(model, parent);
+            childNode = std::make_shared<NodeInheritance>(model, parent);
             break;
         default:
             return std::unexpected(QObject::tr("Unknown node type: %1 (%2)").arg(
@@ -96,7 +96,7 @@ QString NodeSerializable::generateUnusedChildName(QString const &prefix) const {
         for (int j = 0; j != childrenCount(false); ++j)
             if (auto child = childOfRow(j, false); !child) {
                 qCCritical(LoggingCategory) << child.error();
-            } else if (child->get().name(true) == result) {
+            } else if ((*child)->name(true) == result) {
                 found = true;
                 break;
             }
@@ -149,7 +149,9 @@ void NodeSerializable::setLastChangeVersion(int const version) {
     lastChangeVersion_ = version;
 }
 
-std::expected<std::unique_ptr<NodeSerializable>, QString> NodeSerializable::load(QCborValue const &value, Model &model, NodeSerializable const *const parent) {
+std::expected<std::shared_ptr<NodeSerializable>, QString> NodeSerializable::load(
+        QCborValue const &value, Model &model, std::shared_ptr<NodeSerializable> const &parent
+) {
     ZoneScoped;
 
     if (!value.isMap())
@@ -165,7 +167,7 @@ std::expected<std::unique_ptr<NodeSerializable>, QString> NodeSerializable::load
 
     auto type = static_cast<Format::NodeType>(typeValue.toInteger());
 
-    std::unique_ptr<NodeSerializable> node;
+    std::shared_ptr<NodeSerializable> node;
     if (auto result = createNode(type, model, parent); !result)
         return std::unexpected(result.error());
     else

@@ -64,14 +64,6 @@ Node::Node(Model &model): model_(model) {
 
 Node::~Node() {
     assert(deinitialized_ && "deinit() should be called before destroying a node");
-#ifndef NDEBUG
-    // if there's any shadow node still poining at this one, it must be already marked as "about to unpopulate"
-    assert(std::ranges::all_of(shadowNodes_, [](auto const &node){ return node->aboutToUnpopulate_; })
-        && "node is deleted while there's still shadow nodes pointing at it");
-    // remove myself from all shadow nodes
-    for (auto &shadowNode: shadowNodes_)
-        shadowNode->target_ = nullptr;
-#endif
 }
 
 std::expected<void, QString> Node::init() {
@@ -93,7 +85,7 @@ bool Node::canInsertChild(NodeType const) const {
     return false;
 }
 
-std::expected<Node *, QString> Node::insertChild(int const, [[maybe_unused]] std::unique_ptr<Node> &&node) {
+std::expected<std::shared_ptr<Node>, QString> Node::insertChild(int const, [[maybe_unused]] std::shared_ptr<Node> &&node) {
     assert(!canInsertChild(node->type()) && "If canSet* has been overriden to return true, also set* should be overriden");
     assert(canInsertChild(node->type()) && "This function shouldn't be called if the respective canSet* returned false");
     return std::unexpected("insertChild not implemented");
@@ -293,15 +285,15 @@ std::expected<bool, Error> Node::lastChangeAfter(int const version, bool const a
             return true;
 
         // nope, we were not changed, but perhaps out child was? Go check
-        if (auto result = find(VisitFlag::Recursive | VisitFlag::ExcludeSelf, [&](Node const &node)->std::expected<bool, Error>{
-            if (auto result = node.lastChangeAfter(version, true, false); !result)
+        if (auto result = find(VisitFlag::Recursive | VisitFlag::ExcludeSelf, [&](auto &&node)->std::expected<bool, Error>{
+            if (auto result = node->lastChangeAfter(version, true, false); !result)
                 return result;
             else
                 return *result;
         }); !result)
             return std::unexpected(result.error());
         else
-            return *result;
+            return static_cast<bool>(result);
     }
 }
 
@@ -325,12 +317,12 @@ std::vector<QBrush> Node::background(bool const editMode) const {
 
         if (auto result = visit(VisitFlag::Recursive, [&](auto const &node)->std::expected<bool, Error>{
             if (!anyDescendantActive) {
-                if (auto active = node.active(); active && *active)
+                if (auto active = node->active(); active && *active)
                     anyDescendantActive = true;
             }
 
             if (!anyDescendantHighlighted) {
-                if (auto highlighted = node.highlighted(); highlighted && *highlighted)
+                if (auto highlighted = node->highlighted(); highlighted && *highlighted)
                     anyDescendantHighlighted = true;
             }
 
@@ -373,8 +365,8 @@ std::expected<QString, QString> Node::tooltip(bool const editMode) const {
 
         QStringList activeTagsLines;
         if (auto result = visit(VisitFlag::Recursive, [&](auto &&node)->std::expected<bool, Error>{
-                if (auto active = node.active(); active && *active)
-                    activeTagsLines.emplace_back(node.tags()
+                if (auto active = node->active(); active && *active)
+                    activeTagsLines.emplace_back(node->tags()
                             | std::views::transform([](auto const &tag){ return tag.resolved; })
                             | std::views::join_with(QString(", "))
                             | std::ranges::to<QString>());
@@ -428,13 +420,7 @@ std::expected<void, Error> Node::populateShadows() {
 }
 
 std::expected<void, Error> Node::unpopulateShadows() {
-    if (auto result = visit(VisitFlag::Recursive, [](auto &node)->std::expected<bool, Error>{
-        node.aboutToUnpopulate_ = true;
-        return true;
-    }); !result)
-        return std::unexpected(result.error());
-    else
-        return unpopulateShadowsImpl();
+    return unpopulateShadowsImpl();
 }
 
 std::expected<void, QStringList> Node::verify(VerifyContext &context) const {
@@ -467,7 +453,7 @@ std::expected<void, QStringList> Node::verifyRecursive(VerifyContext &context) c
     QStringList unexpected;
 
     if (auto result = visit(VisitFlag::Recursive, [&](auto &&node)->std::expected<bool, Error>{
-        if (auto result = node.verify(context); !result)
+        if (auto result = node->verify(context); !result)
             unexpected.append(result.error());
         return true;
     }); !result)

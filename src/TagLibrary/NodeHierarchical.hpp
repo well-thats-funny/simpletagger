@@ -25,25 +25,25 @@ public:
     NodeHierarchical& operator=(NodeHierarchical const &other) = delete;
     NodeHierarchical& operator=(NodeHierarchical &&other) = delete;
 
-    NodeHierarchical(Model &model, NodeSerializable const *parent);
+    NodeHierarchical(Model &model, std::shared_ptr<NodeSerializable> const &parent);
     virtual ~NodeHierarchical();
 
     void deinit() override;
 
     // parent access
-    [[nodiscard]] Node const *parent() const override;
+    [[nodiscard]] std::shared_ptr<Node> parent() const override;
 
     // parent modification
     [[nodiscard]] bool canRemove() const override;
 
     // children access
     [[nodiscard]] std::expected<int, QString> rowOfChild(Node const &node, bool replaceReplaced) const override;
-    [[nodiscard]] std::expected<std::reference_wrapper<Node>, QString> childOfRow(int row, bool replaceReplaced) const override;
+    [[nodiscard]] std::expected<std::shared_ptr<Node>, QString> childOfRow(int row, bool replaceReplaced) const override;
     [[nodiscard]] std::expected<int, QString> childrenCount(bool replaceReplaced) const override;
 
     // children modification
     [[nodiscard]] bool canInsertChild(NodeType childType) const override;
-    [[nodiscard]] std::expected<Node *, QString> insertChild(int row, std::unique_ptr<Node> &&node) override;
+    [[nodiscard]] std::expected<std::shared_ptr<Node>, QString> insertChild(int row, std::shared_ptr<Node> &&node) override;
     void removeChildren(int row, int count) override;
     [[nodiscard]] bool canAcceptDrop() const override; // does it accept drops at all?
     [[nodiscard]] bool canAcceptDrop(NodeType type) const override; // does it accept drops of this node type?
@@ -61,7 +61,7 @@ protected:
 
     friend class Model;
 
-    NodeSerializable const *const parent_ = nullptr;
-    std::vector<std::unique_ptr<NodeSerializable>> children_;
+    std::weak_ptr<NodeSerializable> const parent_;
+    std::vector<std::shared_ptr<NodeSerializable>> children_;
 };
 }

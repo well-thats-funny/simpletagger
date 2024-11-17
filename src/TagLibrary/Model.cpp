@@ -72,6 +72,10 @@ QModelIndex Model::toIndex(Node const &node) const {
     }
 }
 
+QModelIndex Model::toIndex(std::shared_ptr<Node> const &node) const {
+    return toIndex(*node);
+}
+
 std::pair<QModelIndex, QModelIndex> Model::toIndexRange(Node const &node) const {
     ZoneScoped;
     auto index1 = toIndex(node);
@@ -80,26 +84,26 @@ std::pair<QModelIndex, QModelIndex> Model::toIndexRange(Node const &node) const 
     return {index1, index2};
 }
 
-Node *Model::fromIndex(QModelIndex const &index) const {
+std::shared_ptr<Node> Model::fromIndex(QModelIndex const &index) const {
     ZoneScoped;
     gsl_Expects(!index.isValid() || index.model() == this);
 
     if (!index.isValid())
-        return &*root;
+        return root;
 
-    auto ptr = reinterpret_cast<Node *>(index.internalPointer());
+    auto ptr = reinterpret_cast<Node *>(index.internalPointer())->shared_from_this();
     gsl_Ensures(ptr);
     return ptr;
 }
 
-std::expected<std::reference_wrapper<Node>, QString> Model::fromUuid(const QUuid &uuid) const {
+std::expected<std::shared_ptr<Node>, QString> Model::fromUuid(const QUuid &uuid) const {
     ZoneScoped;
 
-    auto ptr = uuidToNode_.value(uuid);
+    auto ptr = uuidToNode_.value(uuid).lock();
     if (!ptr)
         return std::unexpected(tr("No node with Uuid %1").arg(uuid.toString(QUuid::WithoutBraces)));
     else
-        return *ptr;
+        return ptr;
 }
 
 QModelIndex Model::index(int const row, int const column, QModelIndex const &parent) const {
@@ -115,9 +119,9 @@ QModelIndex Model::index(int const row, int const column, QModelIndex const &par
         return QModelIndex();
     } else {
         qCDebug(LoggingCategory) << "index(" << row << column << parentNode->name() << ") -> "
-                                 << "createIndex(" << row << column << child->get().name() << ")";
+                                 << "createIndex(" << row << column << (*child)->name() << ")";
 
-        result = createIndex(row, column, &child->get());
+        result = createIndex(row, column, &**child);
         gsl_Ensures(result.model() == this);
         return result;
     }
@@ -132,7 +136,7 @@ QModelIndex Model::parent(QModelIndex const &child) const {
         return {};
 
     assert(childNode);
-    if (childNode == &*root)
+    if (childNode == root)
         return {};
 
     return toIndex(*childNode->parent());
@@ -399,25 +403,25 @@ std::expected<QModelIndex, QString> Model::insertNode(NodeType type, QModelIndex
 
     auto parentNode = fromIndex(parent);
     assert(parentNode);
-    auto parentNodeStored = dynamic_cast<NodeSerializable *>(parentNode);
-    if (!parentNodeStored)
-        return std::unexpected(tr("Parent node is not a stored node type subclass, but %1").arg(typeid(*parentNode).name()));
+    auto parentNodeSerializable = std::dynamic_pointer_cast<NodeSerializable>(parentNode);
+    if (!parentNodeSerializable)
+        return std::unexpected(tr("Parent node is not a serializable node type subclass, but %1").arg(typeid(*parentNode).name()));
 
-    gsl_Expects(parentNodeStored->canInsertChild(type));
+    gsl_Expects(parentNodeSerializable->canInsertChild(type));
 
-    auto childNode = NodeHierarchical::createNode(type, *this, parentNodeStored);
+    auto childNode = NodeHierarchical::createNode(type, *this, parentNodeSerializable);
     if (!childNode)
         return std::unexpected(childNode.error());
 
-    auto row = parentNodeStored->childrenCount(false);
+    auto row = parentNodeSerializable->childrenCount(false);
     if (!row)
         return std::unexpected(row.error());
 
-    auto ptr = parentNodeStored->insertChild(*row, dynamicPtrCast<Node>(std::move(*childNode)));
+    auto ptr = parentNodeSerializable->insertChild(*row, std::move(*childNode));
     if (!ptr)
         return std::unexpected(ptr.error());
 
-    return createIndex(*row, 0, *ptr);
+    return createIndex(*row, 0, &**ptr);
 }
 
 [[nodiscard]] bool Model::canRemoveRow(QModelIndex const &index) {
@@ -464,11 +468,11 @@ QMimeData *Model::mimeData(QModelIndexList const &indexes) const {
     for(auto const &index: uniqueRowsIndexes) {
         auto node = fromIndex(index);
         assert(node);
-        if (auto nodeStored = dynamic_cast<NodeSerializable *>(node); !nodeStored) {
+        if (auto nodeSerializable = std::dynamic_pointer_cast<NodeSerializable>(node); !nodeSerializable) {
             qCCritical(LoggingCategory) << "Cannot generate MIME data for a not-stored node of type" << typeid(node).name();
             return nullptr;
         } else {
-            auto result = nodeStored->save();
+            auto result = nodeSerializable->save();
 
             if (!result) {
                 qCCritical(LoggingCategory) << "Could not store node data:" << result.error();
@@ -598,14 +602,14 @@ bool Model::dropMimeData(
 
     auto parentNode = fromIndex(parent);
     assert(parentNode);
-    auto parentNodeStored = dynamic_cast<NodeSerializable *>(parentNode);
-    if (!parentNodeStored) {
+    auto parentNodeSerializable = std::dynamic_pointer_cast<NodeSerializable>(parentNode);
+    if (!parentNodeSerializable) {
         qCCritical(LoggingCategory) << "Parent node should be a subclass of NodeStored, but got" << typeid(*parentNode).name();
         return false;
     }
 
     if (row == -1) {
-        if (auto result = parentNodeStored->childrenCount(false); !result) {
+        if (auto result = parentNodeSerializable->childrenCount(false); !result) {
             qCCritical(LoggingCategory) << ":" << result.error();
             return false;
         } else {
@@ -627,7 +631,7 @@ bool Model::dropMimeData(
         //       perhaps on the sender side (mimeData()) we should sort by row first and then insert in the same
         //       order here?
 
-        auto node = NodeHierarchical::load(map, *this, parentNodeStored);
+        auto node = NodeHierarchical::load(map, *this, parentNodeSerializable);
         if (!node) {
             qCCritical(LoggingCategory) << "Cannot create new node:" << node.error();
             return false;
@@ -638,9 +642,7 @@ bool Model::dropMimeData(
 
         repopulationRequest.modifiedUuids->append(node->get()->uuid());
 
-        if (auto result = parentNodeStored->insertChild(
-                row, dynamicPtrCast<Node>(std::move(*node))
-        ); !result) {
+        if (auto result = parentNodeSerializable->insertChild(row, std::move(*node)); !result) {
             qCCritical(LoggingCategory) << "Cannot insert child node:" << result.error();
             return false;
         }
@@ -691,7 +693,7 @@ std::expected<void, QString> Model::load(QCborValue const &value) {
         if (!result)
             return std::unexpected(result.error());
 
-        auto newRoot = dynamicPtrCast<NodeRoot>(std::move(*result));
+        auto newRoot = std::dynamic_pointer_cast<NodeRoot>(std::move(*result));
         if (!newRoot)
             return std::unexpected(tr("Invalid type of root node, expected Root but got %1").arg(
                     QMetaEnum::fromType<NodeType>().valueToKey(std::to_underlying((*result)->type()))
@@ -750,15 +752,17 @@ std::expected<void, QString> Model::setTagsActive(QStringList const &tags) {
     {
         QSignalBlocker blocker(*this);
 
-        if (auto result = root->visit(Node::VisitFlag::Recursive, [&](auto &node)->std::expected<bool, Error>{
+        if (auto result = root->visit(
+                Node::VisitFlag::Recursive,
+                [&](auto &&node) -> std::expected<bool, Error> {
             ZoneScoped;
 
-            if (node.canSetActive()) {
+            if (node->canSetActive()) {
                 bool active = false;
 
                 for (auto const &tag: tags) {
                     if (std::ranges::any_of(
-                            node.tags(Node::TagFlag::IncludeResolved),
+                            node->tags(Node::TagFlag::IncludeResolved),
                             [&](auto const &nodeTag) { return nodeTag.resolved == tag; }
                     )) {
                         active = true;
@@ -766,7 +770,7 @@ std::expected<void, QString> Model::setTagsActive(QStringList const &tags) {
                     }
                 }
 
-                if (auto result = node.setActive(active); !result)
+                if (auto result = node->setActive(active); !result)
                     return std::unexpected(result.error());
             }
 
@@ -777,7 +781,9 @@ std::expected<void, QString> Model::setTagsActive(QStringList const &tags) {
 
     // potentially many tags might be modified in this function, that's why we block signals for the time of
     // visit and only fire dataChanged here
-    if (auto result = root->visit(Node::VisitFlag::ExcludeSelf, [&](auto &node)->std::expected<bool, Error>{
+    if (auto result = root->visit(
+            Node::VisitFlag::ExcludeSelf,
+            [&](auto &&node) -> std::expected<bool, Error> {
         ZoneScoped;
         emit dataChanged(toIndex(node), toIndex(node));
         return true;
@@ -799,18 +805,20 @@ std::expected<QModelIndexList, QString> Model::setHighlightedTags(QStringList co
 
     QModelIndexList collected;
 
-    if (auto result = root->visit(Node::VisitFlag::Recursive, [&](auto &node)->std::expected<bool, Error>{
+    if (auto result = root->visit(
+            Node::VisitFlag::Recursive,
+            [&](auto &&node) -> std::expected<bool, Error> {
         ZoneScoped;
 
-        auto nodeTags = node.tags()
+        auto nodeTags = node->tags()
                 | std::views::transform([](auto const &v){ return v.resolved; })
                 | std::ranges::to<QStringList>();
-        if (node.canSetHighlighted()) {
+        if (node->canSetHighlighted()) {
             bool highlight = std::ranges::any_of(nodeTags, [&](QString const &tag) {
                 return tags.contains(tag);
             });
 
-            if (auto result = node.setHighlighted(highlight); !result)
+            if (auto result = node->setHighlighted(highlight); !result)
                 return std::unexpected(result.error());
             else if (highlight)
                 collected.push_back(toIndex(node));
@@ -833,8 +841,8 @@ void Model::setNextLibraryVersion(int const nextVersion) {
 
 std::expected<void, Error> Model::invalidateTagCaches() const {
     allTags_ = std::nullopt;
-    if (auto result = root->visit(Node::VisitFlag::Recursive, [](auto &node)->std::expected<bool, Error>{
-        node.invalidateTagCache();
+    if (auto result = root->visit(Node::VisitFlag::Recursive, [](auto &&node)->std::expected<bool, Error>{
+        node->invalidateTagCache();
         return true;
     }); !result)
         return std::unexpected(result.error());
@@ -858,7 +866,7 @@ QStringList Model::allTags() const {
         allTags_.emplace();
         if (auto result = root->visit(Node::VisitFlag::Recursive, [&](auto const &node)mutable->std::expected<bool, Error>{
             std::ranges::copy(
-                    node.tags() | std::views::transform([](auto const &tag){ return tag.resolved; }),
+                    node->tags() | std::views::transform([](auto const &tag){ return tag.resolved; }),
                     std::back_inserter(*allTags_)
             );
 
@@ -871,9 +879,11 @@ QStringList Model::allTags() const {
 
 void Model::populateUuidMap() {
     uuidToNode_.clear();
-    if (auto result = root->visit(Node::VisitFlag::Recursive | Node::VisitFlag::SkipVirtual, [&](auto &&node)->std::expected<bool, Error>{
-            assert(!node.isVirtual());
-            uuidToNode_.emplace(node.uuid(), &node);
+    if (auto result = root->visit(
+            Node::VisitFlag::Recursive | Node::VisitFlag::SkipVirtual,
+            [&](auto &&node) -> std::expected<bool, Error> {
+            assert(!node->isVirtual());
+            uuidToNode_.emplace(node->uuid(), node);
             return true;
         }); !result)
         reportError("modelReset visit", result.error());

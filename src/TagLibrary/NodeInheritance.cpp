@@ -20,7 +20,8 @@
 #include "NodeShadow.hpp"
 
 namespace TagLibrary {
-NodeInheritance::NodeInheritance(TagLibrary::Model &model, TagLibrary::NodeSerializable const *const parent): NodeLink(model, parent) {}
+NodeInheritance::NodeInheritance(TagLibrary::Model &model, std::shared_ptr<TagLibrary::NodeSerializable> const &parent):
+    NodeLink(model, parent) {}
 
 NodeInheritance::~NodeInheritance() = default;
 
@@ -31,10 +32,10 @@ IconIdentifier NodeInheritance::genericIcon() {
 
 std::vector<IconIdentifier> NodeInheritance::icons() const {
     ZoneScoped;
-    if (!linkSubtreeRoot_)
+    if (!shadowRoot_)
         return {IconIdentifier(":/icons/bx-up-arrow-broken.svg")};
     else
-        return linkSubtreeRoot_->icons();
+        return shadowRoot_->icons();
 }
 
 NodeType NodeInheritance::type() const {
@@ -55,11 +56,10 @@ void NodeInheritance::emitInsertChildrenBegin(int const count) {
         return NodeLink::emitInsertChildrenBegin(count);
     } else {
         // otherwise, we're invisible and our parent takes over our children
-        if (auto first = parent_->rowOfChild(*this, true); !first)
+        if (auto first = parent()->rowOfChild(*this, true); !first)
             reportError("emitInsertChildrenBegin -> rowOfChild failed", first.error(), false);
         else
-            // TODO: get rid of const_cast
-            emit const_cast<NodeSerializable *>(parent_)->insertChildrenBegin(*first, *first + count - 1);
+            emit std::dynamic_pointer_cast<NodeSerializable>(parent())->insertChildrenBegin(*first, *first + count - 1);
     }
 }
 
@@ -69,11 +69,10 @@ void NodeInheritance::emitInsertChildrenEnd(int const count) {
         return NodeLink::emitInsertChildrenEnd(count);
     } else {
         // otherwise, we're invisible and our parent takes over our children
-        if (auto first = parent_->rowOfChild(*this, true); !first)
+        if (auto first = parent()->rowOfChild(*this, true); !first)
             reportError("emitInsertChildrenEnd -> rowOfChild failed", first.error(), false);
         else
-            // TODO: get rid of const_cast
-            emit const_cast<NodeSerializable *>(parent_)->insertChildrenEnd(*first, *first + count - 1);
+            emit std::dynamic_pointer_cast<NodeSerializable>(parent())->insertChildrenEnd(*first, *first + count - 1);
     }
 }
 
@@ -83,11 +82,11 @@ void NodeInheritance::emitRemoveChildrenBegin(int const count) {
         return NodeLink::emitRemoveChildrenBegin(count);
     } else {
         // otherwise, we're invisible and our parent takes over our children
-        if (auto first = parent_->rowOfChild(*this, true); !first)
+        if (auto first = parent()->rowOfChild(*this, true); !first)
             reportError("emitRemoveChildrenBegin -> rowOfChild failed", first.error(), false);
         else
             // TODO: get rid of const_cast
-            emit const_cast<NodeSerializable *>(parent_)->removeChildrenBegin(*first, *first + count - 1);
+            emit std::dynamic_pointer_cast<NodeSerializable>(parent())->removeChildrenBegin(*first, *first + count - 1);
     }
 }
 
@@ -97,11 +96,11 @@ void NodeInheritance::emitRemoveChildrenEnd(int const count) {
         return NodeLink::emitRemoveChildrenEnd(count);
     } else {
         // otherwise, we're invisible and our parent takes over our children
-        if (auto first = parent_->rowOfChild(*this, true); !first)
+        if (auto first = parent()->rowOfChild(*this, true); !first)
             reportError("emitRemoveChildrenEnd -> rowOfChild failed", first.error(), false);
         else
             // TODO: get rid of const_cast
-            emit const_cast<NodeSerializable *>(parent_)->removeChildrenEnd(*first, *first + count - 1);
+            emit std::dynamic_pointer_cast<NodeSerializable>(parent())->removeChildrenEnd(*first, *first + count - 1);
     }
 }
 }

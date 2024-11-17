@@ -23,7 +23,8 @@
 #include "../Utility.hpp"
 
 namespace TagLibrary {
-NodeLink::NodeLink(Model &model, NodeSerializable const *const parent): NodeHierarchical(model, parent) {}
+NodeLink::NodeLink(Model &model, std::shared_ptr<NodeSerializable> const &parent):
+    NodeHierarchical(model, parent) {}
 
 NodeLink::~NodeLink() = default;
 
@@ -32,32 +33,29 @@ void NodeLink::deinit() {
 
     NodeHierarchical::deinit();
 
-    // this signal leads to premature destruction of linkSubtreeRoot_
-    disconnect(subtreeRootAboutToRemoveConnection);
-
-    if (linkSubtreeRoot_ && !linkSubtreeRoot_->deinitialized())
-        linkSubtreeRoot_->deinit();
+    if (shadowRoot_ && !shadowRoot_->deinitialized())
+        shadowRoot_->deinit();
 }
 
 std::expected<int, QString> NodeLink::rowOfChild(Node const &node, bool const replaceReplaced) const {
     ZoneScoped;
-    gsl_Expects(linkSubtreeRoot_);
-    return linkSubtreeRoot_->rowOfChild(node, replaceReplaced);
+    gsl_Expects(shadowRoot_);
+    return shadowRoot_->rowOfChild(node, replaceReplaced);
 }
 
-std::expected<std::reference_wrapper<Node>, QString> NodeLink::childOfRow(int const row, bool const replaceReplaced) const {
+std::expected<std::shared_ptr<Node>, QString> NodeLink::childOfRow(int const row, bool const replaceReplaced) const {
     ZoneScoped;
-    gsl_Expects(linkSubtreeRoot_);
-    return linkSubtreeRoot_->childOfRow(row, replaceReplaced);
+    gsl_Expects(shadowRoot_);
+    return shadowRoot_->childOfRow(row, replaceReplaced);
 }
 
 std::expected<int, QString> NodeLink::childrenCount(bool const replaceReplaced) const {
     ZoneScoped;
 
-    if (!linkSubtreeRoot_)
+    if (!shadowRoot_)
         return 0;
     else
-        return linkSubtreeRoot_->childrenCount(replaceReplaced);
+        return shadowRoot_->childrenCount(replaceReplaced);
 }
 
 bool NodeLink::canBeDragged() const {
@@ -76,13 +74,13 @@ QString NodeLink::name(bool const raw, bool const editMode) const {
         else if (auto targetNode = target(); !targetNode)
             targetName = QObject::tr("<invalid target> (%1; %2)").arg(linkTo_.toString(QUuid::WithoutBraces), targetNode.error());
         else
-            targetName = targetNode->get().name();
+            targetName = (*targetNode)->name();
 
         return QString("%1 -> %2").arg(name_, targetName);
     } else if (!name_.isEmpty()) {
         return name_;
-    } else if (linkSubtreeRoot_) {
-        return linkSubtreeRoot_->name();
+    } else if (shadowRoot_) {
+        return shadowRoot_->name();
     } else {
         return {};
     }
@@ -106,10 +104,10 @@ IconIdentifier NodeLink::genericIcon() {
 
 std::vector<IconIdentifier> NodeLink::icons() const {
     ZoneScoped;
-    if (!linkSubtreeRoot_)
+    if (!shadowRoot_)
         return {IconIdentifier(":/icons/bx-unlink.svg")};
     else
-        return linkSubtreeRoot_->icons();
+        return shadowRoot_->icons();
 }
 
 std::optional<QUuid> NodeLink::linkTo() const {
@@ -142,8 +140,8 @@ std::vector<Node::Tag> NodeLink::generateTags(TagFlags const flags) const {
 
     std::vector<Tag> result;
 
-    if (linkSubtreeRoot_) {
-        auto tags = linkSubtreeRoot_->tags(flags);
+    if (shadowRoot_) {
+        auto tags = shadowRoot_->tags(flags);
 
         if (!(flags & TagFlag::IncludeResolved)) {
             std::ranges::move(tags, std::back_inserter(result));
@@ -201,24 +199,24 @@ std::expected<void, QString> NodeLink::setActive(bool const active) {
 
 std::optional<bool> NodeLink::highlighted() const {
     ZoneScoped;
-    if (linkSubtreeRoot_)
-        return linkSubtreeRoot_->highlighted();
+    if (shadowRoot_)
+        return shadowRoot_->highlighted();
     else
         return std::nullopt;
 }
 
 bool NodeLink::canSetHighlighted() const {
     ZoneScoped;
-    if (linkSubtreeRoot_)
-        return linkSubtreeRoot_->canSetHighlighted();
+    if (shadowRoot_)
+        return shadowRoot_->canSetHighlighted();
     else
         return false;
 }
 
 std::expected<void, QString> NodeLink::setHighlighted(bool const highlighted) {
     ZoneScoped;
-    if (linkSubtreeRoot_)
-        return linkSubtreeRoot_->setHighlighted(highlighted);
+    if (shadowRoot_)
+        return shadowRoot_->setHighlighted(highlighted);
     else
         return Node::setHighlighted(highlighted);
 }
@@ -227,7 +225,7 @@ NodeType NodeLink::type() const {
     return NodeType::Link;
 }
 
-std::expected<std::reference_wrapper<Node>, QString> NodeLink::target() const {
+std::expected<std::shared_ptr<Node>, QString> NodeLink::target() const {
     ZoneScoped;
     return model().fromUuid(linkTo_);
 }
@@ -306,14 +304,16 @@ void NodeLink::emitRemoveChildrenEnd(int const count) {
 }
 
 std::expected<void, QString> NodeLink::populateShadowsImpl() {
-    gsl_Expects(!linkSubtreeRoot_);
+    gsl_Expects(!shadowRoot_);
 
     if (!linkTo_.isNull()) {
         auto target = model().fromUuid(linkTo_);
         if (!target)
             return std::unexpected(target.error());
 
-        auto subtreeRoot = std::make_unique<NodeShadow>(model(), this, &target->get(), this, linkingIcon());
+        auto subtreeRoot = std::make_shared<NodeShadow>(
+                model(), shared_from_this(), *target, shared_from_this(), linkingIcon()
+        );
         if (auto result = subtreeRoot->init(); !result)
             return std::unexpected(result.error());
 
@@ -329,35 +329,35 @@ std::expected<void, QString> NodeLink::populateShadowsImpl() {
         if (*childrenCount > 0)
             emitInsertChildrenBegin(*childrenCount);
 
-        linkSubtreeRoot_ = dynamicPtrCast<NodeShadow>(std::move(subtreeRoot));
+        shadowRoot_ = std::move(subtreeRoot);
 
         if (*childrenCount > 0)
             emitInsertChildrenEnd(*childrenCount);
     }
 
-    gsl_Ensures(!linkTo_.isNull() == static_cast<bool>(linkSubtreeRoot_));
+    gsl_Ensures(!linkTo_.isNull() == static_cast<bool>(shadowRoot_));
     return {};
 }
 
 std::expected<void, QString> NodeLink::unpopulateShadowsImpl() {
-    if (linkSubtreeRoot_) {
-        auto childrenCount = linkSubtreeRoot_->childrenCount(true);
+    if (shadowRoot_) {
+        auto childrenCount = shadowRoot_->childrenCount(true);
         if (!childrenCount)
             return std::unexpected(childrenCount.error());
 
         if (*childrenCount > 0)
             emitRemoveChildrenBegin(*childrenCount);
 
-        if (!linkSubtreeRoot_->deinitialized())
-            linkSubtreeRoot_->deinit();
+        if (!shadowRoot_->deinitialized())
+            shadowRoot_->deinit();
 
-        linkSubtreeRoot_.reset();
+        shadowRoot_.reset();
 
         if (*childrenCount > 0)
             emitRemoveChildrenEnd(*childrenCount);
     }
 
-    gsl_Ensures(!linkSubtreeRoot_);
+    gsl_Ensures(!shadowRoot_);
     return {};
 }
 
@@ -368,7 +368,7 @@ std::expected<void, QString> NodeLink::repopulateShadows(RepopulationRequest con
     QSet<QUuid> allRelatedUuids;
 
     // our UUID and all our our parents
-    Node const *node = this;
+    std::shared_ptr<Node const> node = shared_from_this();
     while(node) {
         allRelatedUuids.insert(node->uuid());
         node = node->parent();
@@ -381,7 +381,7 @@ std::expected<void, QString> NodeLink::repopulateShadows(RepopulationRequest con
             //       distinguish such situations
             qCWarning(LoggingCategory) << "Could not find node with UUID" << linkTo_ << ":" << target.error();
         } else {
-            node = &target->get();
+            node = *target;
             while(node) {
                 allRelatedUuids.insert(node->uuid());
                 node = node->parent();
@@ -399,8 +399,8 @@ std::expected<void, QString> NodeLink::repopulateShadows(RepopulationRequest con
             return std::unexpected(result.error());
     }
 
-    if (linkSubtreeRoot_)
-        return linkSubtreeRoot_->repopulateShadows(repopulationRequest);
+    if (shadowRoot_)
+        return shadowRoot_->repopulateShadows(repopulationRequest);
     else
         return {};
 }

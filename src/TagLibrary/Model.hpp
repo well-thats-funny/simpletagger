@@ -43,10 +43,11 @@ public:
     Q_ENUM(Column);
 
     [[nodiscard]] QModelIndex toIndex(Node const &node) const;
+    [[nodiscard]] QModelIndex toIndex(std::shared_ptr<Node> const &node) const;
     [[nodiscard]] std::pair<QModelIndex, QModelIndex> toIndexRange(Node const &node) const;
-    [[nodiscard]] Node *fromIndex(QModelIndex const &index) const;
+    [[nodiscard]] std::shared_ptr<Node> fromIndex(QModelIndex const &index) const;
 
-    [[nodiscard]] std::expected<std::reference_wrapper<Node>, QString> fromUuid(QUuid const &uuid) const;
+    [[nodiscard]] std::expected<std::shared_ptr<Node>, QString> fromUuid(QUuid const &uuid) const;
 
     [[nodiscard]] QModelIndex index(int row, int column, QModelIndex const &parent = QModelIndex()) const override;
     [[nodiscard]] QModelIndex parent(QModelIndex const &child) const override;
@@ -100,13 +101,13 @@ signals:
 private:
     void populateUuidMap();
 
-    std::unique_ptr<NodeRoot> root;
+    std::shared_ptr<NodeRoot> root;
     bool editMode_ = false;
     int rowHeight_ = 0;
     int nextLibraryVersion_ = -1;
     std::optional<int> highlightChangedAfterVersion_;
 
-    QHash<QUuid, Node *> uuidToNode_;
+    QHash<QUuid, std::weak_ptr<Node>> uuidToNode_;
 
     mutable QMutex allTagsMutex_;
     mutable std::optional<QStringList> allTags_;

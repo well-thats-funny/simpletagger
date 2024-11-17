@@ -27,16 +27,15 @@ public:
     void deinit() override;
 
     // parent access
-    [[nodiscard]] Node const *parent() const override;
+    [[nodiscard]] std::shared_ptr<Node> parent() const override;
 
     // children access
     [[nodiscard]] std::expected<int, QString> rowOfChild(Node const &node, bool replaceReplaced) const override;
-    [[nodiscard]] std::expected<std::reference_wrapper<Node>, QString> childOfRow(int row, bool replaceReplaced) const override;
+    [[nodiscard]] std::expected<std::shared_ptr<Node>, QString> childOfRow(int row, bool replaceReplaced) const override;
     [[nodiscard]] std::expected<int, QString> childrenCount(bool replaceReplaced) const override;
 
-
     [[nodiscard]] bool canInsertChild(NodeType childType) const override;
-    [[nodiscard]] std::expected<Node *, QString> insertChild(int row, std::unique_ptr<Node> &&node) override;
+    [[nodiscard]] std::expected<std::shared_ptr<Node>, QString> insertChild(int row, std::shared_ptr<Node> &&node) override;
 
     [[nodiscard]] NodeType type() const override;
 
@@ -50,6 +49,6 @@ protected:
     [[nodiscard]] std::expected<void, QString> loadNodeData(QCborMap &map) override;
 
 private:
-    std::unique_ptr<NodeCollection> rootCollection_;
+    std::shared_ptr<NodeCollection> rootCollection_;
 };
 }

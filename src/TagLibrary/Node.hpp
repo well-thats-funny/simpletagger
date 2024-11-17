@@ -29,7 +29,7 @@ using NodeType = Format::NodeType;
 class NodeShadow;
 #endif
 
-class Node: public QObject {
+class Node: public QObject, public std::enable_shared_from_this<Node> {
     Q_OBJECT
 
 public:
@@ -50,7 +50,7 @@ public:
     }
 
     // parent access
-    [[nodiscard]] virtual Node const *parent() const = 0;
+    [[nodiscard]] virtual std::shared_ptr<Node> parent() const = 0;
 
     // parent modification
     // TODO: would be logical to also have remove() here, but our Library code currently relies on Model on that
@@ -58,7 +58,7 @@ public:
 
     // children access
     [[nodiscard]] virtual std::expected<int, QString> rowOfChild(Node const &node, bool replaceReplaced) const = 0;
-    [[nodiscard]] virtual std::expected<std::reference_wrapper<Node>, QString> childOfRow(int row, bool replaceReplaced) const = 0;
+    [[nodiscard]] virtual std::expected<std::shared_ptr<Node>, QString> childOfRow(int row, bool replaceReplaced) const = 0;
     [[nodiscard]] virtual std::expected<int, QString> childrenCount(bool replaceReplaced) const = 0;
     enum class VisitFlag {
         NoFlags         = 0x0,
@@ -71,10 +71,14 @@ public:
 
     // if visitor returns false, iteration gets iterrupted
     template<typename Self, typename Visitor>
-    requires std::invocable<Visitor, copyConst<Self, Node> &> && std::same_as<std::invoke_result_t<Visitor, copyConst<Self, Node> &>, std::expected<bool, Error>>
+    requires std::invocable<Visitor, std::shared_ptr<copyConst<Self, Node>> const &>
+            && std::same_as<
+                    std::invoke_result_t<Visitor, std::shared_ptr<copyConst<Self, Node>> const &>,
+                    std::expected<bool, Error>
+            >
     [[nodiscard]] std::expected<void, Error> visit(this Self &&self, VisitFlags const flags, Visitor &&visitor) {
         if (!(flags & VisitFlag::ExcludeSelf)) {
-            if (auto result = visitor(self); !result)
+            if (auto result = visitor(self.shared_from_this()); !result)
                 return std::unexpected(result.error());
             else if (!*result)
                 return {};
@@ -89,17 +93,17 @@ public:
             if (!childNode)
                 return std::unexpected(childNode.error());
 
-            if (flags & VisitFlag::SkipVirtual && childNode->get().isVirtual())
+            if (flags & VisitFlag::SkipVirtual && (*childNode)->isVirtual())
                 continue;
 
-            if (auto result = visitor(childNode->get()); !result)
+            if (auto result = visitor(*childNode); !result)
                 return std::unexpected(result.error());
             else if (!*result)
                 break;
 
             if (flags & VisitFlag::Recursive) {
                 // ExcludeSelf to prevent visitor being called with the same argument second time
-                if (auto result = childNode->get().visit(flags | VisitFlag::ExcludeSelf, visitor); !result)
+                if (auto result = (*childNode)->visit(flags | VisitFlag::ExcludeSelf, visitor); !result)
                     return std::unexpected(result.error());
             }
         }
@@ -109,13 +113,14 @@ public:
 
     template<typename Checker>
     requires std::invocable<Checker, Node const &> && (
-               std::same_as<std::invoke_result_t<Checker, Node const &>, std::expected<bool, Error>>
-            || std::same_as<std::invoke_result_t<Checker, Node const &>, bool>
+               std::same_as<std::invoke_result_t<Checker, std::shared_ptr<Node> const &>, std::expected<bool, Error>>
+            || std::same_as<std::invoke_result_t<Checker, std::shared_ptr<Node> const &>, bool>
     )
-    [[nodiscard]] auto find(this auto &&self, VisitFlags const flags, Checker const &checker) -> std::expected<copyConst<decltype(self), Node> *, Error> {
-        copyConst<decltype(self), Node> *foundNode = nullptr;
+    [[nodiscard]] auto find(this auto &&self, VisitFlags const flags, Checker const &checker)
+            -> std::expected<std::shared_ptr<copyConst<decltype(self), Node>>, Error> {
+        std::shared_ptr<copyConst<decltype(self), Node>> foundNode;
         if (auto result = self.visit(flags, [&](auto &&node)->std::expected<bool, Error>{
-            auto cmp = checker(node);
+            auto cmp = checker(std::as_const(node));
             bool bcmp;
             if constexpr (std::same_as<decltype(cmp), std::expected<bool, Error>>) {
                 if (!cmp)
@@ -127,7 +132,7 @@ public:
             }
 
             if (bcmp) {
-                foundNode = &node;
+                foundNode = node;
                 return false;
             } else {
                 return true;
@@ -140,7 +145,7 @@ public:
 
     // children modification
     [[nodiscard]] virtual bool canInsertChild(NodeType childType) const;
-    [[nodiscard]] virtual std::expected<Node *, QString> insertChild(int row, std::unique_ptr<Node> &&node);
+    [[nodiscard]] virtual std::expected<std::shared_ptr<Node>, QString> insertChild(int row, std::shared_ptr<Node> &&node);
     [[nodiscard]] virtual bool canRemoveChildren(int row, int count) const;
     virtual void removeChildren(int row, int count);
     [[nodiscard]] virtual bool canBeDragged() const;
@@ -269,12 +274,6 @@ private:
     bool deinitialized_ = false;
 
     mutable QHash<TagFlags, std::vector<Tag>> tagCache_;
-
-#ifndef NDEBUG
-    friend class NodeShadow;
-    std::vector<NodeShadow*> shadowNodes_;
-    bool aboutToUnpopulate_ = false;
-#endif
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(Node::VisitFlags);

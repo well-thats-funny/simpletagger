@@ -21,7 +21,7 @@
 #include "../Utility.hpp"
 
 namespace TagLibrary {
-NodeCollection::NodeCollection(Model &model, NodeSerializable const *const parent):
+NodeCollection::NodeCollection(Model &model, std::shared_ptr<NodeSerializable> const &parent):
     NodeHierarchical(model, parent), name_(parent->generateUnusedChildName(QObject::tr("New collection"))) {}
 
 NodeCollection::~NodeCollection() = default;

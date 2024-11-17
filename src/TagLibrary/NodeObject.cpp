@@ -22,7 +22,7 @@
 #include "../Utility.hpp"
 
 namespace TagLibrary {
-NodeObject::NodeObject(Model &model, NodeSerializable const *const parent):
+NodeObject::NodeObject(Model &model, std::shared_ptr<NodeSerializable> const &parent):
     NodeHierarchical(model, parent), name_(parent->generateUnusedChildName(QObject::tr("New object"))) {}
 
 NodeObject::~NodeObject() = default;

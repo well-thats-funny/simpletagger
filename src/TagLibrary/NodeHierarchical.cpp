@@ -22,7 +22,7 @@
 #include "../Utility.hpp"
 
 namespace TagLibrary {
-NodeHierarchical::NodeHierarchical(Model &model, NodeSerializable const *const parent): NodeSerializable(model), parent_(parent) {}
+NodeHierarchical::NodeHierarchical(Model &model, std::shared_ptr<NodeSerializable> const &parent): NodeSerializable(model), parent_(parent) {}
 
 NodeHierarchical::~NodeHierarchical() = default;
 
@@ -35,8 +35,10 @@ void NodeHierarchical::deinit() {
         child->deinit();
 }
 
-Node const *NodeHierarchical::parent() const {
-    return parent_;
+std::shared_ptr<Node> NodeHierarchical::parent() const {
+    auto parent = parent_.lock();
+    assert(parent);
+    return parent;
 }
 
 bool NodeHierarchical::canRemove() const {
@@ -82,7 +84,7 @@ std::expected<int, QString> NodeHierarchical::rowOfChild(Node const &node, bool 
                         if (auto replacedChild = child->childOfRow(replacedRow, true); !replacedChild) {
                             return std::unexpected(replacedChild.error());
                         } else {
-                            if (&replacedChild->get() == &node)
+                            if (&**replacedChild == &node)
                                 return row;
                         }
                         ++row;
@@ -94,20 +96,20 @@ std::expected<int, QString> NodeHierarchical::rowOfChild(Node const &node, bool 
     }
 }
 
-std::expected<std::reference_wrapper<Node>, QString> NodeHierarchical::childOfRow(int const row, bool const replaceReplaced) const {
+std::expected<std::shared_ptr<Node>, QString> NodeHierarchical::childOfRow(int const row, bool const replaceReplaced) const {
     ZoneScoped;
     gsl_Expects(row >= 0);
 
     if (!replaceReplaced) {
         gsl_Expects(row < gsl::narrow<int>(children_.size()));
-        return *children_.at(row);
+        return children_.at(row);
     } else {
         int childRow = 0;
 
         for (auto const &child: children_) {
             if (!child->isReplaced()) {
                 if (childRow == row)
-                    return *child;
+                    return child;
 
                 childRow++;
             } else {
@@ -153,18 +155,18 @@ bool NodeHierarchical::canInsertChild(NodeType const) const {
     return false;
 }
 
-std::expected<Node *, QString> NodeHierarchical::insertChild(int row, std::unique_ptr<Node> &&node) {
+std::expected<std::shared_ptr<Node>, QString> NodeHierarchical::insertChild(int const row, std::shared_ptr<Node> &&node) {
     ZoneScoped;
 
     gsl_Expects(row >= 0);
     gsl_Expects(row <= gsl::narrow<int>(children_.size()));
     gsl_Expects(canInsertChild(node->type()));
 
-    auto ptr = dynamicPtrCast<NodeHierarchical>(std::move(node));
+    auto ptr = std::dynamic_pointer_cast<NodeHierarchical>(std::move(node));
     gsl_Expects(ptr);
 
     emit insertChildrenBegin(row, row);
-    auto result = &**children_.emplace(children_.begin() + row, dynamicPtrCast<NodeSerializable>(std::move(ptr)));
+    auto result = *children_.emplace(children_.begin() + row, std::move(ptr));
     emit insertChildrenEnd(row, row);
 
     return result;
@@ -244,8 +246,8 @@ std::expected<std::optional<QCborArray>, QString> NodeHierarchical::saveChildren
         // only save stored children
         if (auto child = childOfRow(i, false); !child) {
             return std::unexpected(child.error());
-        } else if (auto storedChild = dynamic_cast<NodeSerializable *>(&child->get())) {
-            if (auto childData = storedChild->save())
+        } else if (auto serializableChild = std::dynamic_pointer_cast<NodeSerializable>(*child)) {
+            if (auto childData = serializableChild->save())
                 children.append(*childData);
             else
                 return std::unexpected(childData.error());
@@ -281,10 +283,10 @@ std::expected<void, QString> NodeHierarchical::loadChildrenNodes(QCborMap &map) 
     children_.reserve(childrenArray.size());
 
     for (auto const &child: childrenArray) {
-        if (auto childNode = NodeHierarchical::load(child, model(), this); !childNode)
+        if (auto childNode = NodeHierarchical::load(child, model(), std::dynamic_pointer_cast<NodeHierarchical>(shared_from_this())); !childNode)
             return std::unexpected(childNode.error());
         else
-            children_.emplace_back(dynamicPtrCast<NodeSerializable>(std::move(*childNode)));
+            children_.emplace_back(std::dynamic_pointer_cast<NodeSerializable>(std::move(*childNode)));
     }
 
     return {};

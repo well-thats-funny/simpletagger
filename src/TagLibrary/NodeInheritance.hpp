@@ -22,7 +22,7 @@ class NodeShadow;
 
 class NodeInheritance : public NodeLink {
 public:
-    NodeInheritance(Model &model, NodeSerializable const *parent);
+    NodeInheritance(Model &model, std::shared_ptr<NodeSerializable> const &parent);
     ~NodeInheritance() override;
 
     [[nodiscard]] static IconIdentifier genericIcon();
