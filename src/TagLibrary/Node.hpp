@@ -232,6 +232,9 @@ public:
 
     bool deinitialized() const;
 
+    [[nodiscard]] virtual bool canPopulate() const = 0;
+    [[nodiscard]] virtual bool canUnpopulate() const = 0;
+
     // These two are only made public to be called by a parent node on its children.
     // Everything else should call un/populateShadows() methods (below).
     [[nodiscard]] virtual std::expected<void, Error> populateShadowsImpl() = 0;

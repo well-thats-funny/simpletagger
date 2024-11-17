@@ -202,6 +202,14 @@ bool NodeHierarchical::canAcceptDrop(NodeType const type) const {
     return canInsertChild(type);
 }
 
+bool NodeHierarchical::canPopulate() const {
+    return std::ranges::all_of(children_, [](auto const &n){ return n->canPopulate(); });
+}
+
+bool NodeHierarchical::canUnpopulate() const {
+    return std::ranges::all_of(children_, [](auto const &n){ return n->canUnpopulate(); });
+}
+
 std::expected<void, Error> NodeHierarchical::populateShadowsImpl() {
     for (auto &child: children_)
         if (auto result = child->populateShadowsImpl(); !result)

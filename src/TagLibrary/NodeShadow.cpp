@@ -381,6 +381,14 @@ std::vector<QBrush> NodeShadow::background(bool const editMode) const {
     return result;
 }
 
+bool NodeShadow::canPopulate() const {
+    return true;
+}
+
+bool NodeShadow::canUnpopulate() const {
+    return true;
+}
+
 std::expected<void, Error> NodeShadow::populateShadowsImpl() {
     ZoneScoped;
     for (auto &child: children_)

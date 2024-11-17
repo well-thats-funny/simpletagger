@@ -303,6 +303,14 @@ void NodeLink::emitRemoveChildrenEnd(int const count) {
     emit removeChildrenEnd(0, count - 1);
 }
 
+bool NodeLink::canPopulate() const {
+    return !static_cast<bool>(shadowRoot_);
+}
+
+bool NodeLink::canUnpopulate() const {
+    return static_cast<bool>(shadowRoot_);
+}
+
 std::expected<void, QString> NodeLink::populateShadowsImpl() {
     gsl_Expects(!shadowRoot_);
 

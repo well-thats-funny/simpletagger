@@ -48,6 +48,9 @@ public:
     [[nodiscard]] bool canAcceptDrop() const override; // does it accept drops at all?
     [[nodiscard]] bool canAcceptDrop(NodeType type) const override; // does it accept drops of this node type?
 
+    [[nodiscard]] bool canPopulate() const override;
+    [[nodiscard]] bool canUnpopulate() const override;
+
     [[nodiscard]] std::expected<void, Error> populateShadowsImpl() override;
     [[nodiscard]] std::expected<void, Error> unpopulateShadowsImpl() override;
 

@@ -39,6 +39,9 @@ public:
 
     [[nodiscard]] NodeType type() const override;
 
+    [[nodiscard]] bool canPopulate() const override;
+    [[nodiscard]] bool canUnpopulate() const override;
+
     [[nodiscard]] std::expected<void, Error> populateShadowsImpl() override;
     [[nodiscard]] std::expected<void, Error> unpopulateShadowsImpl() override;
 

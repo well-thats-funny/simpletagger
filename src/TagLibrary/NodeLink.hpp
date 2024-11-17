@@ -78,6 +78,8 @@ protected:
     virtual void emitRemoveChildrenEnd(int count);
 
 public:
+    [[nodiscard]] bool canPopulate() const override;
+    [[nodiscard]] bool canUnpopulate() const override;
     [[nodiscard]] std::expected<void, Error> populateShadowsImpl() override;
     [[nodiscard]] std::expected<void, Error> unpopulateShadowsImpl() override;
 

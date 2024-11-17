@@ -26,6 +26,7 @@ namespace TagLibrary {
 class Model;
 class FilterProxyModel;
 class SelectionHelperProxyModel;
+class Node;
 class NodeRoot;
 
 class Library : public QWidget {
@@ -74,8 +75,9 @@ signals:
     void tagsActiveChanged(QStringList const &tags, bool active);
 
 private:
-    QModelIndex toLibraryModelIndex(QModelIndex const &viewModelIndex);
-    QModelIndex toViewModelIndex(QModelIndex const &libraryModelIndex);
+    std::shared_ptr<Node> currentNode() const;
+    QModelIndex toLibraryModelIndex(QModelIndex const &viewModelIndex) const;
+    QModelIndex toViewModelIndex(QModelIndex const &libraryModelIndex) const;
     void updateLibraryVersion(int currentLibraryVersion);
 
     std::unique_ptr<Ui_Library> ui;

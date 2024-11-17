@@ -84,6 +84,14 @@ NodeType NodeRoot::type() const {
     return NodeType::Root;
 }
 
+bool NodeRoot::canPopulate() const {
+    return rootCollection_ && rootCollection_->canPopulate();
+}
+
+bool NodeRoot::canUnpopulate() const {
+    return rootCollection_ && rootCollection_->canUnpopulate();
+}
+
 std::expected<void, Error> NodeRoot::populateShadowsImpl() {
     if (rootCollection_)
         return rootCollection_->populateShadowsImpl();

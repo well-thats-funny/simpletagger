@@ -273,22 +273,28 @@ std::expected<void, QString> Library::init() {
             menu.addAction(ui->actionLinkReset);
             menu.addAction(ui->actionComment);
             menu.addAction(ui->actionSetHidden);
-
-            // TODO: remove after the issues are fixed
-            menu.addSeparator();
-            connect(menu.addAction("[bug workaround] repopulate linked"), &QAction::triggered, [this]{
-                auto index = ui->treeTags->currentIndex();
-                if (index.isValid()) {
-                    auto sourceIndex = toLibraryModelIndex(index);
-                    auto node = libraryModel_->fromIndex(sourceIndex);
-                    assert(node);
-                    if (auto result = node->repopulateShadows({}); !result)
-                        QMessageBox::critical(this, tr("Repopulate failed"), result.error());
-                }
-            });
         } else {
             menu.addAction(ui->actionToggleActive);
         }
+
+        // TODO: when there's no issues anymore, these two actions can be wrapped in #ifndef NDEBUG
+        menu.addSeparator();
+        auto actionPopulateShadows = menu.addAction("[debug] populate shadows");
+        connect(actionPopulateShadows, &QAction::triggered, [this]{
+            if (auto node = currentNode())
+                if (auto result = node->populateShadows(); !result)
+                    QMessageBox::critical(this, tr("Populate failed"), result.error());
+        });
+        actionPopulateShadows->setEnabled(currentNode()->canPopulate());
+
+        auto actionUnpopulateShadows = menu.addAction("[debug] unpopulate shadows");
+        connect(actionUnpopulateShadows, &QAction::triggered, [this]{
+            if (auto node = currentNode())
+                if (auto result = node->unpopulateShadows(); !result)
+                    QMessageBox::critical(this, tr("Unpopulate failed"), result.error());
+        });
+        actionUnpopulateShadows->setEnabled(currentNode()->canUnpopulate());
+
         menu.exec(ui->treeTags->mapToGlobal(pos));
     });
 
@@ -766,12 +772,22 @@ QStringList Library::allTags() const {
     return libraryModel_->allTags();
 }
 
-QModelIndex Library::toLibraryModelIndex(QModelIndex const &viewModelIndex) {
+std::shared_ptr<Node> Library::currentNode() const {
+    auto index = ui->treeTags->currentIndex();
+    if (index.isValid()) {
+        auto sourceIndex = toLibraryModelIndex(index);
+        return libraryModel_->fromIndex(sourceIndex);
+    } else {
+        return nullptr;
+    }
+}
+
+QModelIndex Library::toLibraryModelIndex(QModelIndex const &viewModelIndex) const {
     auto filterModelIndex = model_->mapToSource(viewModelIndex);
     return filterModel_->mapToSource(filterModelIndex);
 }
 
-QModelIndex Library::toViewModelIndex(QModelIndex const &libraryModelIndex) {
+QModelIndex Library::toViewModelIndex(QModelIndex const &libraryModelIndex) const {
     auto filterModelIndex = filterModel_->mapFromSource(libraryModelIndex);
     return model_->mapFromSource(filterModelIndex);
 }
