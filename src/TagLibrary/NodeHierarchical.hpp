@@ -59,8 +59,8 @@ public:
 protected:
     [[nodiscard]] std::expected<void, QString> saveNodeData(QCborMap &map) const override;
     [[nodiscard]] virtual std::expected<std::optional<QCborArray>, QString> saveChildrenNodes() const;
-    [[nodiscard]] std::expected<void, QString> loadNodeData(QCborMap &map) override;
-    [[nodiscard]] virtual std::expected<void, QString> loadChildrenNodes(QCborMap &map);
+    [[nodiscard]] std::expected<void, QString> loadNodeData(QCborMap &map, bool allowDuplicatedUuids) override;
+    [[nodiscard]] virtual std::expected<void, QString> loadChildrenNodes(QCborMap &map, bool allowDuplicatedUuids);
 
     friend class Model;
 

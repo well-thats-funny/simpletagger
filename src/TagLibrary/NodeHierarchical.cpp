@@ -187,10 +187,11 @@ void NodeHierarchical::removeChildren(int const row, int const count) {
 
     int last = row + count - 1;
     emit beforeRemoveChildren(row, last);
-    emit removeChildrenBegin(row, last);
+
     for (auto it = begin; it != end; ++it)
         (*it)->deinit();
 
+    emit removeChildrenBegin(row, last);
     children_.erase(begin, end);
     emit removeChildrenEnd(row, last);
 }
@@ -266,19 +267,19 @@ std::expected<std::optional<QCborArray>, QString> NodeHierarchical::saveChildren
     return children;
 }
 
-std::expected<void, QString> NodeHierarchical::loadNodeData(QCborMap &map) {
+std::expected<void, QString> NodeHierarchical::loadNodeData(QCborMap &map, bool const allowDuplicatedUuids) {
     ZoneScoped;
 
-    if (auto result = NodeSerializable::loadNodeData(map); !result)
+    if (auto result = NodeSerializable::loadNodeData(map, allowDuplicatedUuids); !result)
         return std::unexpected(result.error());
 
-    if (auto result = loadChildrenNodes(map); !result)
+    if (auto result = loadChildrenNodes(map, allowDuplicatedUuids); !result)
         return std::unexpected(result.error());
 
     return {};
 }
 
-std::expected<void, QString> NodeHierarchical::loadChildrenNodes(QCborMap &map) {
+std::expected<void, QString> NodeHierarchical::loadChildrenNodes(QCborMap &map, const bool allowDuplicatedUuids) {
     ZoneScoped;
 
     auto children = map.take(std::to_underlying(Format::NodeKey::Children));
@@ -292,7 +293,9 @@ std::expected<void, QString> NodeHierarchical::loadChildrenNodes(QCborMap &map) 
     children_.reserve(childrenArray.size());
 
     for (auto const &child: childrenArray) {
-        if (auto childNode = NodeHierarchical::load(child, model(), std::dynamic_pointer_cast<NodeHierarchical>(shared_from_this())); !childNode)
+        if (auto childNode = NodeHierarchical::load(
+                child, model(), std::dynamic_pointer_cast<NodeHierarchical>(shared_from_this()), allowDuplicatedUuids
+        ); !childNode)
             return std::unexpected(childNode.error());
         else
             children_.emplace_back(std::dynamic_pointer_cast<NodeSerializable>(std::move(*childNode)));

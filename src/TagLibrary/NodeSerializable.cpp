@@ -17,6 +17,7 @@
 #include "NodeSerializable.hpp"
 
 #include "Logging.hpp"
+#include "Model.hpp"
 #include "NodeCollection.hpp"
 #include "NodeInheritance.hpp"
 #include "NodeLink.hpp"
@@ -80,8 +81,6 @@ NodeSerializable::createNode(NodeType const type, Model &model, std::shared_ptr<
             return {};
     }
 }
-
-NodeSerializable::NodeSerializable(Model &model) : Node(model), uuid_(QUuid::createUuid()) {}
 
 NodeSerializable::~NodeSerializable() = default;
 
@@ -150,7 +149,8 @@ void NodeSerializable::setLastChangeVersion(int const version) {
 }
 
 std::expected<std::shared_ptr<NodeSerializable>, QString> NodeSerializable::load(
-        QCborValue const &value, Model &model, std::shared_ptr<NodeSerializable> const &parent
+        QCborValue const &value, Model &model,
+        std::shared_ptr<NodeSerializable> const &parent, bool const allowDuplicatedUuids
 ) {
     ZoneScoped;
 
@@ -173,7 +173,7 @@ std::expected<std::shared_ptr<NodeSerializable>, QString> NodeSerializable::load
     else
         node = std::move(*result);
 
-    if (auto result = node->loadNodeData(map); !result) {
+    if (auto result = node->loadNodeData(map, allowDuplicatedUuids); !result) {
         // TODO: this should be solved via RAII
         node->deinit();
         return std::unexpected(result.error());
@@ -197,13 +197,15 @@ std::expected<void, QString> NodeSerializable::saveNodeData(QCborMap &map) const
     return {};
 }
 
-std::expected<void, QString> NodeSerializable::loadNodeData(QCborMap &map) {
+std::expected<void, QString> NodeSerializable::loadNodeData(QCborMap &map, bool const allowDuplicatedUuids) {
     ZoneScoped;
 
     auto uuid = map.take(std::to_underlying(Format::NodeKey::Uuid));
     if (!uuid.isByteArray())
         return std::unexpected(QObject::tr("UUID element is not a byte array but %1").arg(cborTypeToString(uuid.type())));
+    auto oldUuid = uuid_;
     uuid_ = QUuid::fromRfc4122(uuid.toByteArray());
+    uuidChanged(oldUuid, allowDuplicatedUuids);
 
     auto hidden = map.take(std::to_underlying(Format::NodeKey::Hidden));
     if (!hidden.isBool())

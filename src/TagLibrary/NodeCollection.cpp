@@ -99,10 +99,10 @@ std::expected<void, QString> NodeCollection::saveNodeData(QCborMap &map) const {
     return {};
 }
 
-std::expected<void, QString> NodeCollection::loadNodeData(QCborMap &map) {
+std::expected<void, QString> NodeCollection::loadNodeData(QCborMap &map, bool const allowDuplicatedUuids) {
     ZoneScoped;
 
-    if (auto result = NodeHierarchical::loadNodeData(map); !result)
+    if (auto result = NodeHierarchical::loadNodeData(map, allowDuplicatedUuids); !result)
         return std::unexpected(result.error());
 
     auto name = map.take(std::to_underlying(Format::NodeKey::Name));

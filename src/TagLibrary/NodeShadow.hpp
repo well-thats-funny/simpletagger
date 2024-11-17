@@ -95,6 +95,7 @@ private:
 
     std::weak_ptr<Node> const parent_;
     std::weak_ptr<Node> const target_;
+    QUuid const targetUuid_;
     std::weak_ptr<Node> const owner_;
     std::vector<std::shared_ptr<NodeShadow>> children_;
     mutable std::optional<std::vector<IconIdentifier>> icons_;

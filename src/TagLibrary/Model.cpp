@@ -29,25 +29,6 @@ Model::Model() {
         if (auto result = invalidateTagCaches(); !result)
             reportError(QObject::tr("Tags cache invalidation failed"), result.error());
     });
-    connect(this, &Model::modelReset, this, [this](){
-        populateUuidMap();
-    });
-    connect(this, &Model::rowsInserted, this, [this](QModelIndex const &parent, int const first, int const last){
-        for (int row = first; row <= last; ++row) {
-            auto childIndex = index(row, 0, parent);
-            auto child = fromIndex(childIndex);
-            if (!child->isVirtual())
-                uuidToNode_.emplace(child->uuid(), child);
-        }
-    });
-    connect(this, &Model::rowsAboutToBeRemoved, this, [this](QModelIndex const &parent, int const first, int const last){
-        for (int row = first; row <= last; ++row) {
-            auto childIndex = index(row, 0, parent);
-            auto child = fromIndex(childIndex);
-            if (!child->isVirtual())
-                uuidToNode_.remove(child->uuid());
-        }
-    });
 }
 
 Model::~Model() {
@@ -479,7 +460,11 @@ QMimeData *Model::mimeData(QModelIndexList const &indexes) const {
                 return nullptr;
             }
 
-            array.append(*result);
+            QCborMap mimeEntry;
+            mimeEntry[std::to_underlying(NodesMimeKey::SourceModelInstanceUuid)] = modelInstanceUuid_.toRfc4122();
+            mimeEntry[std::to_underlying(NodesMimeKey::NodeData)] = *result;
+
+            array.append(mimeEntry);
         }
     }
 
@@ -506,7 +491,7 @@ Qt::DropActions Model::supportedDropActions() const {
 }
 
 namespace {
-std::generator<std::expected<QCborMap, QString>> parseMimeData(QMimeData const *const data) {
+std::generator<std::expected<std::pair<QUuid, QCborMap>, QString>> parseMimeData(QMimeData const *const data) {
     ZoneScoped;
 
     if (!data->hasFormat(mimeType.toString())) {
@@ -544,8 +529,17 @@ std::generator<std::expected<QCborMap, QString>> parseMimeData(QMimeData const *
             co_return;
         }
 
-        auto nodeData = element.toMap();
-        co_yield nodeData;
+        auto mimeData = element.toMap();
+        auto sourceModelInstaceIdValue = mimeData.take(std::to_underlying(NodesMimeKey::SourceModelInstanceUuid));
+        if (!sourceModelInstaceIdValue.isByteArray()) {
+            co_yield std::unexpected(
+                    QObject::tr("Mime data source model uuid not a byte array but %1").arg(cborTypeToString(sourceModelInstaceIdValue.type())));
+            co_return;
+        }
+        auto sourceModelInstanceId = QUuid::fromRfc4122(sourceModelInstaceIdValue.toByteArray());
+
+        auto nodeData = mimeData.take(std::to_underlying(NodesMimeKey::NodeData)).toMap();
+        co_yield std::make_pair(sourceModelInstanceId, nodeData);
     }
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wmismatched-new-delete" // TODO: appears in MinSizeRel build
@@ -573,7 +567,7 @@ bool Model::canDropMimeData(
             return false;
         }
 
-        QCborMap map = *v;
+        QCborMap map = v->second;
 
         auto typeValue = map.take(std::to_underlying(Format::NodeKey::Type));
         if (!typeValue.isInteger()) {
@@ -589,15 +583,14 @@ bool Model::canDropMimeData(
 }
 
 bool Model::dropMimeData(
-        QMimeData const *const data, Qt::DropAction const action, int row, int const column,
-        QModelIndex const &parent
+        QMimeData const *const data, Qt::DropAction const action, int row, int const column, QModelIndex const &parent
 ) {
     ZoneScoped;
     gsl_Expects(data);
     gsl_Expects(!parent.isValid() || parent.model() == this);
     (void)column; // gsl_Expects(column == -1); // TODO: which one?
 
-    if (action != Qt::DropAction::MoveAction)
+    if (action != Qt::DropAction::MoveAction) // TODO: allow other actions, e.g. copy
         return false;
 
     auto parentNode = fromIndex(parent);
@@ -625,13 +618,15 @@ bool Model::dropMimeData(
             return false;
         }
 
-        QCborMap map = *v;
+        bool internalOp = v->first == modelInstanceUuid_;
+
+        QCborMap map = v->second;
 
         // TODO: not sure what will be the exact effect if we get more than one row... which order will they appear in=
         //       perhaps on the sender side (mimeData()) we should sort by row first and then insert in the same
         //       order here?
 
-        auto node = NodeHierarchical::load(map, *this, parentNodeSerializable);
+        auto node = NodeHierarchical::load(map, *this, parentNodeSerializable, internalOp && action == Qt::MoveAction);
         if (!node) {
             qCCritical(LoggingCategory) << "Cannot create new node:" << node.error();
             return false;
@@ -664,7 +659,10 @@ std::expected<void, QString> Model::resetRoot() {
 
     {
         QSignalBlocker block(this);
-        root.reset(new NodeRoot(*this));
+        root = std::make_shared<NodeRoot>(*this);
+
+        if (auto result = root->init(); !result)
+            return std::unexpected(result.error());
 
         if (auto index = insertNode(NodeType::Collection, QModelIndex()); !index)
             return std::unexpected(index.error());
@@ -701,8 +699,6 @@ std::expected<void, QString> Model::load(QCborValue const &value) {
 
         root->deinit();
         root = std::move(newRoot);
-
-        populateUuidMap();
 
         if (auto result = root->populateShadows(); !result)
             return std::unexpected(result.error());
@@ -877,15 +873,53 @@ QStringList Model::allTags() const {
     return *allTags_;
 }
 
-void Model::populateUuidMap() {
-    uuidToNode_.clear();
-    if (auto result = root->visit(
-            Node::VisitFlag::Recursive | Node::VisitFlag::SkipVirtual,
-            [&](auto &&node) -> std::expected<bool, Error> {
-            assert(!node->isVirtual());
-            uuidToNode_.emplace(node->uuid(), node);
-            return true;
-        }); !result)
-        reportError("modelReset visit", result.error());
+void Model::nodeUUIDRegister(std::shared_ptr<Node> const &node) {
+    ZoneScoped;
+    if (!node->isVirtual()) {
+        qCDebug(LoggingCategory) << "UUID-to-node: add" << node->uuid() << ":" << node->name(true);
+        assert(!uuidToNode_.contains(node->uuid()));
+        uuidToNode_.emplace(node->uuid(), node);
+    }
+}
+
+void Model::nodeUUIDChanged(std::shared_ptr<Node> const &node, QUuid const &oldUuid, bool const replaceExisting) {
+    ZoneScoped;
+    if (!node->isVirtual()) {
+        qCDebug(LoggingCategory) << "UUID-to-node: change" << oldUuid << "->" << node->uuid() << ":" << node->name(true);
+        assert(uuidToNode_.contains(oldUuid));
+        assert(uuidToNode_.value(oldUuid).lock() == node);
+        uuidToNode_.remove(oldUuid);
+
+        auto newUuid = node->uuid();
+        bool exists = uuidToNode_.contains(newUuid);
+
+        if (replaceExisting) {
+            if (exists) {
+                assert(!uuidToNodeReplaced_.contains(newUuid));
+                uuidToNodeReplaced_.insert(newUuid);
+            }
+        } else {
+            assert(!exists);
+        }
+
+        uuidToNode_[newUuid] = node;
+    }
+}
+
+void Model::nodeUUIDUnregister(std::shared_ptr<Node> const &node) {
+    ZoneScoped;
+    if (!node->isVirtual()) {
+        auto uuid = node->uuid();
+
+        qCDebug(LoggingCategory) << "UUID-to-node: remove" << uuid << ":" << node->name(true);
+
+        if (uuidToNodeReplaced_.contains(uuid)) {
+            uuidToNodeReplaced_.remove(uuid);
+        } else {
+            assert(uuidToNode_.contains(uuid));
+            assert(uuidToNode_.value(uuid).lock() == node);
+            uuidToNode_.remove(uuid);
+        }
+    }
 }
 }

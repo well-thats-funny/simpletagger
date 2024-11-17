@@ -252,6 +252,8 @@ public:
     [[nodiscard]] virtual std::expected<void, QString> repopulateShadows(RepopulationRequest const &repopulationRequest) = 0;
 
 protected:
+    void uuidChanged(QUuid const &oldUuid, bool replaceExisting);
+
     struct VerifyContext {
         QSet<QUuid> uuids;
         QSet<QString> resolvedTags;
@@ -275,7 +277,10 @@ signals:
 
 private:
     Model &model_;
-    bool deinitialized_ = false;
+    struct {
+        bool initialized_   : 1 = false;
+        bool deinitialized_ : 1 = false;
+    };
 
     mutable QHash<TagFlags, std::vector<Tag>> tagCache_;
 };

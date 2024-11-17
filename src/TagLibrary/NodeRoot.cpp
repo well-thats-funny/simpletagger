@@ -132,10 +132,10 @@ std::expected<void, QString> NodeRoot::saveNodeData(QCborMap &map) const {
     return {};
 }
 
-std::expected<void, QString> NodeRoot::loadNodeData(QCborMap &map) {
+std::expected<void, QString> NodeRoot::loadNodeData(QCborMap &map, bool const allowDuplicatedUuids) {
     ZoneScoped;
 
-    if (auto result = NodeSerializable::loadNodeData(map); !result)
+    if (auto result = NodeSerializable::loadNodeData(map, allowDuplicatedUuids); !result)
         return std::unexpected(result.error());
 
     auto children = map.take(std::to_underlying(Format::NodeKey::Children));
@@ -149,7 +149,9 @@ std::expected<void, QString> NodeRoot::loadNodeData(QCborMap &map) {
         rootCollection_.reset();
     } else {
         for (auto const &child: childrenArray) {
-            if (auto childNode = NodeHierarchical::load(child, model(), std::dynamic_pointer_cast<NodeRoot>(shared_from_this())); !childNode)
+            if (auto childNode = NodeHierarchical::load(
+                    child, model(), std::dynamic_pointer_cast<NodeRoot>(shared_from_this()), allowDuplicatedUuids
+            ); !childNode)
                 return std::unexpected(childNode.error());
             else
                 if (auto childCollection = std::dynamic_pointer_cast<NodeCollection>(std::move(*childNode)); !childCollection)

@@ -67,13 +67,20 @@ Node::~Node() {
 }
 
 std::expected<void, QString> Node::init() {
+    ZoneScoped;
+    assert(!initialized_);
+    assert(!deinitialized_);
+    model().nodeUUIDRegister(shared_from_this());
+    initialized_ = true;
     return {};
 }
 
 void Node::deinit() {
     ZoneScoped;
+    assert(initialized_);
     assert(!deinitialized_);
     emit aboutToRemove();
+    model().nodeUUIDUnregister(shared_from_this());
     deinitialized_ = true;
 }
 
@@ -421,6 +428,10 @@ std::expected<void, Error> Node::populateShadows() {
 
 std::expected<void, Error> Node::unpopulateShadows() {
     return unpopulateShadowsImpl();
+}
+
+void Node::uuidChanged(QUuid const &oldUuid, bool const replaceExisting) {
+    model().nodeUUIDChanged(shared_from_this(), oldUuid, replaceExisting);
 }
 
 std::expected<void, QStringList> Node::verify(VerifyContext &context) const {

@@ -21,6 +21,10 @@ namespace TagLibrary {
 class NodeRoot;
 
 static constexpr QStringView mimeType = u"application/x.simpletagger.taglibrary.nodes";
+enum class NodesMimeKey {
+    SourceModelInstanceUuid = 1,
+    NodeData = 2
+};
 
 class Model: public QAbstractItemModel {
     Q_OBJECT
@@ -99,7 +103,14 @@ signals:
     void persistentDataChanged();
 
 private:
-    void populateUuidMap();
+    void nodeUUIDRegister(std::shared_ptr<Node> const &node);
+    void nodeUUIDChanged(std::shared_ptr<Node> const &node, QUuid const &oldUuid, bool replaceExisting);
+    void nodeUUIDUnregister(std::shared_ptr<Node> const &node);
+
+    // Uuid of the specific model instance. Randomly generated on every instantiation (startup etc).
+    // It's used to distinguish in copy or drag&drop operations between nodes coming from the same model
+    // and from elsewhere.
+    QUuid modelInstanceUuid_ = QUuid::createUuid();
 
     std::shared_ptr<NodeRoot> root;
     bool editMode_ = false;
@@ -108,6 +119,7 @@ private:
     std::optional<int> highlightChangedAfterVersion_;
 
     QHash<QUuid, std::weak_ptr<Node>> uuidToNode_;
+    QSet<QUuid> uuidToNodeReplaced_;
 
     mutable QMutex allTagsMutex_;
     mutable std::optional<QStringList> allTags_;

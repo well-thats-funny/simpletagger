@@ -36,6 +36,7 @@ protected:
     [[nodiscard]] IconIdentifier linkingIcon() const override;
     void emitInsertChildrenBegin(int count) override;
     void emitInsertChildrenEnd(int count) override;
+    void emitBeforeRemoveChildren(int count) override;
     void emitRemoveChildrenBegin(int count) override;
     void emitRemoveChildrenEnd(int count) override;
 };

@@ -249,10 +249,10 @@ std::expected<std::optional<QCborArray>, QString> NodeLink::saveChildrenNodes() 
     return std::nullopt;
 }
 
-std::expected<void, QString> NodeLink::loadNodeData(QCborMap &map) {
+std::expected<void, QString> NodeLink::loadNodeData(QCborMap &map, bool const allowDuplicatedUuids) {
     ZoneScoped;
 
-    if (auto result = NodeHierarchical::loadNodeData(map); !result)
+    if (auto result = NodeHierarchical::loadNodeData(map, allowDuplicatedUuids); !result)
         return std::unexpected(result.error());
 
     auto name = map.take(std::to_underlying(Format::NodeKey::Name));
@@ -277,7 +277,7 @@ std::expected<void, QString> NodeLink::loadNodeData(QCborMap &map) {
     return {};
 }
 
-std::expected<void, QString> NodeLink::loadChildrenNodes([[maybe_unused]] QCborMap &map) {
+std::expected<void, QString> NodeLink::loadChildrenNodes([[maybe_unused]] QCborMap &map, bool const) {
     ZoneScoped;
     assert(!map.contains(std::to_underlying(Format::NodeKey::Children)));
     return {};
@@ -293,6 +293,10 @@ void NodeLink::emitInsertChildrenBegin(int const count) {
 
 void NodeLink::emitInsertChildrenEnd(int const count) {
     emit insertChildrenEnd(0, count - 1);
+}
+
+void NodeLink::emitBeforeRemoveChildren(int const count) {
+    emit beforeRemoveChildren(0, count - 1);
 }
 
 void NodeLink::emitRemoveChildrenBegin(int const count) {
@@ -353,8 +357,10 @@ std::expected<void, QString> NodeLink::unpopulateShadowsImpl() {
         if (!childrenCount)
             return std::unexpected(childrenCount.error());
 
-        if (*childrenCount > 0)
+        if (*childrenCount > 0) {
+            emitBeforeRemoveChildren(*childrenCount);
             emitRemoveChildrenBegin(*childrenCount);
+        }
 
         if (!shadowRoot_->deinitialized())
             shadowRoot_->deinit();

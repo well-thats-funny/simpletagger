@@ -68,12 +68,13 @@ public:
 protected:
     [[nodiscard]] std::expected<void, QString> saveNodeData(QCborMap &map) const override;
     [[nodiscard]] std::expected<std::optional<QCborArray>, QString> saveChildrenNodes() const override;
-    [[nodiscard]] std::expected<void, QString> loadNodeData(QCborMap &map) override;
-    [[nodiscard]] std::expected<void, QString> loadChildrenNodes(QCborMap &map) override;
+    [[nodiscard]] std::expected<void, QString> loadNodeData(QCborMap &map, bool allowDuplicatedUuids) override;
+    [[nodiscard]] std::expected<void, QString> loadChildrenNodes(QCborMap &map, bool allowDuplicatedUuids) override;
 
     [[nodiscard]] virtual IconIdentifier linkingIcon() const;
     virtual void emitInsertChildrenBegin(int count);
     virtual void emitInsertChildrenEnd(int count);
+    virtual void emitBeforeRemoveChildren(int count);
     virtual void emitRemoveChildrenBegin(int count);
     virtual void emitRemoveChildrenEnd(int count);
 

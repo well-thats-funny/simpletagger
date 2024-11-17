@@ -59,7 +59,7 @@ public:
 
 protected:
     [[nodiscard]] std::expected<void, QString> saveNodeData(QCborMap &map) const override;
-    [[nodiscard]] std::expected<void, QString> loadNodeData(QCborMap &map) override;
+    [[nodiscard]] std::expected<void, QString> loadNodeData(QCborMap &map, bool allowDuplicatedUuids) override;
 
 private:
     QString name_;

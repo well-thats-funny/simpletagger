@@ -28,12 +28,15 @@ NodeShadow::NodeShadow(
         std::shared_ptr<Node> const &owner,
         IconIdentifier const &linkingIcon
 ):
-    Node(model), parent_(parent), target_(target), owner_(owner), linkingIcon_(linkingIcon) {}
+    Node(model), parent_(parent), target_(target), targetUuid_(target->uuid()), owner_(owner), linkingIcon_(linkingIcon) {}
 
 NodeShadow::~NodeShadow() = default;
 
 std::expected<void, QString> NodeShadow::init() {
     ZoneScoped;
+
+    if (auto result = Node::init(); !result)
+        return std::unexpected(result.error());
 
     auto target = target_.lock();
     assert(target);
@@ -431,6 +434,15 @@ std::expected<std::shared_ptr<NodeShadow>, QString> NodeShadow::createChild(int 
 
 std::shared_ptr<Node> NodeShadow::target() const {
     auto target = target_.lock();
+    if (!target) {
+        // it might happen that the node has been recreated (destroyed and created
+        // at another place), so we should try to find its new pointer
+        if (auto newTarget = model().fromUuid(targetUuid_); !newTarget)
+            qCCritical(LoggingCategory) << "Could not find new pointer to target" << targetUuid_ << ":" << newTarget.error();
+        else
+            target = *newTarget;
+    }
+
     assert(target);
     return target;
 }

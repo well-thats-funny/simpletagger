@@ -24,7 +24,7 @@ public:
     createNode(NodeType type, Model &model, std::shared_ptr<NodeSerializable> const &parent);
     [[nodiscard]] static IconIdentifier genericIcon(NodeType type);
 
-    explicit NodeSerializable(Model &model);
+    using Node::Node;
     ~NodeSerializable();
 
     // children modification
@@ -45,14 +45,14 @@ public:
     // persistence
     [[nodiscard]] std::expected<QCborValue, QString> save() const;
     [[nodiscard]] static std::expected<std::shared_ptr<NodeSerializable>, QString>
-    load(QCborValue const &value, Model &model, std::shared_ptr<NodeSerializable> const &parent);
+    load(QCborValue const &value, Model &model, std::shared_ptr<NodeSerializable> const &parent, bool allowDuplicatedUuids = false);
 
 protected:
     [[nodiscard]] virtual std::expected<void, QString> saveNodeData(QCborMap &map) const;
-    [[nodiscard]] virtual std::expected<void, QString> loadNodeData(QCborMap &map);
+    [[nodiscard]] virtual std::expected<void, QString> loadNodeData(QCborMap &map, bool allowDuplicatedUuids);
 
 private:
-    QUuid uuid_;
+    QUuid uuid_ = QUuid::createUuid();
     bool hidden_ = false;
     std::optional<int> lastChangeVersion_;
 };

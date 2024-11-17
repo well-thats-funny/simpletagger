@@ -76,6 +76,19 @@ void NodeInheritance::emitInsertChildrenEnd(int const count) {
     }
 }
 
+void NodeInheritance::emitBeforeRemoveChildren(int const count) {
+    if (model().editMode()) {
+        // if we're in edit mode, we behave like any link
+        return NodeLink::emitBeforeRemoveChildren(count);
+    } else {
+        // otherwise, we're invisible and our parent takes over our children
+        if (auto first = parent()->rowOfChild(*this, true); !first)
+            reportError("emitBeforeRemoveChildren -> rowOfChild failed", first.error(), false);
+        else
+            emit std::dynamic_pointer_cast<NodeSerializable>(parent())->beforeRemoveChildren(*first, *first + count - 1);
+    }
+}
+
 void NodeInheritance::emitRemoveChildrenBegin(int const count) {
     if (model().editMode()) {
         // if we're in edit mode, we behave like any link
@@ -85,7 +98,6 @@ void NodeInheritance::emitRemoveChildrenBegin(int const count) {
         if (auto first = parent()->rowOfChild(*this, true); !first)
             reportError("emitRemoveChildrenBegin -> rowOfChild failed", first.error(), false);
         else
-            // TODO: get rid of const_cast
             emit std::dynamic_pointer_cast<NodeSerializable>(parent())->removeChildrenBegin(*first, *first + count - 1);
     }
 }
@@ -99,7 +111,6 @@ void NodeInheritance::emitRemoveChildrenEnd(int const count) {
         if (auto first = parent()->rowOfChild(*this, true); !first)
             reportError("emitRemoveChildrenEnd -> rowOfChild failed", first.error(), false);
         else
-            // TODO: get rid of const_cast
             emit std::dynamic_pointer_cast<NodeSerializable>(parent())->removeChildrenEnd(*first, *first + count - 1);
     }
 }
