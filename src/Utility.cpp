@@ -108,4 +108,6 @@ void reportError(QString const &title, Error const &content, bool const messageB
 
     if (messageBox)
         QMessageBox::critical(qApp->activeWindow(), title, content);
+
+    assert(false && "error occurred");
 }
