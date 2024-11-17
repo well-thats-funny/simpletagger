@@ -191,9 +191,11 @@ Qt::ItemFlags Model::flags(QModelIndex const &index) const {
     ZoneScoped;
     gsl_Expects(!index.isValid() || index.model() == this);
 
-    Qt::ItemFlags flags = Qt::ItemFlag::ItemIsEnabled | Qt::ItemFlag::ItemIsSelectable;
+    Qt::ItemFlags flags = {};
 
     if (index.isValid()) {
+        flags |= Qt::ItemFlag::ItemIsEnabled | Qt::ItemFlag::ItemIsSelectable;
+
         auto &node = fromIndex(index);
 
         switch (static_cast<Column>(index.column())) {
