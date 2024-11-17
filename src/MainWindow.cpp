@@ -715,8 +715,6 @@ void MainWindow::loadFile(QString const &path) {
 
     tagLibrary->setEnabled(true);
 
-    loadFileTaggerTagsToTagLibrary();
-
     QString notification;
     QString notificationTooltip;
 
