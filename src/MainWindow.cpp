@@ -418,8 +418,11 @@ std::expected<void, QString> MainWindow::setupTagLibraryDock() {
         }
     }
 
-    connectionSaveTagLibraryOnChange = connect(&*tagLibrary, &TagLibrary::Library::contentChanged, this, [this, tagLibraryPath]{
+    connectionSaveTagLibraryOnChange = connect(&*tagLibrary, &TagLibrary::Library::editModeChanged, this, [this, tagLibraryPath](bool const editMode){
         ZoneScoped;
+
+        if (editMode)
+            return; // don't save on entering edit mode
 
         std::optional<int> backupsCounter;
 

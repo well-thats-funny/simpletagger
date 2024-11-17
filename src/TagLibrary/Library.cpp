@@ -466,6 +466,7 @@ std::expected<void, QString> Library::init() {
     connect(ui->actionToggleEditMode, &QAction::triggered, this, [this]{
         ZoneScoped;
         finishSelection(true);
+        emit editModeChanged(ui->actionToggleEditMode->isChecked());
     });
 
     connect(ui->actionExpandAll, &QAction::triggered, this, [this]{

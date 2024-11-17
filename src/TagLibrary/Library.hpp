@@ -65,6 +65,7 @@ public:
 
 signals:
     void contentChanged();
+    void editModeChanged(bool editMode);
     void tagsSelected(QStringList const &tags);
     void tagsActiveChanged(QStringList const &tags, bool active);
 
