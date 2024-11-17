@@ -328,6 +328,11 @@ bool NodeLinkSubtree::isVirtual() const {
     return true;
 }
 
+bool NodeLinkSubtree::isHidden() const {
+    ZoneScoped;
+    return target_.isHidden();
+}
+
 std::optional<int> NodeLinkSubtree::lastChangeVersion() const {
     ZoneScoped;
     return target_.lastChangeVersion();
