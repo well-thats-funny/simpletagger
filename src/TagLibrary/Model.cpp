@@ -128,6 +128,9 @@ QModelIndex Model::parent(QModelIndex const &child) const {
     gsl_Expects(!child.isValid() || child.model() == this);
 
     auto childNode = fromIndex(child);
+    if (!child.isValid() && !childNode)
+        return {};
+
     assert(childNode);
     if (childNode == &*root)
         return {};
