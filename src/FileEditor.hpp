@@ -56,8 +56,9 @@ public:
     bool setCompleteFlag(bool complete);
     [[nodiscard]] bool isCompleteFlag() const;
 
-    [[nodiscard]] std::expected<void, QString> setFileExcluded(bool excluded);
+    [[nodiscard]] std::expected<void, Error> setFileExcluded(bool excluded);
     [[nodiscard]] bool isFileExcluded() const;
+    [[nodiscard]] std::expected<void, Error> setFileExcluded(bool excluded, QString const &path);
 
     [[nodiscard]] std::optional<QUuid> imageTagLibraryUuid() const;
     [[nodiscard]] std::optional<int> imageTagLibraryVersion() const;

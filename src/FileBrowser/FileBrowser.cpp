@@ -203,9 +203,24 @@ std::expected<void, QString> FileBrowser::init() {
 
     connect(ui->actionExclude, &QAction::triggered, this, [this]{
         ZoneScoped;
-        if (auto result = fileEditor_.setFileExcluded(ui->actionExclude->isChecked()); !result) {
-            QMessageBox::critical(this, tr("Could not set exclusion"), result.error());
+
+        auto exclude = ui->actionExclude->isChecked();
+
+        if (auto result = fileEditor_.setFileExcluded(exclude); !result) {
+            reportError(tr("Could not set exclusion"), result.error());
         } else {
+            // if other files except of the main one are selected, bring them all to the same
+            // exclusion state
+            for (auto const &index: ui->treeViewDirectories->selectionModel()->selectedRows()) {
+                if (index != ui->treeViewDirectories->currentIndex()) {
+                    auto sourceIndex = directoryTreeProxyModel->mapToSource(index);
+                    auto file = directoryTreeModel->filePath(sourceIndex);
+                    if (auto result = fileEditor_.setFileExcluded(exclude, file); !result)
+                        reportError(tr("Could not set exclusion"), result.error());
+                    directoryTreeModel->refreshExcludedState(file);
+                }
+            }
+
             ui->actionExclude->setChecked(fileEditor_.isFileExcluded());
 
             auto indexCurrent = ui->treeViewDirectories->currentIndex();

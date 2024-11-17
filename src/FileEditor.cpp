@@ -190,18 +190,7 @@ bool FileEditor::isCompleteFlag() const {
 
 std::expected<void, QString> FileEditor::setFileExcluded(bool const excluded) {
     ZoneScoped;
-    gsl_Expects(project_);
-    gsl_Expects(QFileInfo(currentFile_).isAbsolute());
-
-    auto relative = QDir(project_->rootDir()).relativeFilePath(currentFile_);
-    project_->setExcludedFile(relative, excluded);
-    if (auto result = project_->save(backupOnEverySave_); !result) {
-        return std::unexpected(result.error());
-    } else {
-        emit projectSaved(*result);
-        return {};
-    }
-
+    return setFileExcluded(excluded, currentFile_);
 }
 
 bool FileEditor::isFileExcluded() const {
@@ -212,6 +201,21 @@ bool FileEditor::isFileExcluded() const {
 
     auto relative = QDir(project_->rootDir()).relativeFilePath(currentFile_);
     return project_->isExcludedFile(relative);
+}
+
+std::expected<void, Error> FileEditor::setFileExcluded(bool const excluded, QString const &path) {
+    ZoneScoped;
+    gsl_Expects(project_);
+    gsl_Expects(QFileInfo(path).isAbsolute());
+
+    auto relative = QDir(project_->rootDir()).relativeFilePath(path);
+    project_->setExcludedFile(relative, excluded);
+    if (auto result = project_->save(backupOnEverySave_); !result) {
+        return std::unexpected(result.error());
+    } else {
+        emit projectSaved(*result);
+        return {};
+    }
 }
 
 std::optional<QUuid> FileEditor::imageTagLibraryUuid() const {
