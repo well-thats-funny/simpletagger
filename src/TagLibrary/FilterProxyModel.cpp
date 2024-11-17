@@ -51,10 +51,11 @@ bool FilterProxyModel::filterAcceptsRow(int const sourceRow, QModelIndex const &
     auto source = qobject_cast<Model*>(sourceModel());
     gsl_Expects(source);
 
-    auto &node = source->fromIndex(source->index(sourceRow, 0, sourceParent));
+    auto node = source->fromIndex(source->index(sourceRow, 0, sourceParent));
+    assert(node);
 
     if (changedAfterVersion_ && onlyChanged_) {
-        if (auto lastChangeAfter = node.lastChangeAfter(*changedAfterVersion_, true, true); !lastChangeAfter)
+        if (auto lastChangeAfter = node->lastChangeAfter(*changedAfterVersion_, true, true); !lastChangeAfter)
             qWarning() << "lastChangeAfter error:" << lastChangeAfter.error();
         else if (!*lastChangeAfter)
             return false;
@@ -63,7 +64,7 @@ bool FilterProxyModel::filterAcceptsRow(int const sourceRow, QModelIndex const &
     if (editMode_) {
         return true;
     } else {
-        return !node.isHidden();
+        return !node->isHidden();
     }
 }
 }

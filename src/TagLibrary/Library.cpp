@@ -125,23 +125,27 @@ std::expected<void, QString> Library::init() {
         selectionJumpBackTo = link;
         auto isSelectable = [this](auto const &candidate) {
             auto sourceCandidate = toLibraryModelIndex(candidate);
-            return libraryModel_->fromIndex(sourceCandidate).canBeLinkedTo();
+            auto node = libraryModel_->fromIndex(sourceCandidate);
+            assert(node);
+            return node->canBeLinkedTo();
         };
         model_->requestSelection(isSelectable);
         ui->treeTags->requestSelection(
                 isSelectable,
                 [this, link](auto const &target){
                     ZoneScoped;
-                    auto &linkNode = libraryModel_->fromIndex(toLibraryModelIndex(link));
-                    auto &targetNode = libraryModel_->fromIndex(toLibraryModelIndex(target));
+                    auto linkNode = libraryModel_->fromIndex(toLibraryModelIndex(link));
+                    assert(linkNode);
+                    auto targetNode = libraryModel_->fromIndex(toLibraryModelIndex(target));
+                    assert(targetNode);
                     if (QMessageBox::question(
-                            this, tr("Link"), tr("Link <b>%1</b> to <b>%2</b>?").arg(linkNode.name(true), targetNode.name(true))
+                            this, tr("Link"), tr("Link <b>%1</b> to <b>%2</b>?").arg(linkNode->name(true), targetNode->name(true))
                     ) == QMessageBox::StandardButton::Yes) {
-                        if (auto result = linkNode.setLinkTo(targetNode.uuid()); !result) {
+                        if (auto result = linkNode->setLinkTo(targetNode->uuid()); !result) {
                             QMessageBox::critical(
                                     this, tr("Linking failed"), tr("Could not link <b>%1</b> (%2) to <b>%3</b> (%4)<br><br>%4").arg(
-                                            linkNode.name(true), linkNode.uuid().toString(QUuid::WithoutBraces),
-                                            targetNode.name(true), targetNode.uuid().toString(QUuid::WithoutBraces),
+                                            linkNode->name(true), linkNode->uuid().toString(QUuid::WithoutBraces),
+                                            targetNode->name(true), targetNode->uuid().toString(QUuid::WithoutBraces),
                                             result.error()
                                     )
                             );
@@ -159,22 +163,23 @@ std::expected<void, QString> Library::init() {
     connect(ui->actionLinkReset, &QAction::triggered, this, [this]{
         ZoneScoped;
         auto link = ui->treeTags->currentIndex();
-        auto &linkNode = libraryModel_->fromIndex(toLibraryModelIndex(link));
-        assert(linkNode.linkTo());
-        auto targetNode = libraryModel_->fromUuid(*linkNode.linkTo());
+        auto linkNode = libraryModel_->fromIndex(toLibraryModelIndex(link));
+        assert(linkNode);
+        assert(linkNode->linkTo());
+        auto targetNode = libraryModel_->fromUuid(*linkNode->linkTo());
         if (!targetNode) {
             qCCritical(LoggingCategory) << "unlink get target failed:" << targetNode.error();
             return;
         }
 
         if (QMessageBox::question(
-                this, tr("Link"), tr("Unlink <b>%1</b> from <b>%2</b>?").arg(linkNode.name(true), targetNode->get().name(true))
+                this, tr("Link"), tr("Unlink <b>%1</b> from <b>%2</b>?").arg(linkNode->name(true), targetNode->get().name(true))
         ) == QMessageBox::StandardButton::Yes) {
-            if (auto result = linkNode.setLinkTo(QUuid()); !result) {
+            if (auto result = linkNode->setLinkTo(QUuid()); !result) {
                 QMessageBox::critical(
                         this, tr("Linking failed"),
                         tr("Could not unlink <b>%1</b> (%2) from <b>%3</b> (%4)<br><br>%4").arg(
-                                linkNode.name(true), linkNode.uuid().toString(QUuid::WithoutBraces),
+                                linkNode->name(true), linkNode->uuid().toString(QUuid::WithoutBraces),
                                 targetNode->get().name(true), targetNode->get().uuid().toString(QUuid::WithoutBraces),
                                 result.error()
                         )
@@ -188,7 +193,8 @@ std::expected<void, QString> Library::init() {
 
         auto index = ui->treeTags->selectionModel()->currentIndex();
         auto sourceIndex = toLibraryModelIndex(index);
-        auto &node = libraryModel_->fromIndex(sourceIndex);
+        auto node = libraryModel_->fromIndex(sourceIndex);
+        assert(node);
 
         auto dialog = CommentEditor::create(this);
         if (!dialog) {
@@ -198,13 +204,13 @@ std::expected<void, QString> Library::init() {
                     tr("Could not open comment editor: %1").arg(dialog.error())
             );
         } else {
-            (*dialog)->setHeaderLabel(node.name());
-            (*dialog)->setText(node.comment());
+            (*dialog)->setHeaderLabel(node->name());
+            (*dialog)->setText(node->comment());
             (*dialog)->exec();
 
             if ((*dialog)->result() == QDialog::Accepted) {
-                assert(node.canSetComment());
-                if (auto result = node.setComment((*dialog)->text()); !result)
+                assert(node->canSetComment());
+                if (auto result = node->setComment((*dialog)->text()); !result)
                     QMessageBox::critical(
                             this,
                             tr("Comment change failed"),
@@ -219,10 +225,11 @@ std::expected<void, QString> Library::init() {
 
         auto index = ui->treeTags->selectionModel()->currentIndex();
         auto sourceIndex = toLibraryModelIndex(index);
-        auto &node = libraryModel_->fromIndex(sourceIndex);
+        auto node = libraryModel_->fromIndex(sourceIndex);
+        assert(node);
 
-        gsl_Expects(node.canSetHidden());
-        if (auto result = node.setHidden(ui->actionSetHidden->isChecked()); !result)
+        gsl_Expects(node->canSetHidden());
+        if (auto result = node->setHidden(ui->actionSetHidden->isChecked()); !result)
             QMessageBox::critical(this, tr("Set hidden failed"), result.error());
     });
 
@@ -230,12 +237,15 @@ std::expected<void, QString> Library::init() {
         ZoneScoped;
         auto index = ui->treeTags->selectionModel()->currentIndex();
         auto sourceIndex = toLibraryModelIndex(index);
-        auto &node = libraryModel_->fromIndex(sourceIndex);
-        auto active = node.active();
+        auto node = libraryModel_->fromIndex(sourceIndex);
+        assert(node);
+        auto active = node->active();
         gsl_Expects(active);
         auto newValue = !*active;
-        node.setActive(newValue);
-        ui->actionToggleActive->setChecked(newValue);
+        if (auto result = node->setActive(newValue); !result)
+            reportError("setActive", result.error(), false);
+        else
+            ui->actionToggleActive->setChecked(newValue);
     });
 
     auto addCreateActions = [this](QMenu &menu){
@@ -267,8 +277,9 @@ std::expected<void, QString> Library::init() {
                 auto index = ui->treeTags->currentIndex();
                 if (index.isValid()) {
                     auto sourceIndex = toLibraryModelIndex(index);
-                    auto &node = libraryModel_->fromIndex(sourceIndex);
-                    if (auto result = node.repopulateLinked(); !result)
+                    auto node = libraryModel_->fromIndex(sourceIndex);
+                    assert(node);
+                    if (auto result = node->repopulateLinked(); !result)
                         QMessageBox::critical(this, tr("Repopulate failed"), result.error());
                 }
             });
@@ -349,30 +360,31 @@ std::expected<void, QString> Library::init() {
 
         auto index = ui->treeTags->selectionModel()->currentIndex();
         auto indexSource = toLibraryModelIndex(index);
-        auto &node = libraryModel_->fromIndex(indexSource);
+        auto node = libraryModel_->fromIndex(indexSource);
+        assert(node);
 
         ui->buttonsNormalMode->setVisible(!editMode);
         ui->buttonsEditMode->setVisible(editMode);
-        ui->actionCreateCollection->setEnabled(editMode && node.canInsertChild(NodeType::Collection));
-        ui->actionCreateObject->setEnabled(editMode && node.canInsertChild(NodeType::Object));
-        ui->actionCreateLink->setEnabled(editMode && node.canInsertChild(NodeType::Link));
-        ui->actionCreateInheritance->setEnabled(editMode && node.canInsertChild(NodeType::Inheritance));
+        ui->actionCreateCollection->setEnabled(editMode && node->canInsertChild(NodeType::Collection));
+        ui->actionCreateObject->setEnabled(editMode && node->canInsertChild(NodeType::Object));
+        ui->actionCreateLink->setEnabled(editMode && node->canInsertChild(NodeType::Link));
+        ui->actionCreateInheritance->setEnabled(editMode && node->canInsertChild(NodeType::Inheritance));
         ui->buttonAdd->setEnabled(editMode && (ui->actionCreateCollection->isEnabled() || ui->actionCreateObject->isEnabled() || ui->actionCreateLink->isEnabled()));
-        ui->actionDelete->setEnabled(editMode && node.canRemove());
-        ui->actionRename->setEnabled(editMode && node.canSetName());
-        ui->buttonSetIcon->setEnabled(editMode && node.canSetIcon());
+        ui->actionDelete->setEnabled(editMode && node->canRemove());
+        ui->actionRename->setEnabled(editMode && node->canSetName());
+        ui->buttonSetIcon->setEnabled(editMode && node->canSetIcon());
         userIconMenu.setEnabled(ui->buttonSetIcon->isEnabled());
-        ui->actionLinkTo->setEnabled(editMode && node.canLinkTo());
-        ui->actionLinkReset->setEnabled(editMode && node.canLinkTo() && node.linkTo() && !node.linkTo()->isNull());
-        ui->actionComment->setEnabled(editMode && node.canSetComment());
+        ui->actionLinkTo->setEnabled(editMode && node->canLinkTo());
+        ui->actionLinkReset->setEnabled(editMode && node->canLinkTo() && node->linkTo() && !node->linkTo()->isNull());
+        ui->actionComment->setEnabled(editMode && node->canSetComment());
 
-        ui->actionSetHidden->setEnabled(editMode && node.canSetHidden());
-        ui->actionSetHidden->setChecked(node.isHidden());
+        ui->actionSetHidden->setEnabled(editMode && node->canSetHidden());
+        ui->actionSetHidden->setChecked(node->isHidden());
 
-        ui->actionToggleActive->setEnabled(!editMode && node.canSetActive());
+        ui->actionToggleActive->setEnabled(!editMode && node->canSetActive());
         if (ui->actionToggleActive->isEnabled()) {
-            gsl_Expects(node.active());
-            ui->actionToggleActive->setChecked(*node.active());
+            gsl_Expects(node->active());
+            ui->actionToggleActive->setChecked(*node->active());
         } else {
             ui->actionToggleActive->setChecked(false);
         }
@@ -386,12 +398,12 @@ std::expected<void, QString> Library::init() {
         ui->treeTags->setEditTriggers(editTriggers);
 
         if (indexSource.isValid()) {
-            ui->labelDescriptionTitle->setText(node.name());
+            ui->labelDescriptionTitle->setText(node->name());
 
             QString description;
-            description += tr("<b>Name:</b> %1<br>").arg(node.name(true).toHtmlEscaped());
+            description += tr("<b>Name:</b> %1<br>").arg(node->name(true).toHtmlEscaped());
 
-            auto tags = node.tags(Node::TagFlag::IncludeRaw | Node::TagFlag::IncludeResolved);
+            auto tags = node->tags(Node::TagFlag::IncludeRaw | Node::TagFlag::IncludeResolved);
             QString formattedTags;
 
             auto formatTag = [](Node::Tag const &tag) {
@@ -414,19 +426,19 @@ std::expected<void, QString> Library::init() {
             description += tr("<b>Tag:</b> %1").arg(formattedTags);
 
             description += tr("<b>Type:</b> %1 (%2)%3<br>").arg(
-                    QString::fromUtf8(QMetaEnum::fromType<NodeType>().valueToKey(std::to_underlying(node.type()))).toHtmlEscaped(),
-                    QString::number(std::to_underlying(node.type())).toHtmlEscaped(),
-                    node.isLinkingNode() ? tr(" (linking node)") : ""
+                    QString::fromUtf8(QMetaEnum::fromType<NodeType>().valueToKey(std::to_underlying(node->type()))).toHtmlEscaped(),
+                    QString::number(std::to_underlying(node->type())).toHtmlEscaped(),
+                    node->isLinkingNode() ? tr(" (linking node)") : ""
             );
-            description += tr("<b>Icon(s):</b> %1<br>").arg(node.icons()
+            description += tr("<b>Icon(s):</b> %1<br>").arg(node->icons()
                     | std::views::transform(&IconIdentifier::name)
                     | std::views::transform(&QString::toHtmlEscaped)
                     | std::views::join_with(QString::fromUtf8(", "))
                     | std::ranges::to<QString>()
             );
-            description += tr("<b>UUID:</b> %1<br>").arg(node.uuid().toString(QUuid::WithoutBraces).toHtmlEscaped());
+            description += tr("<b>UUID:</b> %1<br>").arg(node->uuid().toString(QUuid::WithoutBraces).toHtmlEscaped());
 
-            if (auto link = node.linkTo()) {
+            if (auto link = node->linkTo()) {
                 QString target;
 
                 auto targetNode = libraryModel_->fromUuid(*link);
@@ -443,18 +455,18 @@ std::expected<void, QString> Library::init() {
             }
 
             QString activeStr;
-            if (auto active = node.active(); !active)
+            if (auto active = node->active(); !active)
                 activeStr = tr("<i>not applicable</i>");
             else
                 activeStr = (*active ? tr("yes") : tr("no"));
             description += tr("<b>Active:</b> %1<br>").arg(activeStr);
 
-            description += tr("<b>Comment: </b> %1<br>").arg(node.comment());
-            description += tr("<b>Hidden:</b> %1<br>").arg(node.isHidden() ? tr("yes"): tr("no"));
-            description += tr("<b>Last change version:</b> %1<br>").arg(node.lastChangeVersion() ? QString::number(*node.lastChangeVersion()) : tr("unknown"));
+            description += tr("<b>Comment: </b> %1<br>").arg(node->comment());
+            description += tr("<b>Hidden:</b> %1<br>").arg(node->isHidden() ? tr("yes"): tr("no"));
+            description += tr("<b>Last change version:</b> %1<br>").arg(node->lastChangeVersion() ? QString::number(*node->lastChangeVersion()) : tr("unknown"));
 
             ui->labelDescriptionText->setText(description);
-            emit tagsSelected(node.tags()
+            emit tagsSelected(node->tags()
                     | std::views::transform([](auto const &v){ return v.resolved; })
                     | std::ranges::to<QStringList>()
             );

@@ -60,17 +60,16 @@ std::pair<QModelIndex, QModelIndex> Model::toIndexRange(Node const &node) const 
     return {index1, index2};
 }
 
-Node &Model::fromIndex(QModelIndex const &index) const {
+Node *Model::fromIndex(QModelIndex const &index) const {
     ZoneScoped;
     gsl_Expects(!index.isValid() || index.model() == this);
-    gsl_Expects(root);
 
     if (!index.isValid())
-        return *root;
+        return &*root;
 
     auto ptr = reinterpret_cast<Node *>(index.internalPointer());
     gsl_Ensures(ptr);
-    return *ptr;
+    return ptr;
 }
 
 std::expected<std::reference_wrapper<Node>, QString> Model::fromUuid(const QUuid &uuid) const {
@@ -109,12 +108,13 @@ QModelIndex Model::index(int const row, int const column, QModelIndex const &par
 
     QModelIndex result;
 
-    auto &parentNode = fromIndex(parent);
-    if (auto child = parentNode.childOfRow(row, !editMode_); !child) {
+    auto parentNode = fromIndex(parent);
+    assert(parentNode);
+    if (auto child = parentNode->childOfRow(row, !editMode_); !child) {
         qCWarning(LoggingCategory) << "childOfRow" << child.error();
         return QModelIndex();
     } else {
-        qCDebug(LoggingCategory) << "index(" << row << column << parentNode.name() << ") -> "
+        qCDebug(LoggingCategory) << "index(" << row << column << parentNode->name() << ") -> "
                                  << "createIndex(" << row << column << child->get().name() << ")";
 
         result = createIndex(row, column, &child->get());
@@ -127,23 +127,30 @@ QModelIndex Model::parent(QModelIndex const &child) const {
     ZoneScoped;
     gsl_Expects(!child.isValid() || child.model() == this);
 
-    auto &childNode = fromIndex(child);
-    if (&childNode == &*root)
+    auto childNode = fromIndex(child);
+    assert(childNode);
+    if (childNode == &*root)
         return {};
 
-    return toIndex(*childNode.parent());
+    return toIndex(*childNode->parent());
 }
 
 int Model::rowCount(QModelIndex const &parent) const {
     ZoneScoped;
     gsl_Expects(!parent.isValid() || parent.model() == this);
 
-    auto &node = fromIndex(parent);
-    if (auto size = node.childrenCount(!editMode_); !size) {
-        qCDebug(LoggingCategory) << "rowCount(" << node.name() << ") -> unexpected: " << size.error();
+    auto node = fromIndex(parent);
+    if (!node) {
+        qCDebug(LoggingCategory) << "rowCount(" << node->name() << ") -> 0 (no node)";
+        return 0;
+    }
+
+    assert(node);
+    if (auto size = node->childrenCount(!editMode_); !size) {
+        qCDebug(LoggingCategory) << "rowCount(" << node->name() << ") -> unexpected: " << size.error();
         return 0;
     } else {
-        qCDebug(LoggingCategory) << "rowCount(" << node.name() << ") -> " << *size;
+        qCDebug(LoggingCategory) << "rowCount(" << node->name() << ") -> " << *size;
         return *size;
     }
 }
@@ -196,24 +203,24 @@ Qt::ItemFlags Model::flags(QModelIndex const &index) const {
     if (index.isValid()) {
         flags |= Qt::ItemFlag::ItemIsEnabled | Qt::ItemFlag::ItemIsSelectable;
 
-        auto &node = fromIndex(index);
+        auto node = fromIndex(index);
 
         switch (static_cast<Column>(index.column())) {
             case Column::Name: {
-                if (node.canSetName())
+                if (node->canSetName())
                     flags |= Qt::ItemFlag::ItemIsEditable;
                 break;
             }
             case Column::Tag:
-                if (node.canSetTags())
+                if (node->canSetTags())
                     flags |= Qt::ItemFlag::ItemIsEditable;
                 break;
         }
 
-        if (node.canBeDragged())
+        if (node->canBeDragged())
             flags |= Qt::ItemFlag::ItemIsDragEnabled;
 
-        if (node.canAcceptDrop())
+        if (node->canAcceptDrop())
             flags |= Qt::ItemFlag::ItemIsDropEnabled;
     }
 
@@ -224,7 +231,7 @@ QVariant Model::data(const QModelIndex &index, int role) const {
     ZoneScoped;
     gsl_Expects(!index.isValid() || index.model() == this);
 
-    auto &node = fromIndex(index);
+    auto node = fromIndex(index);
 
     QVariant result;
 
@@ -232,16 +239,16 @@ QVariant Model::data(const QModelIndex &index, int role) const {
         case Qt::ItemDataRole::DisplayRole: {
             switch (static_cast<Column>(index.column())) {
                 case Column::Name:
-                    result = node.name(false, editMode_);
+                    result = node->name(false, editMode_);
                     break;
                 case Column::Tag:
                     if (!editMode_) {
-                        result = node.tags(Node::TagFlag::IncludeResolved)
+                        result = node->tags(Node::TagFlag::IncludeResolved)
                                 | std::views::transform([](auto const &tag){ return tag.resolved; })
                                 | std::views::join_with(QString(", "))
                                 | std::ranges::to<QString>();
                     } else {
-                        result = node.tags(Node::TagFlag::IncludeRaw | Node::TagFlag::IncludeResolved)
+                        result = node->tags(Node::TagFlag::IncludeRaw | Node::TagFlag::IncludeResolved)
                                 | std::views::transform([](auto const &tag){
                                     assert(!tag.raw.isEmpty());
                                     assert(!tag.resolved.isEmpty());
@@ -260,7 +267,7 @@ QVariant Model::data(const QModelIndex &index, int role) const {
         case Qt::ItemDataRole::DecorationRole: {
             switch (static_cast<Column>(index.column())) {
                 case Column::Name:
-                    result = QVariant::fromValue(node.icons());
+                    result = QVariant::fromValue(node->icons());
                     break;
                 case Column::Tag:
                     break;
@@ -270,10 +277,10 @@ QVariant Model::data(const QModelIndex &index, int role) const {
         case Qt::ItemDataRole::EditRole: {
             switch (static_cast<Column>(index.column())) {
                 case Column::Name:
-                    result = node.name(true);
+                    result = node->name(true);
                     break;
                 case Column::Tag:
-                    result = node.tags(Node::TagFlag::IncludeRaw)
+                    result = node->tags(Node::TagFlag::IncludeRaw)
                             | std::views::transform([](auto const &tag){ return tag.raw; })
                             | std::views::join_with(QString(", "))
                             | std::ranges::to<QString>();
@@ -282,8 +289,8 @@ QVariant Model::data(const QModelIndex &index, int role) const {
             break;
         }
         case Qt::ItemDataRole::ToolTipRole: {
-            if (auto tooltip = node.tooltip(editMode_); !tooltip)
-                qCCritical(LoggingCategory) << "Cannot generate tooltip for node" << node.uuid() << ":" << tooltip.error();
+            if (auto tooltip = node->tooltip(editMode_); !tooltip)
+                qCCritical(LoggingCategory) << "Cannot generate tooltip for node" << node->uuid() << ":" << tooltip.error();
             else if (!tooltip->isEmpty())
                 result = *tooltip;
             break;
@@ -296,29 +303,29 @@ QVariant Model::data(const QModelIndex &index, int role) const {
             QFont font;
 
             if (!editMode_) {
-                if (auto active = node.active())
+                if (auto active = node->active())
                     font.setBold(*active);
 
                 if (highlightChangedAfterVersion_) {
-                    if (auto highlight = node.lastChangeAfter(*highlightChangedAfterVersion_, true, true); !highlight)
+                    if (auto highlight = node->lastChangeAfter(*highlightChangedAfterVersion_, true, true); !highlight)
                         qCCritical(LoggingCategory) << "Could not compare last change of a node:" << highlight.error();
                     else
                         font.setUnderline(*highlight);
                 }
             }
 
-            font.setItalic(node.isHidden());
+            font.setItalic(node->isHidden());
             result = font;
             break;
         }
         case Qt::ItemDataRole::BackgroundRole: {
-            result = QVariant::fromValue(node.background(editMode_));
+            result = QVariant::fromValue(node->background(editMode_));
             break;
         }
     }
 
     if (role == Qt::DisplayRole)
-        qCDebug(LoggingCategory) << "data(" << node.name() << ", DisplayRole) ->" << result;
+        qCDebug(LoggingCategory) << "data(" << node->name() << ", DisplayRole) ->" << result;
 
     return result;
 }
@@ -330,13 +337,18 @@ bool Model::setData(const QModelIndex &index, const QVariant &value, int role) {
     switch (role) {
         case Qt::ItemDataRole::EditRole: {
             switch (static_cast<Column>(index.column())) {
-                case Column::Name:
-                    if (!fromIndex(index).setName(value.toString()))
+                case Column::Name: {
+                    auto node = fromIndex(index);
+                    assert(node);
+                    if (!node->setName(value.toString()))
                         return false;
                     emit dataChanged(index, index);
                     return true;
+                }
                 case Column::Tag: {
-                    if (!fromIndex(index).setTags(value.toString().split(",")
+                    auto node = fromIndex(index);
+                    assert(node);
+                    if (!node->setTags(value.toString().split(",")
                             | std::views::transform([](QString const &s){ return s.trimmed(); })
                             | std::views::filter([](QString const &s){ return !s.isEmpty(); })
                             | std::ranges::to<QStringList>()
@@ -350,10 +362,13 @@ bool Model::setData(const QModelIndex &index, const QVariant &value, int role) {
         }
         case Qt::ItemDataRole::DecorationRole: {
             switch (static_cast<Column>(index.column())) {
-                case Column::Name:
-                    if (fromIndex(index).setIcon(value.toString()))
+                case Column::Name: {
+                    auto node = fromIndex(index);
+                    assert(node);
+                    if (node->setIcon(value.toString()))
                         emit dataChanged(index, index);
                     return true;
+                }
                 case Column::Tag:
                     return false;
             }
@@ -367,14 +382,17 @@ bool Model::setData(const QModelIndex &index, const QVariant &value, int role) {
 bool Model::canInsertNode(NodeType const type, QModelIndex const &parent) const {
     ZoneScoped;
     gsl_Expects(!parent.isValid() || parent.model() == this);
-    return fromIndex(parent).canInsertChild(type);
+    auto node = fromIndex(parent);
+    assert(node);
+    return node->canInsertChild(type);
 }
 
 std::expected<QModelIndex, QString> Model::insertNode(NodeType type, QModelIndex const &parent) {
     ZoneScoped;
     gsl_Expects(!parent.isValid() || parent.model() == this);
 
-    auto parentNode = &fromIndex(parent);
+    auto parentNode = fromIndex(parent);
+    assert(parentNode);
     auto parentNodeStored = dynamic_cast<NodeSerializable *>(parentNode);
     if (!parentNodeStored)
         return std::unexpected(tr("Parent node is not a stored node type subclass, but %1").arg(typeid(*parentNode).name()));
@@ -399,16 +417,18 @@ std::expected<QModelIndex, QString> Model::insertNode(NodeType type, QModelIndex
 [[nodiscard]] bool Model::canRemoveRow(QModelIndex const &index) {
     ZoneScoped;
     gsl_Expects(!index.isValid() || index.model() == this);
-    auto &node = fromIndex(index);
-    gsl_Expects(node.parent());
-    return node.parent()->canRemoveChildren(index.row(), 1);
+    auto node = fromIndex(index);
+    assert(node);
+    gsl_Expects(node->parent());
+    return node->parent()->canRemoveChildren(index.row(), 1);
 }
 
 bool Model::removeRows(int const row, int const count, const QModelIndex &parent) {
     ZoneScoped;
     gsl_Expects(!parent.isValid() || parent.model() == this);
-    auto &node = fromIndex(parent);
-    node.removeChildren(row, count);
+    auto node = fromIndex(parent);
+    assert(node);
+    node->removeChildren(row, count);
     return true;
 }
 
@@ -436,8 +456,9 @@ QMimeData *Model::mimeData(QModelIndexList const &indexes) const {
     }
 
     for(auto const &index: uniqueRowsIndexes) {
-        auto &node = fromIndex(index);
-        if (auto nodeStored = dynamic_cast<NodeSerializable *>(&node); !nodeStored) {
+        auto node = fromIndex(index);
+        assert(node);
+        if (auto nodeStored = dynamic_cast<NodeSerializable *>(node); !nodeStored) {
             qCCritical(LoggingCategory) << "Cannot generate MIME data for a not-stored node of type" << typeid(node).name();
             return nullptr;
         } else {
@@ -533,7 +554,8 @@ bool Model::canDropMimeData(
     if (action != Qt::DropAction::MoveAction)
         return false;
 
-    auto &parentNode = fromIndex(parent);
+    auto parentNode = fromIndex(parent);
+    assert(parentNode);
 
     for (auto const &v: parseMimeData(data)) {
         if (!v) {
@@ -550,7 +572,7 @@ bool Model::canDropMimeData(
         }
 
         // TODO: this won't work if we want to support multiple index drag&drop
-        return parentNode.canAcceptDrop(static_cast<Format::NodeType>(typeValue.toInteger()));
+        return parentNode->canAcceptDrop(static_cast<Format::NodeType>(typeValue.toInteger()));
     }
 
     return false;
@@ -568,10 +590,11 @@ bool Model::dropMimeData(
     if (action != Qt::DropAction::MoveAction)
         return false;
 
-    auto &parentNode = fromIndex(parent);
-    auto parentNodeStored = dynamic_cast<NodeSerializable *>(&parentNode);
+    auto parentNode = fromIndex(parent);
+    assert(parentNode);
+    auto parentNodeStored = dynamic_cast<NodeSerializable *>(parentNode);
     if (!parentNodeStored) {
-        qCCritical(LoggingCategory) << "Parent node should be a subclass of NodeStored, but got" << typeid(parentNode).name();
+        qCCritical(LoggingCategory) << "Parent node should be a subclass of NodeStored, but got" << typeid(*parentNode).name();
         return false;
     }
 

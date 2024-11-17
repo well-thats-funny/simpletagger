@@ -44,7 +44,7 @@ public:
 
     [[nodiscard]] QModelIndex toIndex(Node const &node) const;
     [[nodiscard]] std::pair<QModelIndex, QModelIndex> toIndexRange(Node const &node) const;
-    [[nodiscard]] Node &fromIndex(QModelIndex const &index) const;
+    [[nodiscard]] Node *fromIndex(QModelIndex const &index) const;
 
     [[nodiscard]] std::expected<std::reference_wrapper<Node>, QString> fromUuid(QUuid const &uuid) const;
 
