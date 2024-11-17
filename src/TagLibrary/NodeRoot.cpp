@@ -27,7 +27,9 @@ NodeRoot::~NodeRoot() = default;
 void NodeRoot::deinit() {
     ZoneScoped;
     NodeSerializable::deinit();
-    rootCollection_->deinit();
+
+    if (rootCollection_)
+        rootCollection_->deinit();
 }
 
 Node const *NodeRoot::parent() const {

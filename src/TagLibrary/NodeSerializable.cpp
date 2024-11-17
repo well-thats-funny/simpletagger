@@ -165,8 +165,11 @@ std::expected<std::unique_ptr<NodeSerializable>, QString> NodeSerializable::load
     else
         node = std::move(*result);
 
-    if (auto result = node->loadNodeData(map); !result)
+    if (auto result = node->loadNodeData(map); !result) {
+        // TODO: this should be solved via RAII
+        node->deinit();
         return std::unexpected(result.error());
+    }
 
     for (auto const &v: map)
         qCWarning(LoggingCategory) << "Unhandled element:" << v.first << "=" << v.second;
