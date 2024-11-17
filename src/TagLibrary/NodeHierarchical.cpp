@@ -200,16 +200,16 @@ bool NodeHierarchical::canAcceptDrop(NodeType const type) const {
     return canInsertChild(type);
 }
 
-std::expected<void, Error> NodeHierarchical::populateShadows() {
+std::expected<void, Error> NodeHierarchical::populateShadowsImpl() {
     for (auto &child: children_)
-        if (auto result = child->populateShadows(); !result)
+        if (auto result = child->populateShadowsImpl(); !result)
             return result;
     return {};
 }
 
-std::expected<void, Error> NodeHierarchical::unpopulateShadows() {
+std::expected<void, Error> NodeHierarchical::unpopulateShadowsImpl() {
     for (auto &child: children_)
-        if (auto result = child->unpopulateShadows(); !result)
+        if (auto result = child->unpopulateShadowsImpl(); !result)
             return result;
     return {};
 }

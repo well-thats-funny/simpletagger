@@ -305,7 +305,7 @@ void NodeLink::emitRemoveChildrenEnd(int const count) {
     emit removeChildrenEnd(0, count - 1);
 }
 
-std::expected<void, QString> NodeLink::populateShadows() {
+std::expected<void, QString> NodeLink::populateShadowsImpl() {
     gsl_Expects(!linkSubtreeRoot_);
 
     if (!linkTo_.isNull()) {
@@ -313,7 +313,7 @@ std::expected<void, QString> NodeLink::populateShadows() {
         if (!target)
             return std::unexpected(target.error());
 
-        auto subtreeRoot = std::make_unique<NodeShadow>(model(), this, target->get(), this, linkingIcon());
+        auto subtreeRoot = std::make_unique<NodeShadow>(model(), this, &target->get(), this, linkingIcon());
         if (auto result = subtreeRoot->init(); !result)
             return std::unexpected(result.error());
 
@@ -339,7 +339,7 @@ std::expected<void, QString> NodeLink::populateShadows() {
     return {};
 }
 
-std::expected<void, QString> NodeLink::unpopulateShadows() {
+std::expected<void, QString> NodeLink::unpopulateShadowsImpl() {
     if (linkSubtreeRoot_) {
         auto childrenCount = linkSubtreeRoot_->childrenCount(true);
         if (!childrenCount)

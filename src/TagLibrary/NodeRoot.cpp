@@ -84,16 +84,16 @@ NodeType NodeRoot::type() const {
     return NodeType::Root;
 }
 
-std::expected<void, Error> NodeRoot::populateShadows() {
+std::expected<void, Error> NodeRoot::populateShadowsImpl() {
     if (rootCollection_)
-        return rootCollection_->populateShadows();
+        return rootCollection_->populateShadowsImpl();
     else
         return {};
 }
 
-std::expected<void, Error> NodeRoot::unpopulateShadows() {
+std::expected<void, Error> NodeRoot::unpopulateShadowsImpl() {
     if (rootCollection_)
-        return rootCollection_->unpopulateShadows();
+        return rootCollection_->unpopulateShadowsImpl();
     else
         return {};
 }

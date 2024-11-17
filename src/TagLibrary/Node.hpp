@@ -227,8 +227,13 @@ public:
 
     bool deinitialized() const;
 
-    [[nodiscard]] virtual std::expected<void, Error> populateShadows() = 0;
-    [[nodiscard]] virtual std::expected<void, Error> unpopulateShadows() = 0;
+    // These two are only made public to be called by a parent node on its children.
+    // Everything else should call un/populateShadows() methods (below).
+    [[nodiscard]] virtual std::expected<void, Error> populateShadowsImpl() = 0;
+    [[nodiscard]] virtual std::expected<void, Error> unpopulateShadowsImpl() = 0;
+
+    [[nodiscard]] std::expected<void, Error> populateShadows();
+    [[nodiscard]] std::expected<void, Error> unpopulateShadows();
 
     struct RepopulationRequest {
         // nullopt means there's no specific UUIDs modified - meaning all links should be considered outdated
@@ -268,6 +273,7 @@ private:
 #ifndef NDEBUG
     friend class NodeShadow;
     std::vector<NodeShadow*> shadowNodes_;
+    bool aboutToUnpopulate_ = false;
 #endif
 };
 

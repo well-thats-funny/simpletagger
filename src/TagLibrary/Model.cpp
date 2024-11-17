@@ -723,15 +723,17 @@ void Model::setEditMode(bool const editMode) {
     ZoneScoped;
     if (editMode_ != editMode) {
         emit layoutAboutToBeChanged();
+        {
+            QSignalBlocker block(this);
 
-        if (auto result = root->unpopulateShadows(); !result)
-            reportError("setEditMode unpopulateShadows", result.error());
+            if (auto result = root->unpopulateShadows(); !result)
+                reportError("setEditMode unpopulateShadows", result.error());
 
-        editMode_ = editMode;
+            editMode_ = editMode;
 
-        if (auto result = root->populateShadows(); !result)
-            reportError("setEditMode populateShadows", result.error());
-
+            if (auto result = root->populateShadows(); !result)
+                reportError("setEditMode populateShadows", result.error());
+        }
         emit layoutChanged();
     }
 }

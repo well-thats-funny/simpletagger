@@ -40,8 +40,8 @@ public:
 
     [[nodiscard]] NodeType type() const override;
 
-    [[nodiscard]] std::expected<void, Error> populateShadows() override;
-    [[nodiscard]] std::expected<void, Error> unpopulateShadows() override;
+    [[nodiscard]] std::expected<void, Error> populateShadowsImpl() override;
+    [[nodiscard]] std::expected<void, Error> unpopulateShadowsImpl() override;
 
     [[nodiscard]] std::expected<void, QString> repopulateShadows(RepopulationRequest const &repopulationRequest = {}) override;
 

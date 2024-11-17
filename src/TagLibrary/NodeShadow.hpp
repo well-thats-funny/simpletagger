@@ -23,8 +23,12 @@ class Model;
 class NodeShadow: public Node {
     Q_OBJECT
 
+#ifndef NDEBUG
+    friend class Node;
+#endif
+
 public:
-    NodeShadow(Model &model, Node const *parent, Node &target, Node *subtreeRootOwner, IconIdentifier const &linkingIcon);
+    NodeShadow(Model &model, Node const *parent, Node *target, Node *subtreeRootOwner, IconIdentifier const &linkingIcon);
     ~NodeShadow();
 
     [[nodiscard]] std::expected<void, QString> init() override;
@@ -68,8 +72,8 @@ public:
 
     [[nodiscard]] std::vector<QBrush> background(bool editMode) const override;
 
-    [[nodiscard]] std::expected<void, Error> populateShadows() override;
-    [[nodiscard]] std::expected<void, Error> unpopulateShadows() override;
+    [[nodiscard]] std::expected<void, Error> populateShadowsImpl() override;
+    [[nodiscard]] std::expected<void, Error> unpopulateShadowsImpl() override;
 
     [[nodiscard]] std::expected<void, QString> repopulateShadows(RepopulationRequest const &repopulationRequest = {}) override;
 
@@ -80,7 +84,7 @@ private:
     [[nodiscard]] std::expected<std::unique_ptr<NodeShadow>, QString> createChild(int row);
 
     Node const *parent_ = nullptr;
-    Node &target_;
+    Node *target_ = nullptr;
     Node *subtreeRootOwner_ = nullptr;
     std::vector<std::unique_ptr<NodeShadow>> children_;
     mutable std::optional<std::vector<IconIdentifier>> icons_;

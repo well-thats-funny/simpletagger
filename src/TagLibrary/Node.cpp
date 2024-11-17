@@ -22,6 +22,7 @@
 #include "NodeCollection.hpp"
 #include "NodeObject.hpp"
 #include "NodeLink.hpp"
+#include "NodeShadow.hpp"
 
 namespace TagLibrary {
 Node::Node(Model &model): model_(model) {
@@ -64,7 +65,12 @@ Node::Node(Model &model): model_(model) {
 Node::~Node() {
     assert(deinitialized_ && "deinit() should be called before destroying a node");
 #ifndef NDEBUG
-    assert(shadowNodes_.empty() && "node is deleted while there's still shadow nodes pointing at it");
+    // if there's any shadow node still poining at this one, it must be already marked as "about to unpopulate"
+    assert(std::ranges::all_of(shadowNodes_, [](auto const &node){ return node->aboutToUnpopulate_; })
+        && "node is deleted while there's still shadow nodes pointing at it");
+    // remove myself from all shadow nodes
+    for (auto &shadowNode: shadowNodes_)
+        shadowNode->target_ = nullptr;
 #endif
 }
 
@@ -417,6 +423,19 @@ bool Node::deinitialized() const {
     return deinitialized_;
 }
 
+std::expected<void, Error> Node::populateShadows() {
+    return populateShadowsImpl();
+}
+
+std::expected<void, Error> Node::unpopulateShadows() {
+    if (auto result = visit(VisitFlag::Recursive, [](auto &node)->std::expected<bool, Error>{
+        node.aboutToUnpopulate_ = true;
+        return true;
+    }); !result)
+        return std::unexpected(result.error());
+    else
+        return unpopulateShadowsImpl();
+}
 
 std::expected<void, QStringList> Node::verify(VerifyContext &context) const {
     gsl_Expects(&model_);  // this is not an acceptable circumstance ever

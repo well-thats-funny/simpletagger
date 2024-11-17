@@ -48,8 +48,8 @@ public:
     [[nodiscard]] bool canAcceptDrop() const override; // does it accept drops at all?
     [[nodiscard]] bool canAcceptDrop(NodeType type) const override; // does it accept drops of this node type?
 
-    [[nodiscard]] std::expected<void, Error> populateShadows() override;
-    [[nodiscard]] std::expected<void, Error> unpopulateShadows() override;
+    [[nodiscard]] std::expected<void, Error> populateShadowsImpl() override;
+    [[nodiscard]] std::expected<void, Error> unpopulateShadowsImpl() override;
 
     [[nodiscard]] std::expected<void, QString> repopulateShadows(RepopulationRequest const &repopulationRequest = {}) override;
 
