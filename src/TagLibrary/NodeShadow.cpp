@@ -144,12 +144,34 @@ std::expected<int, QString> NodeShadow::rowOfChild(Node const &node, bool const 
             ));
         return it - children_.begin();
     } else {
-        // TODO: very inefficient
-        for (int row = 0; row != childrenCount(true); ++row) {
-            if (auto child = childOfRow(row, true); !child)
-                return std::unexpected(child.error());
-            else if (&child->get() == &node)
+        int row = 0;
+
+        for (auto const &child: children_) {
+            // NOTE: This check purposedly takes place before the child->isReplaced() check.
+            // This is to allow passing a replaced node as a "node" parameter. In this case
+            // the function returns the row where the first replacement would be displayed.
+            // This is because NodeInheritance calls this function to find out where its
+            // replacement nodes should be placed.
+            if (&*child == &node)
                 return row;
+
+            if (!child->isReplaced()) {
+                ++row;
+            } else {
+                if (auto replacedCount = child->childrenCount(true); !replacedCount)
+                    return std::unexpected(replacedCount.error());
+                else {
+                    for (int replacedRow = 0; replacedRow != *replacedCount; ++replacedRow) {
+                        if (auto replacedChild = child->childOfRow(replacedRow, true); !replacedChild) {
+                            return std::unexpected(replacedChild.error());
+                        } else {
+                            if (&replacedChild->get() == &node)
+                                return row;
+                        }
+                        ++row;
+                    }
+                }
+            }
         }
         return std::unexpected("rowOfChild: child not found");
     }
