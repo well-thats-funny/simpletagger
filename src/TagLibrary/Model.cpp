@@ -686,6 +686,7 @@ std::expected<void, QString> Model::load(QCborValue const &value) {
     auto _ = gsl::finally([this]{ endResetModel(); });
 
     {
+        // prevent signals like insertChildrenBegin/End to be emitted
         QSignalBlocker block(this);
         auto result = NodeHierarchical::load(value, *this, nullptr);
         if (!result)
@@ -699,10 +700,10 @@ std::expected<void, QString> Model::load(QCborValue const &value) {
 
         root->deinit();
         root = std::move(newRoot);
-    }
 
-    if (auto result = root->repopulateLinked(); !result)
-        return std::unexpected(result.error());
+        if (auto result = root->repopulateLinked(); !result)
+            return std::unexpected(result.error());
+    }
 
     emit loadComplete();
 
