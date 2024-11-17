@@ -129,6 +129,8 @@ add_executable(simpletagger-cxx
         DirectoryStats.hpp
         TagLibrary/LibraryInfoDialog.cpp
         TagLibrary/LibraryInfoDialog.hpp
+        CustomItemViewHelper.cpp
+        CustomItemViewHelper.hpp
 )
 target_compile_options(simpletagger-cxx PRIVATE -Wall -Wextra -Werror)
 

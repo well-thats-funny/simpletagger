@@ -17,7 +17,7 @@
 #include "DirectoryTreeView.hpp"
 
 namespace FileBrowser {
-DirectoryTreeView::DirectoryTreeView(QWidget *const parent): CustomTreeView(new CustomItemDelegate, parent) {
+DirectoryTreeView::DirectoryTreeView(QWidget *const parent): CustomTreeView(parent) {
     ZoneScoped;
 
     connect(this, &DirectoryTreeView::entered, this, [this](QModelIndex const &index){

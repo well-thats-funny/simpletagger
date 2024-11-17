@@ -15,22 +15,7 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 #pragma once
-
-class CustomItemDelegate: public QStyledItemDelegate {
-    Q_OBJECT
-
-    CustomItemDelegate(CustomItemDelegate const &other) = delete;
-    CustomItemDelegate(CustomItemDelegate &&other) = delete;
-    CustomItemDelegate& operator=(CustomItemDelegate const &other) = delete;
-    CustomItemDelegate& operator=(CustomItemDelegate &&other) = delete;
-
-public:
-    using QStyledItemDelegate::QStyledItemDelegate;
-    ~CustomItemDelegate() override;
-
-    void initStyleOption(QStyleOptionViewItem *option, const QModelIndex &index) const override;
-    void paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const override;
-};
+#include "CustomItemViewHelper.hpp"
 
 class CustomTreeView: public QTreeView {
     Q_OBJECT
@@ -41,7 +26,7 @@ class CustomTreeView: public QTreeView {
     CustomTreeView& operator=(CustomTreeView &&other) = delete;
 
 public:
-    explicit CustomTreeView(CustomItemDelegate *delegate, QWidget *parent = nullptr);
+    explicit CustomTreeView(QWidget *parent = nullptr, CustomItemDelegate *delegate = nullptr);
     ~CustomTreeView() override;
 
     CustomItemDelegate *itemDelegate() const;
@@ -52,5 +37,6 @@ public:
     void setModel(QAbstractItemModel *model) override;
 
 private:
+    CustomItemViewHelper helper_;
     QByteArray expandedState_;
 };

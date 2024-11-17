@@ -23,7 +23,7 @@ class TreeViewDelegate: public CustomItemDelegate {
     Q_OBJECT
 
 public:
-    using CustomItemDelegate::CustomItemDelegate;
+    explicit TreeViewDelegate(QObject *parent = nullptr);
     ~TreeViewDelegate() override;
 
     void initStyleOption(QStyleOptionViewItem *option, const QModelIndex &index) const override;

@@ -20,6 +20,10 @@
 #include "../IconIdentifier.hpp"
 
 namespace TagLibrary {
+TreeViewDelegate::TreeViewDelegate(QObject *const parent): CustomItemDelegate(parent) {
+    setExtendFirstColumnBackground(true);
+}
+
 TreeViewDelegate::~TreeViewDelegate() = default;
 
 void TreeViewDelegate::initStyleOption(QStyleOptionViewItem *option, const QModelIndex &index) const {
@@ -83,7 +87,7 @@ bool TreeViewDelegate::helpEvent(
     return event->isAccepted();
 }
 
-TreeView::TreeView(QWidget *const parent): CustomTreeView(new TreeViewDelegate(), parent) {}
+TreeView::TreeView(QWidget *const parent): CustomTreeView(parent, new TreeViewDelegate()) {}
 
 TreeView::~TreeView() = default;
 

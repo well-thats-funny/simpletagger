@@ -18,54 +18,13 @@
 
 #include "Utility.hpp"
 
-CustomItemDelegate::~CustomItemDelegate() = default;
-
-void CustomItemDelegate::initStyleOption(QStyleOptionViewItem *const option, QModelIndex const &index) const {
-    ZoneScoped;
-
-    QStyledItemDelegate::initStyleOption(option, index);
-
-    option->backgroundBrush = QBrush(); // remove the background brush, as we handle it manually in paint()
-}
-
-void CustomItemDelegate::paint(QPainter *const painter, QStyleOptionViewItem const &option, QModelIndex const &index) const {
-    ZoneScoped;
-
-    // draw background not only under the item but all the way to the left border of the widget
-    auto rect = option.rect;
-
-    if (index.column() == 0) {
-        // not sure whether it's the best way, but hey!
-        rect.setLeft(0);
-    }
-
-    if (auto brushes = index.data(Qt::ItemDataRole::BackgroundRole); !brushes.isNull()) {
-        if (brushes.canConvert<std::vector<QBrush>>()) {
-            auto brushesVector = brushes.value<std::vector<QBrush>>();
-            for (auto const &brush: withoutDuplicates(brushesVector))
-                painter->fillRect(rect, brush);
-        } else if (brushes.canConvert<QBrush>()) {
-            painter->fillRect(rect, brushes.value<QBrush>());
-        } else
-            gsl_Expects(false);
-    }
-
-    return QStyledItemDelegate::paint(painter, option, index);
-}
-
-CustomTreeView::CustomTreeView(CustomItemDelegate *const delegate, QWidget *const parent): QTreeView(parent) {
-    ZoneScoped;
-    gsl_Expects(delegate);
-    delegate->setParent(this);
-    setItemDelegate(delegate);
-}
+CustomTreeView::CustomTreeView(QWidget *const parent, CustomItemDelegate *const delegate):
+        QTreeView(parent), helper_(this, delegate) {}
 
 CustomTreeView::~CustomTreeView() = default;
 
 CustomItemDelegate *CustomTreeView::itemDelegate() const {
-    auto delegate = dynamic_cast<CustomItemDelegate *>(QTreeView::itemDelegate());
-    gsl_Expects(delegate);
-    return delegate;
+    return helper_.itemDelegate();
 }
 
 QByteArray CustomTreeView::saveExpandedState() const {
