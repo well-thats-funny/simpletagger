@@ -16,7 +16,8 @@
 */
 #include "TagsAssignedListModel.hpp"
 
-#include "FileEditor.hpp"
+#include "../CustomItemDataRole.hpp"
+#include "../FileEditor.hpp"
 
 namespace Tags {
 TagsAssignedListModel::TagsAssignedListModel(FileEditor &fileEditor): fileEditor_{fileEditor} {
@@ -68,7 +69,7 @@ QVariant TagsAssignedListModel::data(const QModelIndex &index, int role) const {
 
     switch (role) {
         case Qt::ItemDataRole::DisplayRole:
-        case TagRole:
+        case std::to_underlying(CustomItemDataRole::TagRole):
             return tag;
         case Qt::ItemDataRole::BackgroundRole: {
             std::vector<QBrush> result;

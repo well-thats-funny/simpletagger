@@ -18,6 +18,7 @@
 
 #include "TagsAssignedListModel.hpp"
 
+#include "../CustomItemDataRole.hpp"
 #include "../FileEditor.hpp"
 
 #include "ui_Tags.h"
@@ -105,7 +106,7 @@ void Tags::setKnownTags(QStringList const &tags) {
 
 QString Tags::indexToTag(QModelIndex const &index) const {
     ZoneScoped;
-    auto v = assignedTagsListModel->data(index, TagsAssignedListModel::TagRole);
+    auto v = assignedTagsListModel->data(index, std::to_underlying(CustomItemDataRole::TagRole));
     assert(v.isValid());
     return v.toString();
 }

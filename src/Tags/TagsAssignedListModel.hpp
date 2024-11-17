@@ -23,8 +23,6 @@ class TagsAssignedListModel: public QAbstractListModel {
     Q_OBJECT
 
 public:
-    static constexpr auto TagRole = Qt::ItemDataRole::UserRole + 1;
-
     explicit TagsAssignedListModel(FileEditor &fileEditor);
     ~TagsAssignedListModel();
 
