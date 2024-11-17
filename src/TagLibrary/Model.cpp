@@ -786,8 +786,9 @@ std::expected<void, QString> Model::setTagsActive(QStringList const &tags) {
 
 void Model::setRowHeight(int const rowHeight) {
     ZoneScoped;
+    beginResetModel();
     rowHeight_ = rowHeight;
-    emit dataChanged(QModelIndex(), QModelIndex(), QList<int>() << Qt::ItemDataRole::SizeHintRole);
+    endResetModel();
 }
 
 std::expected<QModelIndexList, QString> Model::setHighlightedTags(QStringList const &tags) {
