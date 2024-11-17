@@ -417,9 +417,6 @@ bool Node::deinitialized() const {
     return deinitialized_;
 }
 
-std::expected<void, QString> Node::repopulateLinked(RepopulationRequest const &) {
-    return {};
-}
 
 std::expected<void, QStringList> Node::verify(VerifyContext &context) const {
     gsl_Expects(&model_);  // this is not an acceptable circumstance ever

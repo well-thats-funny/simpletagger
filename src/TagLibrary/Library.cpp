@@ -282,7 +282,7 @@ std::expected<void, QString> Library::init() {
                     auto sourceIndex = toLibraryModelIndex(index);
                     auto node = libraryModel_->fromIndex(sourceIndex);
                     assert(node);
-                    if (auto result = node->repopulateLinked(); !result)
+                    if (auto result = node->repopulateShadows({}); !result)
                         QMessageBox::critical(this, tr("Repopulate failed"), result.error());
                 }
             });

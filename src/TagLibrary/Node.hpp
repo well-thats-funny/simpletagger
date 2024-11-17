@@ -227,13 +227,16 @@ public:
 
     bool deinitialized() const;
 
+    [[nodiscard]] virtual std::expected<void, Error> populateShadows() = 0;
+    [[nodiscard]] virtual std::expected<void, Error> unpopulateShadows() = 0;
+
     struct RepopulationRequest {
         // nullopt means there's no specific UUIDs modified - meaning all links should be considered outdated
         // empty list means no nodes were modified - meaning no links should be considered outdated
         // non-empty list means only these nodes were modified - meaning only links to these (or links themselves) should be considered outdated
         std::optional<QList<QUuid>> modifiedUuids;
     };
-    [[nodiscard]] virtual std::expected<void, QString> repopulateLinked(RepopulationRequest const &repopulationRequest = {});
+    [[nodiscard]] virtual std::expected<void, QString> repopulateShadows(RepopulationRequest const &repopulationRequest) = 0;
 
 protected:
     struct VerifyContext {

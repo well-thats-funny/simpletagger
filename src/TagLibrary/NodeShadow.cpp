@@ -379,10 +379,26 @@ std::vector<QBrush> NodeShadow::background(bool const editMode) const {
     return result;
 }
 
-std::expected<void, QString> NodeShadow::repopulateLinked(RepopulationRequest const &repopulationRequest) {
+std::expected<void, Error> NodeShadow::populateShadows() {
     ZoneScoped;
     for (auto &child: children_)
-        if (auto result = child->repopulateLinked(repopulationRequest); !result)
+        if (auto result = child->populateShadows(); !result)
+            return result;
+    return {};
+}
+
+std::expected<void, Error> NodeShadow::unpopulateShadows() {
+    ZoneScoped;
+    for (auto &child: children_)
+        if (auto result = child->unpopulateShadows(); !result)
+            return result;
+    return {};
+}
+
+std::expected<void, QString> NodeShadow::repopulateShadows(RepopulationRequest const &repopulationRequest) {
+    ZoneScoped;
+    for (auto &child: children_)
+        if (auto result = child->repopulateShadows(repopulationRequest); !result)
             return result;
     return {};
 }

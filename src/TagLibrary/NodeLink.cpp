@@ -124,12 +124,12 @@ std::expected<void, QString> NodeLink::setLinkTo(QUuid const &uuid) {
     ZoneScoped;
 
     if (uuid != linkTo_) {
-        if (auto result = unpopulateLinked(); !result)
+        if (auto result = unpopulateShadows(); !result)
             return std::unexpected(result.error());
 
         linkTo_ = uuid;
 
-        if (auto result = populateLinked(); !result)
+        if (auto result = populateShadows(); !result)
             return std::unexpected(result.error());
     }
 
@@ -285,7 +285,27 @@ std::expected<void, QString> NodeLink::loadChildrenNodes([[maybe_unused]] QCborM
     return {};
 }
 
-std::expected<void, QString> NodeLink::populateLinked() {
+IconIdentifier NodeLink::linkingIcon() const {
+    return IconIdentifier(":/icons/bx-link.svg");
+}
+
+void NodeLink::emitInsertChildrenBegin(int const count) {
+    emit insertChildrenBegin(0, count - 1);
+}
+
+void NodeLink::emitInsertChildrenEnd(int const count) {
+    emit insertChildrenEnd(0, count - 1);
+}
+
+void NodeLink::emitRemoveChildrenBegin(int const count) {
+    emit removeChildrenBegin(0, count - 1);
+}
+
+void NodeLink::emitRemoveChildrenEnd(int const count) {
+    emit removeChildrenEnd(0, count - 1);
+}
+
+std::expected<void, QString> NodeLink::populateShadows() {
     gsl_Expects(!linkSubtreeRoot_);
 
     if (!linkTo_.isNull()) {
@@ -298,7 +318,7 @@ std::expected<void, QString> NodeLink::populateLinked() {
             return std::unexpected(result.error());
 
         connect(&*subtreeRoot, &NodeShadow::targetAboutToRemove, this, [this]{
-            if (auto result = unpopulateLinked(); !result)
+            if (auto result = unpopulateShadows(); !result)
                 qCCritical(LoggingCategory) << "targetAboutToRemove -> unpopulateLinked error:" << result.error();
         });
 
@@ -319,7 +339,7 @@ std::expected<void, QString> NodeLink::populateLinked() {
     return {};
 }
 
-std::expected<void, QString> NodeLink::unpopulateLinked() {
+std::expected<void, QString> NodeLink::unpopulateShadows() {
     if (linkSubtreeRoot_) {
         auto childrenCount = linkSubtreeRoot_->childrenCount(true);
         if (!childrenCount)
@@ -341,31 +361,8 @@ std::expected<void, QString> NodeLink::unpopulateLinked() {
     return {};
 }
 
-IconIdentifier NodeLink::linkingIcon() const {
-    return IconIdentifier(":/icons/bx-link.svg");
-}
-
-void NodeLink::emitInsertChildrenBegin(int const count) {
-    emit insertChildrenBegin(0, count - 1);
-}
-
-void NodeLink::emitInsertChildrenEnd(int const count) {
-    emit insertChildrenEnd(0, count - 1);
-}
-
-void NodeLink::emitRemoveChildrenBegin(int const count) {
-    emit removeChildrenBegin(0, count - 1);
-}
-
-void NodeLink::emitRemoveChildrenEnd(int const count) {
-    emit removeChildrenEnd(0, count - 1);
-}
-
-std::expected<void, QString> NodeLink::repopulateLinked(RepopulationRequest const &repopulationRequest) {
+std::expected<void, QString> NodeLink::repopulateShadows(RepopulationRequest const &repopulationRequest) {
     ZoneScoped;
-
-    if (auto result = Node::repopulateLinked(repopulationRequest); !result)
-        return std::unexpected(result.error());
 
     // build a list of all UUIDs for which change we need to repopulate
     QSet<QUuid> allRelatedUuids;
@@ -395,15 +392,15 @@ std::expected<void, QString> NodeLink::repopulateLinked(RepopulationRequest cons
     if (!repopulationRequest.modifiedUuids  // no specific UUIDs requested -> all are relevant
         || std::ranges::any_of(*repopulationRequest.modifiedUuids, [&](auto const &uuid){ return allRelatedUuids.contains(uuid); })
     ) {
-        if (auto result = unpopulateLinked(); !result)
+        if (auto result = unpopulateShadows(); !result)
             return std::unexpected(result.error());
 
-        if (auto result = populateLinked(); !result)
+        if (auto result = populateShadows(); !result)
             return std::unexpected(result.error());
     }
 
     if (linkSubtreeRoot_)
-        return linkSubtreeRoot_->repopulateLinked(repopulationRequest);
+        return linkSubtreeRoot_->repopulateShadows(repopulationRequest);
     else
         return {};
 }

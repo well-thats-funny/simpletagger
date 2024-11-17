@@ -200,9 +200,23 @@ bool NodeHierarchical::canAcceptDrop(NodeType const type) const {
     return canInsertChild(type);
 }
 
-std::expected<void, QString> NodeHierarchical::repopulateLinked(RepopulationRequest const &repopulationRequest) {
+std::expected<void, Error> NodeHierarchical::populateShadows() {
     for (auto &child: children_)
-        if (auto result = child->repopulateLinked(repopulationRequest); !result)
+        if (auto result = child->populateShadows(); !result)
+            return result;
+    return {};
+}
+
+std::expected<void, Error> NodeHierarchical::unpopulateShadows() {
+    for (auto &child: children_)
+        if (auto result = child->unpopulateShadows(); !result)
+            return result;
+    return {};
+}
+
+std::expected<void, QString> NodeHierarchical::repopulateShadows(RepopulationRequest const &repopulationRequest) {
+    for (auto &child: children_)
+        if (auto result = child->repopulateShadows(repopulationRequest); !result)
             return result;
     return {};
 }

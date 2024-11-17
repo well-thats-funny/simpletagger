@@ -84,9 +84,23 @@ NodeType NodeRoot::type() const {
     return NodeType::Root;
 }
 
-std::expected<void, QString> NodeRoot::repopulateLinked(RepopulationRequest const &repopulationRequest) {
+std::expected<void, Error> NodeRoot::populateShadows() {
     if (rootCollection_)
-        return rootCollection_->repopulateLinked(repopulationRequest);
+        return rootCollection_->populateShadows();
+    else
+        return {};
+}
+
+std::expected<void, Error> NodeRoot::unpopulateShadows() {
+    if (rootCollection_)
+        return rootCollection_->unpopulateShadows();
+    else
+        return {};
+}
+
+std::expected<void, QString> NodeRoot::repopulateShadows(RepopulationRequest const &repopulationRequest) {
+    if (rootCollection_)
+        return rootCollection_->repopulateShadows(repopulationRequest);
     else
         return {};
 }

@@ -70,8 +70,6 @@ protected:
     [[nodiscard]] std::expected<std::optional<QCborArray>, QString> saveChildrenNodes() const override;
     [[nodiscard]] std::expected<void, QString> loadNodeData(QCborMap &map) override;
     [[nodiscard]] std::expected<void, QString> loadChildrenNodes(QCborMap &map) override;
-    [[nodiscard]] std::expected<void, QString> populateLinked();
-    [[nodiscard]] std::expected<void, QString> unpopulateLinked();
 
     [[nodiscard]] virtual IconIdentifier linkingIcon() const;
     virtual void emitInsertChildrenBegin(int count);
@@ -80,7 +78,10 @@ protected:
     virtual void emitRemoveChildrenEnd(int count);
 
 public:
-    [[nodiscard]] std::expected<void, QString> repopulateLinked(RepopulationRequest const &repopulationRequest) override;
+    [[nodiscard]] std::expected<void, Error> populateShadows() override;
+    [[nodiscard]] std::expected<void, Error> unpopulateShadows() override;
+
+    [[nodiscard]] std::expected<void, QString> repopulateShadows(RepopulationRequest const &repopulationRequest) override;
 
 private:
     QString name_;

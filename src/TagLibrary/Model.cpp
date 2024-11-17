@@ -646,7 +646,7 @@ bool Model::dropMimeData(
         }
     }
 
-    if (auto result = root->repopulateLinked(repopulationRequest); !result) {
+    if (auto result = root->repopulateShadows(repopulationRequest); !result) {
         qCCritical(LoggingCategory) << "Cannot repopulate links:" << result.error();
         return false;
     }
@@ -702,7 +702,7 @@ std::expected<void, QString> Model::load(QCborValue const &value) {
 
         populateUuidMap();
 
-        if (auto result = root->repopulateLinked(); !result)
+        if (auto result = root->populateShadows(); !result)
             return std::unexpected(result.error());
     }
 
@@ -724,7 +724,13 @@ void Model::setEditMode(bool const editMode) {
     if (editMode_ != editMode) {
         emit layoutAboutToBeChanged();
 
+        if (auto result = root->unpopulateShadows(); !result)
+            reportError("setEditMode unpopulateShadows", result.error());
+
         editMode_ = editMode;
+
+        if (auto result = root->populateShadows(); !result)
+            reportError("setEditMode populateShadows", result.error());
 
         emit layoutChanged();
     }
