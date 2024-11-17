@@ -186,6 +186,7 @@ void NodeHierarchical::removeChildren(int const row, int const count) {
     auto end = begin + count;
 
     int last = row + count - 1;
+    emit beforeRemoveChildren(row, last);
     emit removeChildrenBegin(row, last);
     for (auto it = begin; it != end; ++it)
         (*it)->deinit();

@@ -269,6 +269,7 @@ signals:
     void activeChanged(bool active);
     void insertChildrenBegin(int first, int last);
     void insertChildrenEnd(int first, int last);
+    void beforeRemoveChildren(int first, int last);
     void removeChildrenBegin(int first, int last);
     void removeChildrenEnd(int first, int last);
 

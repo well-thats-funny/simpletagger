@@ -80,7 +80,7 @@ std::expected<void, QString> NodeShadow::init() {
             emit insertChildrenEnd(first, last);
     });
 
-    connect(&*target, &Node::removeChildrenBegin, this, [this](int const first, int const last) {
+    connect(&*target, &Node::beforeRemoveChildren, this, [this](int const first, int const last) {
         ZoneScoped;
 
         // we must do our removals before the target has completed its
