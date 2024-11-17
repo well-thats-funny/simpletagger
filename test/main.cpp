@@ -52,6 +52,35 @@ private slots:
         QTest::newRow("two females") << tagFemale1 << tagChild2 << "two females";
         QTest::newRow("two women") << tagFemale2 << tagChild2 << "two women";
     }
+
+    void testTagProcessorThreeLevels() {
+        QFETCH(QString, tagGrandparent);
+        QFETCH(QString, tagParent);
+        QFETCH(QString, tagChild);
+        QFETCH(QString, resolvedParent);
+        QFETCH(QString, resolvedChild);
+
+        QCOMPARE(TagProcessor::resolveChildTag(tagGrandparent, tagParent), resolvedParent);
+
+        auto intermediate = TagProcessor::resolveChildTag(tagParent, tagChild);
+        QCOMPARE(TagProcessor::resolveChildTag(tagGrandparent, intermediate), resolvedChild);
+    }
+
+    void testTagProcessorThreeLevels_data() {
+        QTest::addColumn<QString>("tagGrandparent");
+        QTest::addColumn<QString>("tagParent");
+        QTest::addColumn<QString>("tagChild");
+        QTest::addColumn<QString>("resolvedParent");
+        QTest::addColumn<QString>("resolvedChild");
+
+        QString tagHand = "hand";
+        QString tagOnHip = "% on (own:own )(anothers:another's )hip";
+        QString tagOwn = "%(own)";
+        QString tagAnothers = "%(anothers)";
+
+        QTest::newRow("hand on own hip")       << tagHand << tagOnHip << tagOwn      << "hand on hip" << "hand on own hip";
+        QTest::newRow("hand on another's hip") << tagHand << tagOnHip << tagAnothers << "hand on hip" << "hand on another's hip";
+    }
 };
 
 QTEST_MAIN(TestTagProcessor)
