@@ -808,6 +808,8 @@ void Model::setNextLibraryVersion(int const nextVersion) {
 }
 
 std::expected<void, Error> Model::invalidateTagCaches() const {
+    allTags_ = std::nullopt;
+
     auto visit = [](this auto &&self, Node &node)->std::expected<void, Error> {
         node.invalidateTagCache();
 
@@ -828,5 +830,36 @@ std::expected<void, Error> Model::invalidateTagCaches() const {
         return {};
     };
     return visit(*root);
+}
+
+QStringList Model::allTags() const {
+    if (!allTags_) {
+        allTags_.emplace();
+
+        auto visit = [t=this](this auto &&self, Node &node) -> std::expected<void, Error> {
+            std::ranges::copy(
+                    node.tags() | std::views::transform([](auto const &tag){ return tag.resolved; }),
+                    std::back_inserter(*t->allTags_)
+            );
+
+            // TODO: this iteration stuff is repeated in many places. Could become a method of Node ?
+            auto count = node.childrenCount();
+            if (!count)
+                return std::unexpected(count.error());
+
+            for (int i = 0; i != *count; ++i) {
+                auto childNode = node.childOfRow(i);
+                if (!childNode)
+                    return std::unexpected(childNode.error());
+
+                if (auto result = self(childNode->get()); !result)
+                    return std::unexpected(result.error());
+            }
+
+            return {};
+        };
+        visit(*root);
+    }
+    return *allTags_;
 }
 }

@@ -98,6 +98,11 @@ void Tags::setHighlightedTags(QStringList const &tags) {
         ui->listAssignedTags->scrollTo(indexes.front());
 }
 
+void Tags::setKnownTags(QStringList const &tags) {
+    ZoneScoped;
+    assignedTagsListModel->setKnownTags(tags);
+}
+
 QString Tags::indexToTag(QModelIndex const &index) const {
     ZoneScoped;
     auto v = assignedTagsListModel->data(index, TagsAssignedListModel::TagRole);

@@ -733,6 +733,10 @@ void Library::setHighlightChangedAfterVersion(std::optional<int> const &version)
     filterModel_->setChangedAfterVersion(version);
 }
 
+QStringList Library::allTags() const {
+    return libraryModel_->allTags();
+}
+
 QModelIndex Library::toLibraryModelIndex(QModelIndex const &viewModelIndex) {
     auto filterModelIndex = model_->mapToSource(viewModelIndex);
     return filterModel_->mapToSource(filterModelIndex);

@@ -37,9 +37,11 @@ public:
     [[nodiscard]] bool moveRows(QModelIndex const &sourceParent, int sourceRow, int count, QModelIndex const &destinationParent, int destinationChild) override;
 
     QModelIndexList setHighlightedTags(QStringList const &tags);
+    void setKnownTags(QStringList const &tags);
 
 private:
     FileEditor &fileEditor_;
     QStringList highlightedTags_;
+    QStringList knownTags_;
 };
 }

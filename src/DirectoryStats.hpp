@@ -44,6 +44,7 @@ public:
     int filesOtherTagLibrary() const;
     int filesOtherTagLibraryVersion() const;
     int totalTags() const;
+    int unknownTags() const;
 
     bool ready() const;
 
@@ -70,6 +71,7 @@ private:
         int filesOtherTagLibrary_ = 0;
         int filesOtherTagLibraryVersion_ = 0;
         int totalTags_ = 0;
+        int unknownTags_ = 0;
     };
 
     Stats stats_;

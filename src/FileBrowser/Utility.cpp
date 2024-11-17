@@ -91,7 +91,10 @@ QString formatDirectoryStats(DirectoryStats const &stats, QString const &path) {
             if (!thirdLine.isEmpty())
                 lines.push_back(thirdLine.join(", "));
 
-            lines.push_back(QObject::tr("%1 total tags").arg(stats.totalTags()));
+            QString fourthLine = QObject::tr("%1 total tags").arg(stats.totalTags());
+            if (stats.unknownTags() != 0)
+                fourthLine += QObject::tr(", %1 unknown tags").arg(stats.unknownTags());
+            lines.push_back(fourthLine);
         }
     }
 

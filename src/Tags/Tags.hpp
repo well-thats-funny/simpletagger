@@ -39,6 +39,7 @@ public:
     ~Tags() override;
 
     void setHighlightedTags(QStringList const &tags);
+    void setKnownTags(QStringList const &tags);
 
 signals:
     void tagsSelected(QStringList const &tags);

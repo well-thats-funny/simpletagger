@@ -61,6 +61,8 @@ public:
 
     void setHighlightChangedAfterVersion(std::optional<int> const &version);
 
+    QStringList allTags() const;
+
 signals:
     void contentChanged();
     void tagsSelected(QStringList const &tags);

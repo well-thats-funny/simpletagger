@@ -210,6 +210,8 @@ std::expected<void, QString> MainWindow::setupDocks() {
     if (auto result = setupTagLibraryDock(); !result)
         return std::unexpected(result.error());
 
+    tags_->setKnownTags(tagLibrary->allTags());
+
     return {};
 }
 
@@ -444,6 +446,8 @@ std::expected<void, QString> MainWindow::setupTagLibraryDock() {
             qInfo() << "Tag library saved, backups count:" << (backupsCounter ? *backupsCounter : -1);
             showSavedStatusMessage(tr("tags library"), backupsCounter);
         }
+
+        tags_->setKnownTags(tagLibrary->allTags());
     });
 
     connect(&*tagLibrary, &TagLibrary::Library::tagsSelected, this, [this](QStringList const &tags){

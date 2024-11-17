@@ -128,6 +128,17 @@ int DirectoryStats::totalTags() const {
     ).value_or(0);
 }
 
+int DirectoryStats::unknownTags() const {
+    ZoneScoped;
+    gsl_Expects(ready());
+
+    QMutexLocker locker(&mutex_);
+    return stats_.unknownTags_ + std::ranges::fold_left_first(
+            stats_.childrenStats_ | std::views::transform([](auto const &v){ return v.get().unknownTags(); }),
+            std::plus<int>()
+    ).value_or(0);
+}
+
 bool DirectoryStats::ready() const {
     ZoneScoped;
     QMutexLocker locker(&mutex_);
@@ -203,6 +214,13 @@ void DirectoryStats::reload() {
                 }
 
                 stats.totalTags_ += size;
+
+                stats.unknownTags_ += std::ranges::count_if(
+                        tags->get().assignedTags(),
+                        [&](auto const &tag){
+                                return !manager_.tagLibrary_->allTags().contains(tag);
+                        }
+                );
             }
         };
 

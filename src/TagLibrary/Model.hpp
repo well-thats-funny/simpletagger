@@ -90,6 +90,8 @@ public:
 
     [[nodiscard]] std::expected<void, Error> invalidateTagCaches() const;
 
+    QStringList allTags() const;
+
 signals:
     void loadComplete();
     void activeChanged(Node const &node, bool active);
@@ -101,5 +103,6 @@ private:
     int rowHeight_ = 0;
     int nextLibraryVersion_ = -1;
     std::optional<int> highlightChangedAfterVersion_;
+    mutable std::optional<QStringList> allTags_;
 };
 }

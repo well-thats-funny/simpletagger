@@ -70,10 +70,14 @@ QVariant TagsAssignedListModel::data(const QModelIndex &index, int role) const {
         case Qt::ItemDataRole::DisplayRole:
         case TagRole:
             return tag;
-        case Qt::ItemDataRole::BackgroundRole:
-            return highlightedTags_.contains(tag)
-                ? QVariant::fromValue(QBrush(QColor(64, 64, 255, 128)))
-                : QVariant();
+        case Qt::ItemDataRole::BackgroundRole: {
+            std::vector<QBrush> result;
+            if (highlightedTags_.contains(tag))
+                result.emplace_back(QColor(64, 64, 255, 128), Qt::BrushStyle::SolidPattern);
+            if (!knownTags_.contains(tag))
+                result.emplace_back(QColor(255, 0,   0, 128), Qt::BrushStyle::FDiagPattern);
+            return QVariant::fromValue(result);
+        }
         default:
             return {};
     }
@@ -127,5 +131,10 @@ QModelIndexList TagsAssignedListModel::setHighlightedTags(QStringList const &tag
     return highlightedTags_
         | std::views::transform(tagToIndex)
         | std::ranges::to<QModelIndexList>();
+}
+
+void TagsAssignedListModel::setKnownTags(QStringList const &tags) {
+    knownTags_ = tags;
+    emit dataChanged(QModelIndex(), QModelIndex());
 }
 }
